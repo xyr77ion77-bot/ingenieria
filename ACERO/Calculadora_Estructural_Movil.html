@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Calculadora Estructural &bull; COVENIN 1756-2021</title>
+<script>
+MathJax={tex:{inlineMath:[['$','$']],displayMath:[['$$','$$']],processEscapes:true,tags:'none'},svg:{fontCache:'global'},options:{ignoreHtmlClass:'no-mathjax'}};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+:root{
+--bg:#f1f5f9;--card:#fff;--pri:#0f172a;--acc:#2563eb;--acc2:#1d4ed8;--accl:#dbeafe;
+--brd:#e2e8f0;--txt:#334155;--mut:#64748b;--ok:#059669;--okbg:#dcfce7;
+--err:#ef4444;--errbg:#fee2e2;--warn:#f59e0b;--warnbg:#fef3c7;
+--r:12px;--rs:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var(--txt);font-size:14px;line-height:1.5;-webkit-tap-highlight-color:transparent;overflow-x:hidden}
+
+.hdr{background:var(--pri);color:#fff;padding:10px 14px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.hdr h1{font-size:.88rem;font-weight:800;letter-spacing:.4px}
+.hdr p{font-size:.62rem;opacity:.65;margin-top:1px}
+
+.nav{display:flex;background:var(--card);border-bottom:2px solid var(--brd);position:sticky;top:46px;z-index:99;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.nav::-webkit-scrollbar{display:none}
+.nt{flex:1;min-width:0;padding:10px 4px;border:none;background:none;cursor:pointer;font-weight:700;font-size:.6rem;color:var(--mut);border-bottom:3px solid transparent;transition:.2s;white-space:nowrap;text-transform:uppercase;letter-spacing:.3px}
+.nt.on{color:var(--acc);border-bottom-color:var(--acc)}
+
+.pg{display:none;padding:10px;padding-bottom:80px}
+.pg.on{display:block}
+@media(min-width:600px){.pg{padding:14px;max-width:620px;margin:0 auto}}
+
+.cd{background:var(--card);border:1px solid var(--brd);border-radius:var(--r);padding:14px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.ct{font-size:.7rem;font-weight:800;text-transform:uppercase;color:var(--pri);letter-spacing:.5px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+
+.ir{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.ig label{display:block;font-size:.62rem;font-weight:600;color:var(--mut);margin-bottom:3px}
+.ig input,.ig select{width:100%;padding:9px 8px;border:1px solid var(--brd);border-radius:var(--rs);font-size:.82rem;color:var(--pri);font-weight:600;outline:none;background:#fff;-webkit-appearance:none}
+.ig input:focus,.ig select:focus{border-color:var(--acc);box-shadow:0 0 0 3px var(--accl)}
+.ig select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2364748b'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px}
+
+.tr{display:flex;align-items:center;border:1px solid var(--brd);border-radius:var(--rs);padding:7px 8px;margin-bottom:6px;background:#fafbfc;gap:6px}
+.tr-l{font-size:.68rem;font-weight:700;color:var(--mut);min-width:52px}
+.tr-i{flex:1;border:none;background:transparent;font-size:.85rem;font-weight:700;color:var(--pri);text-align:center;outline:none;min-width:0}
+.ba{background:var(--acc);color:#fff;border:none;width:26px;height:26px;border-radius:6px;font-size:1.1rem;font-weight:bold;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.bd{background:none;border:none;color:var(--err);font-size:1.2rem;font-weight:bold;cursor:pointer;padding:0 3px;min-width:26px}
+
+.mt{width:100%;border-collapse:collapse;font-size:.67rem;margin-top:6px}
+.mt th{background:var(--pri);color:#fff;padding:6px 4px;font-weight:700;font-size:.6rem;text-align:center}
+.mt td{padding:6px 4px;border-bottom:1px solid var(--brd);text-align:center;font-weight:600}
+.mt tr:nth-child(even) td{background:#f8fafc}
+.mt .pk{color:var(--ok);font-weight:800}
+.mt .fl{color:var(--err);font-weight:800}
+.mt .tot td{background:var(--accl)!important;font-weight:800}
+
+.fb{background:#f8fafc;border:1px solid var(--brd);padding:10px;border-radius:var(--rs);font-size:.78rem;line-height:1.8;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.fb mjx-container{font-size:.9rem!important}
+
+.hv{color:var(--pri);font-weight:800;background:#f1f5f9;padding:2px 7px;border-radius:10px;display:inline-block}
+
+.rb{padding:12px;border-radius:var(--rs);text-align:center;font-weight:800;font-size:.95rem;margin-top:10px;border:1px solid}
+.rb-ok{background:var(--okbg);color:#166534;border-color:#bdf2d0}
+.rb-fl{background:var(--errbg);color:#991b1b;border-color:#fecaca}
+.rb-wn{background:var(--warnbg);color:#92400e;border-color:#fde68a}
+.rb-n{background:#f1f5f9;color:#475569;border-color:var(--brd)}
+
+.stg{border-left:3px solid var(--acc);padding-left:10px;margin-bottom:14px}
+.stg-h{font-weight:800;font-size:.72rem;color:var(--acc);text-transform:uppercase;margin-bottom:6px}
+
+.tag{display:inline-block;background:var(--pri);color:#fff;padding:4px 10px;border-radius:6px;font-size:.66rem;font-weight:800;letter-spacing:.3px}
+
+.ccg{display:grid;gap:6px;grid-template-columns:repeat(2,1fr)}
+@media(min-width:400px){.ccg{grid-template-columns:repeat(3,1fr)}}
+@media(min-width:600px){.ccg{grid-template-columns:repeat(4,1fr)}}
+.cc{border:2px solid var(--brd);border-radius:var(--rs);padding:8px;text-align:center;font-weight:700;font-size:.72rem;position:relative}
+.cc.sel{border-color:var(--acc);background:var(--accl)}
+.cc .cdim{font-size:.88rem;font-weight:800;color:var(--pri)}
+.cc .clb{font-size:.55rem;color:var(--mut);margin-top:1px}
+.cc .cnt{position:absolute;top:3px;right:5px;font-size:.55rem;font-weight:800;color:#fff;background:var(--acc);border-radius:6px;padding:0 5px}
+
+.sc{border-left:3px solid var(--acc);padding-left:10px;margin-bottom:14px}
+
+.cvc{width:100%;overflow:hidden;border-radius:var(--r);background:var(--card);border:1px solid var(--brd)}
+#viewCanvas{display:block;width:100%;touch-action:none}
+
+.prt{width:100%;border-collapse:collapse;font-size:.72rem}
+.prt td{padding:6px 5px;border-bottom:1px solid var(--brd)}
+.prt tr:last-child td{border-bottom:none}
+.prt .pl{font-weight:600;color:var(--mut)}
+.prt .pv{text-align:right;font-weight:700;color:var(--pri)}
+
+.note{font-size:.66rem;color:var(--mut);font-style:italic;margin-top:6px;line-height:1.4}
+.divider{height:1px;background:var(--brd);margin:14px 0}
+
+.coll-hdr{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--card);border:1px solid var(--brd);border-radius:var(--rs);margin-bottom:4px;cursor:pointer;font-weight:700;font-size:.75rem;color:var(--pri);transition:background .15s}
+.coll-hdr:active{background:#f1f5f9}
+.coll-arr{font-size:.65rem;transition:transform .2s;color:var(--mut)}
+.coll-hdr.open .coll-arr{transform:rotate(180deg)}
+.coll-body{display:none;padding:6px 0}
+.coll-body.open{display:block}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+<h1>Calculadora Estructural</h1>
+<p>Predimensionado &bull; M&eacute;todo Muto &bull; COVENIN 1756-2021</p>
+</div>
+
+<div class="nav">
+<button class="nt on" data-p="config">CONFIG</button>
+<button class="nt" data-p="cargas">CARGAS</button>
+<button class="nt" data-p="columnas">COL.</button>
+<button class="nt" data-p="sismico">SISMO</button>
+<button class="nt" data-p="rigidez">RIGIDEZ</button>
+<button class="nt" data-p="derivas">DERIVAS</button>
+<button class="nt" data-p="viga">VIGA</button>
+</div>
+
+<!-- ========== CONFIG ========== -->
+<div class="pg on" id="pg-config">
+<div class="cd">
+<div class="ct">GEOMETR&Iacute;A DEL EDIFICIO</div>
+<div class="ir">
+<div class="ig"><label>N&deg; de Niveles</label><input type="number" id="n-niveles" value="4" min="1" max="20" oninput="recalc()"></div>
+<div class="ig"><label>Altura Entrepiso (m)</label><input type="number" id="h-entre" value="3.0" step="0.1" oninput="recalc()"></div>
+</div>
+<div class="ir">
+<div class="ig"><label>f'c (kg/cm&sup2;)</label><input type="number" id="fc" value="250" oninput="recalc()"></div>
+<div class="ig"><label>&alpha; columna</label><input type="number" id="alpha-col" value="0.28" step="0.01" oninput="recalc()"></div>
+</div>
+</div>
+
+<div class="cd">
+<div class="ct">LUCES DIRECCI&Oacute;N X</div>
+<div id="listX"></div>
+<div style="text-align:right;margin-top:4px"><button class="ba" onclick="addSpan('listX')">+</button></div>
+</div>
+
+<div class="cd">
+<div class="ct">LUCES DIRECCI&Oacute;N Y</div>
+<div id="listY"></div>
+<div style="text-align:right;margin-top:4px"><button class="ba" onclick="addSpan('listY')">+</button></div>
+</div>
+
+<div class="cd">
+<div class="ct">SECCI&Oacute;N DE VIGAS (cm)</div>
+<div class="ir">
+<div class="ig"><label>Ancho b</label><input type="number" id="bv" value="30" oninput="recalc()"></div>
+<div class="ig"><label>Peralte h</label><input type="number" id="hv" value="40" oninput="recalc()"></div>
+</div>
+<div id="viga-predim" class="note"></div>
+</div>
+
+<div class="cd">
+<div class="ct">LOSA NERVADA</div>
+<div class="ir">
+<div class="ig"><label>Altura adoptada (cm)</label><input type="number" id="h-losa" value="25" oninput="recalc()"></div>
+<div class="ig"><label>Peso losa (kg/m&sup2;)</label><input type="number" id="p-losa" value="315" oninput="recalc()"></div>
+</div>
+</div>
+
+<div class="cd">
+<div class="ct">PLANTA ESTRUCTURAL</div>
+<div style="font-size:.6rem;color:var(--mut);margin-bottom:4px">Toca un tramo para seleccionar</div>
+<div class="cvc"><canvas id="viewCanvas"></canvas></div>
+</div>
+</div>
+
+<!-- ========== CARGAS ========== -->
+<div class="pg" id="pg-cargas">
+<div id="cargas-content"></div>
+</div>
+
+<!-- ========== COLUMNAS ========== -->
+<div class="pg" id="pg-columnas">
+<div class="cd">
+<div class="ct">&Aacute;REA TRIBUTARIA COLUMNA CENTRAL</div>
+<div class="ir">
+<div class="ig"><label>Ancho tributario X (m)</label><input type="number" id="atx" value="6.0" step="0.1" oninput="recalc()"></div>
+<div class="ig"><label>Ancho tributario Y (m)</label><input type="number" id="aty" value="6.0" step="0.1" oninput="recalc()"></div>
+</div>
+<div id="area-trib" class="fb" style="margin-top:6px"></div>
+</div>
+<div id="col-content"></div>
+</div>
+
+<!-- ========== SISMICO ========== -->
+<div class="pg" id="pg-sismico">
+<div class="cd">
+<div class="ct">PAR&Aacute;METROS S&Iacute;SMICOS &mdash; COVENIN 1756-2021</div>
+<div class="ir">
+<div class="ig"><label>Ao (aceleraci&oacute;n)</label>
+<select id="sel-ao" onchange="recalc()">
+<option value="0.10">0.10 (Zona 1)</option>
+<option value="0.15">0.15 (Zona 2)</option>
+<option value="0.20">0.20 (Zona 3)</option>
+<option value="0.30" selected>0.30 (Zona 4 - Higuerote)</option>
+<option value="0.40">0.40 (Zona 5)</option>
+</select></div>
+<div class="ig"><label>Tipo de Suelo</label>
+<select id="sel-suelo" onchange="recalc()">
+<option value="S1">S1 (Roca)</option>
+<option value="S2" selected>S2 (Regular)</option>
+<option value="S3">S3 (Blando)</option>
+</select></div>
+</div>
+<div class="ir">
+<div class="ig"><label>Factor &beta;</label><input type="number" id="beta" value="2.40" step="0.1" oninput="recalc()"></div>
+<div class="ig"><label>Factor R (reducci&oacute;n)</label><input type="number" id="R-seismic" value="6" step="0.5" oninput="recalc()"></div>
+</div>
+<div class="ir">
+<div class="ig"><label>Factor importancia &alpha;</label><input type="number" id="alpha-imp" value="1.0" step="0.1" oninput="recalc()"></div>
+<div class="ig"><label>&Aacute;rea edificio (m&sup2;)</label><input type="number" id="area-edif" value="537.5" step="0.5" oninput="recalc()"></div>
+</div>
+</div>
+
+<div class="cd">
+<div class="ct">CARGAS S&Iacute;SMICAS REDUCIDAS (CP + 0,15 CV)</div>
+<div id="sismo-cargas" class="fb"></div>
+</div>
+
+<div class="cd">
+<div class="ct">COEFICIENTE S&Iacute;SMICO C</div>
+<div id="sismo-C" class="fb"></div>
+</div>
+
+<div class="cd">
+<div class="ct">DISTRIBUCI&Oacute;N DE FUERZAS S&Iacute;SMICAS</div>
+<div id="sismo-dist"></div>
+</div>
+</div>
+
+<!-- ========== RIGIDEZ ========== -->
+<div class="pg" id="pg-rigidez">
+<div id="rigidez-content"></div>
+</div>
+
+<!-- ========== DERIVAS ========== -->
+<div class="pg" id="pg-derivas">
+<div id="derivas-content"></div>
+</div>
+
+<!-- ========== VIGA (Steel Profile) ========== -->
+<div class="pg" id="pg-viga">
+<div class="cd">
+<div class="ct">DATOS DE DISE&Ntilde;O DE VIGA</div>
+<div class="ir">
+<div class="ig"><label>Carga Losa (kg/m&sup2;)</label><input type="number" id="q-losa-v" value="350" oninput="recalcViga()"></div>
+<div class="ig"><label>Carga Variable (kg/m&sup2;)</label><input type="number" id="q-var-v" value="200" oninput="recalcViga()"></div>
+</div>
+<div class="ir">
+<div class="ig"><label>Ancho Influencia (m)</label><input type="number" id="anch-t" value="4.0" step="0.1" oninput="recalcViga()"></div>
+<div class="ig"><label>&sigma; adm (kg/cm&sup2;)</label>
+<select id="sig-adm" onchange="recalcViga()">
+<option value="2500">A-36 (2500)</option>
+<option value="3500">A-52 (3500)</option>
+</select></div>
+</div>
+<div class="ir">
+<div class="ig"><label>E (kg/cm&sup2;)</label><input type="number" id="mod-e" value="2100000" oninput="recalcViga()"></div>
+<div class="ig"><label>Flecha l&iacute;mite (L/ )</label><input type="number" id="f-lim" value="300" oninput="recalcViga()"></div>
+</div>
+<div style="text-align:center;margin:10px 0"><span class="tag" id="viga-tag">SELECCIONE TRAMO</span></div>
+</div>
+<div id="viga-steps"></div>
+<div id="viga-badge" class="rb rb-n">---</div>
+</div>
+
+<script>
+(function(){
+// ===================== IPN PROFILES =====================
+const IPN=[
+{n:"IPN 80",h:80,b:42,tw:4.6,tf:5.4,R:3.9,R1:2.3,A:8.03,p:6.30,Ix:78.1,Sx:19.4,Rx:3.12,Iy:7.7,Sy:3.61,Ry:0.98},
+{n:"IPN 100",h:100,b:50,tw:4.5,tf:6.8,R:4.5,R1:2.7,A:10.60,p:8.32,Ix:171.0,Sx:34.2,Rx:4.01,Iy:12.2,Sy:4.88,Ry:1.07},
+{n:"IPN 120",h:120,b:58,tw:5.1,tf:7.7,R:5.1,R1:3.1,A:14.20,p:11.20,Ix:328.0,Sx:54.7,Rx:4.81,Iy:21.5,Sy:7.41,Ry:1.23},
+{n:"IPN 140",h:140,b:66,tw:5.7,tf:8.6,R:5.7,R1:3.4,A:18.30,p:14.40,Ix:573.0,Sx:81.9,Rx:5.61,Iy:35.2,Sy:10.70,Ry:1.40},
+{n:"IPN 160",h:160,b:74,tw:6.3,tf:9.5,R:6.3,R1:3.8,A:22.80,p:17.90,Ix:935.0,Sx:117.0,Rx:6.40,Iy:54.7,Sy:14.80,Ry:1.55},
+{n:"IPN 180",h:180,b:82,tw:6.9,tf:10.4,R:6.9,R1:4.1,A:27.90,p:21.90,Ix:1450.0,Sx:161.0,Rx:7.20,Iy:81.3,Sy:19.80,Ry:1.71},
+{n:"IPN 200",h:200,b:90,tw:7.5,tf:11.3,R:7.5,R1:4.5,A:33.50,p:26.30,Ix:2140.0,Sx:214.0,Rx:8.00,Iy:117.0,Sy:26.00,Ry:1.87},
+{n:"IPN 240",h:240,b:106,tw:8.7,tf:13.1,R:8.7,R1:5.2,A:46.10,p:36.20,Ix:4250.0,Sx:354.0,Rx:9.59,Iy:221.0,Sy:41.70,Ry:2.20},
+{n:"IPN 300",h:300,b:125,tw:10.8,tf:16.2,R:10.8,R1:6.5,A:69.10,p:54.20,Ix:9800.0,Sx:653.0,Rx:11.90,Iy:451.0,Sy:72.20,Ry:2.56}
+];
+
+// ===================== STATE =====================
+let S={lx:[4.5,6,6,5],ly:[6,5,7,5],selT:'X',selI:0,hitBox:[],perfilSel:null};
+
+// ===================== HELPERS =====================
+const fmt=(n,d=0)=>new Intl.NumberFormat('en-US',{minimumFractionDigits:d,maximumFractionDigits:d}).format(n);
+const ts=()=>{if(window.MathJax)MathJax.typesetPromise().catch(e=>console.log(e))};
+const $=id=>document.getElementById(id);
+const val=id=>parseFloat($(id).value)||0;
+
+// ===================== NAVIGATION =====================
+document.querySelectorAll('.nt').forEach(b=>{
+b.addEventListener('click',()=>{
+document.querySelectorAll('.nt').forEach(x=>x.classList.remove('on'));
+document.querySelectorAll('.pg').forEach(x=>x.classList.remove('on'));
+b.classList.add('on');
+$('pg-'+b.dataset.p).classList.add('on');
+recalc();
+})});
+
+// ===================== SPAN ADD/DEL =====================
+window.addSpan=function(listId){
+const c=$(listId);const n=c.querySelectorAll('.tr').length+1;
+const d=document.createElement('div');d.className='tr';
+const lbl=listId==='listX'?`${n}-${n+1}`:`${String.fromCharCode(64+n)}-${String.fromCharCode(65+n)}`;
+d.innerHTML=`<span class="tr-l">${lbl}</span><input type="number" step="0.1" value="4.0" class="tr-i" oninput="recalc()"><button class="bd" onclick="delSpan(this)">&times;</button>`;
+c.appendChild(d);recalc();
+};
+window.delSpan=function(btn){btn.closest('.tr').remove();recalc()};
+
+// ===================== INIT SPANS =====================
+function initSpans(){
+['listX','listY'].forEach(id=>{
+const c=$(id);c.innerHTML='';
+const spans=id==='listX'?S.lx:S.ly;
+spans.forEach((v,i)=>{
+const d=document.createElement('div');d.className='tr';
+const lbl=id==='listX'?`${i+1}-${i+2}`:`${String.fromCharCode(65+i)}-${String.fromCharCode(66+i)}`;
+d.innerHTML=`<span class="tr-l">${lbl}</span><input type="number" step="0.1" value="${v}" class="tr-i" oninput="recalc()"><button class="bd" onclick="delSpan(this)">&times;</button>`;
+c.appendChild(d);
+})});
+}
+
+// ===================== CANVAS =====================
+function renderCanvas(){
+S.lx=Array.from(document.querySelectorAll('#listX input')).map(i=>parseFloat(i.value)||0);
+S.ly=Array.from(document.querySelectorAll('#listY input')).map(i=>parseFloat(i.value)||0);
+const cv=$('viewCanvas'),cx=cv.getContext('2d');
+const cw=cv.parentElement.clientWidth;
+const tX=S.lx.reduce((a,b)=>a+b,0)||1,tY=S.ly.reduce((a,b)=>a+b,0)||1;
+const PAD=35;
+const sc=Math.min((cw-PAD*2)/tX,(cw*.65-PAD*2)/tY);
+cv.width=cw*(devicePixelRatio||1);
+cv.height=((tY*sc)+PAD*2)*(devicePixelRatio||1);
+cv.style.height=((tY*sc)+PAD*2)+'px';
+cx.setTransform(devicePixelRatio||1,0,0,devicePixelRatio||1,0,0);
+const px=[PAD];S.lx.forEach(v=>px.push(px[px.length-1]+v*sc));
+const py=[PAD];S.ly.forEach(v=>py.push(py[py.length-1]+v*sc));
+cx.clearRect(0,0,cv.width,cv.height);S.hitBox=[];
+cx.setLineDash([4,4]);cx.strokeStyle='#cbd5e1';cx.lineWidth=1;
+py.forEach(y=>{cx.beginPath();cx.moveTo(px[0]-10,y);cx.lineTo(px[px.length-1]+10,y);cx.stroke()});
+px.forEach(x=>{cx.beginPath();cx.moveTo(x,py[0]-10);cx.lineTo(x,py[py.length-1]+10);cx.stroke()});
+cx.setLineDash([]);cx.lineWidth=3.5;
+py.forEach((y,i)=>{px.forEach((x,j)=>{if(j<px.length-1){
+cx.strokeStyle=(S.selT==='X'&&S.selI===j)?'#2563eb':'#f59e0b';
+cx.beginPath();cx.moveTo(x,y);cx.lineTo(px[j+1],y);cx.stroke();
+S.hitBox.push({t:'X',i:j,x1:x,y1:y-12,x2:px[j+1],y2:y+12});
+}})});
+px.forEach((x,j)=>{py.forEach((y,i)=>{if(i<py.length-1){
+cx.strokeStyle=(S.selT==='Y'&&S.selI===i)?'#2563eb':'#1e293b';
+cx.beginPath();cx.moveTo(x,y);cx.lineTo(x,py[i+1]);cx.stroke();
+S.hitBox.push({t:'Y',i:i,x1:x-12,y1:y,x2:x+12,y2:py[i+1]});
+}})});
+px.forEach(x=>py.forEach(y=>{cx.fillStyle='#2563eb';cx.beginPath();cx.arc(x,y,3.5,0,Math.PI*2);cx.fill()}));
+cx.font='600 10px Inter,sans-serif';cx.textAlign='center';
+py.forEach((y)=>{px.forEach((x,j)=>{if(j<px.length-1){
+cx.fillStyle=(S.selT==='X'&&S.selI===j)?'#2563eb':'#92400e';
+cx.fillText(S.lx[j].toFixed(1)+'m',(x+px[j+1])/2,y-7);
+}})});
+cx.textAlign='right';
+px.forEach((x)=>{py.forEach((y,i)=>{if(i<py.length-1){
+cx.fillStyle=(S.selT==='Y'&&S.selI===i)?'#2563eb':'#64748b';
+cx.fillText(S.ly[i].toFixed(1)+'m',x-8,(y+py[i+1])/2+4);
+}})});
+}
+
+cv=$('viewCanvas');
+cv.addEventListener('click',e=>{const r=cv.getBoundingClientRect();tapCanvas(e.clientX-r.left,e.clientY-r.top)});
+cv.addEventListener('touchend',e=>{e.preventDefault();const t=e.changedTouches[0],r=cv.getBoundingClientRect();tapCanvas(t.clientX-r.left,t.clientY-r.top)});
+function tapCanvas(mx,my){for(const b of S.hitBox){if(mx>=b.x1&&mx<=b.x2&&my>=b.y1&&my<=b.y2){S.selT=b.t;S.selI=b.i;renderCanvas();recalcViga();break}}}
+
+// ===================== MAIN RECALC =====================
+window.recalc=function(){
+S.lx=Array.from(document.querySelectorAll('#listX input')).map(i=>parseFloat(i.value)||0);
+S.ly=Array.from(document.querySelectorAll('#listY input')).map(i=>parseFloat(i.value)||0);
+
+const bv_v=val('bv'),hv_v=val('hv');
+const hLosa=val('h-losa');
+
+// Predimension vigas
+const maxLx=Math.max(...S.lx),maxLy=Math.max(...S.ly);
+const predimX=Math.round(maxLx*100/20),predimY=Math.round(maxLy*100/20);
+$('viga-predim').innerHTML=`L/20 X: ${maxLx.toFixed(1)}m &times; 100/20 = ${predimX} cm &rarr; adoptado ${bv_v}&times;${hv_v} cm &nbsp;|&nbsp; L/20 Y: ${maxLy.toFixed(1)}m &times; 100/20 = ${predimY} cm &rarr; adoptado ${bv_v}&times;${hv_v} cm`;
+
+renderCanvas();
+calcCargas();
+calcColumnas();
+calcSismico();
+calcRigidez();
+calcDerivas();
+recalcViga();
+ts();
+};
+
+// ===================== CARGAS =====================
+function calcCargas(){
+const nNiv=val('n-niveles');
+const pLosa=val('p-losa');
+// Default loads per level type (as per Excel)
+// Levels are numbered from top (techo) to bottom (PB)
+// We allow user to define CP and CV per level type
+
+// Build level configuration
+const levelConfigs=[];
+// Default: top level = techo, middle = apartamentos, bottom = oficinas
+for(let i=0;i<nNiv;i++){
+const nivel=nNiv-i; // nivel from top
+if(nivel===nNiv){
+// Techo / Azotea
+levelConfigs.push({nombre:'Techo (Azotea)',cp_items:[{d:'Losa nervada '+$('h-losa').value+' cm',v:pLosa},{d:'Acabado techo (Cer&aacute;mica)',v:100},{d:'Friso inferior (0,02 &times; 1800)',v:36}],cv:175,cv_name:'Azotea con acceso'});
+} else if(nivel===1){
+// Planta Baja
+levelConfigs.push({nombre:'Planta Baja',cp_items:[{d:'Losa nervada '+$('h-losa').value+' cm',v:pLosa},{d:'Tabiquer&iacute;as',v:180},{d:'Acabado pisos (Cer&aacute;mica)',v:100},{d:'Friso inferior (0,02 &times; 1800)',v:36}],cv:250,cv_name:'Oficinas'});
+} else {
+// Entrepisos intermedios
+levelConfigs.push({nombre:'Entrepiso '+nivel,cp_items:[{d:'Losa nervada '+$('h-losa').value+' cm',v:pLosa},{d:'Tabiquer&iacute;as',v:180},{d:'Acabado pisos (Cer&aacute;mica)',v:100},{d:'Friso inferior (0,02 &times; 1800)',v:36}],cv:175,cv_name:'Apartamentos'});
+}
+}
+
+// Calculate
+let html='';
+levelConfigs.forEach((lc,idx)=>{
+const cp_total=lc.cp_items.reduce((s,it)=>s+it.v,0);
+const Q=1.2*cp_total+1.6*lc.cv;
+const q_sism=cp_total+0.15*lc.cv;
+
+html+=`<div class="cd"><div class="ct">${lc.nombre}</div>`;
+html+=`<div style="font-size:.7rem;font-weight:700;color:var(--mut);margin-bottom:6px">CARGAS PERMANENTES</div>`;
+lc.cp_items.forEach(it=>{
+html+=`<div style="display:flex;justify-content:space-between;font-size:.75rem;padding:3px 0;border-bottom:1px solid #f1f5f9"><span>${it.d}</span><span style="font-weight:700">${it.v} kg/m&sup2;</span></div>`;
+});
+html+=`<div style="display:flex;justify-content:space-between;font-size:.78rem;padding:5px 0;font-weight:800;border-bottom:2px solid var(--brd)"><span>Total CP</span><span>${fmt(cp_total)} kg/m&sup2;</span></div>`;
+html+=`<div style="font-size:.7rem;font-weight:700;color:var(--mut);margin:8px 0 6px">CARGAS VARIABLES</div>`;
+html+=`<div style="display:flex;justify-content:space-between;font-size:.75rem;padding:3px 0"><span>${lc.cv_name}</span><span style="font-weight:700">${lc.cv} kg/m&sup2;</span></div>`;
+html+=`<div class="divider"></div>`;
+html+=`<div class="fb">$$Q = 1{,}2 \\cdot ${fmt(cp_total)} + 1{,}6 \\cdot ${lc.cv} = ${fmt(Q,1)} \\text{ kg/m}^2$$</div>`;
+html+=`<div class="fb" style="margin-top:4px">$$q_{\\text{sism}} = ${fmt(cp_total)} + 0{,}15 \\cdot ${lc.cv} = ${fmt(q_sism,2)} \\text{ kg/m}^2$$</div>`;
+html+=`</div>`;
+
+lc.cp_total=cp_total;lc.Q=Q;lc.q_sism=q_sism;
+});
+
+window._levelConfigs=levelConfigs;
+$('cargas-content').innerHTML=html;
+ts();
+}
+
+// ===================== COLUMNAS =====================
+function calcColumnas(){
+const fc=val('fc'),alphaC=val('alpha-col');
+const atx=val('atx'),aty=val('aty');
+const aTrib=atx*aty;
+const nNiv=val('n-niveles');
+const lcs=window._levelConfigs||[];
+
+$('area-trib').innerHTML=`$$A_t = \\frac{${(S.ly.reduce((a,b)=>a+b,0)/2).toFixed(1)}+${(S.lx.reduce((a,b)=>a+b,0)/2).toFixed(1)}}{2} \\times \\frac{${(S.ly.reduce((a,b)=>a+b,0)/2).toFixed(1)}+${(S.lx.reduce((a,b)=>a+b,0)/2).toFixed(1)}}{2} = ${atx} \\times ${aty} = ${aTrib} \\text{ m}^2$$`;
+
+let html='';
+let P_acum=0;
+
+// Column dimension options
+const dimOpts=['30x30','30x40','30x50','30x60','40x40','40x50','40x60','40x70','50x50','50x60','60x60'];
+
+for(let i=0;i<nNiv;i++){
+const nivel=nNiv-i; // from top
+const lc=lcs[i];
+if(!lc) continue;
+
+const P_nivel=lc.Q*aTrib;
+P_acum+=P_nivel;
+const Ac_req=P_acum/(alphaC*fc);
+
+// Find smallest dimension that satisfies Ac_req
+let selDim='30x30';
+let selArea=900;
+for(const d of dimOpts){
+const[d1,d2]=d.split('x').map(Number);
+const a=d1*d2;
+if(a>=Ac_req){selDim=d;selArea=a;break}
+}
+// Check if 30x70 is needed but we prefer 40x60 (as Excel says)
+if(selDim==='30x70'){
+selDim='40x60';selArea=2400;
+}
+
+html+=`<div class="cd">`;
+html+=`<div class="ct">${lc.nombre}</div>`;
+html+=`<div class="fb">`;
+html+=`$$P_{\\text{nivel}} = ${aTrib} \\times ${fmt(lc.Q,1)} = ${fmt(P_nivel,1)} \\text{ kg}$$`;
+if(i>0){
+html+=`$$P_{\\text{acum}} = ${fmt(P_acum-P_nivel,1)} + ${fmt(P_nivel,1)} = ${fmt(P_acum,1)} \\text{ kg}$$`;
+} else {
+html+=`$$P_{\\text{acum}} = ${fmt(P_acum,1)} \\text{ kg}$$`;
+}
+html+=`$$A_c = \\frac{${fmt(P_acum,1)}}{${alphaC} \\times ${fc}} = ${fmt(Ac_req,1)} \\text{ cm}^2$$`;
+html+=`</div>`;
+html+=`<div class="rb ${selArea>=Ac_req?'rb-ok':'rb-fl'}" style="font-size:.85rem">Columna: ${selDim} = ${selArea} cm&sup2; &ge; ${fmt(Ac_req,1)} cm&sup2;</div>`;
+html+=`</div>`;
+
+lc.P_nivel=P_nivel;lc.P_acum=P_acum;lc.Ac_req=Ac_req;lc.selDim=selDim;
+}
+
+$('col-content').innerHTML=html;
+ts();
+}
+
+// ===================== SISMICO =====================
+function calcSismico(){
+const Ao=val('sel-ao'),beta=val('beta'),R=val('R-seismic'),alphaI=val('alpha-imp');
+const areaEdif=val('area-edif');
+const nNiv=val('n-niveles'),hE=val('h-entre');
+const lcs=window._levelConfigs||[];
+const Htotal=nNiv*hE;
+
+// Ad
+const Ad=alphaI*beta*Ao/R;
+
+// T*
+const TStar=Math.pow(Htotal,0.75);
+
+// mu
+const mu=1.40*(nNiv+9)/(2*nNiv+12);
+
+// C
+const C=mu*Ad;
+
+// Vo
+const Wtotal=lcs.reduce((s,lc)=>s+lc.q_sism*areaEdif,0);
+const Vo=C*Wtotal;
+
+$('sismo-C').innerHTML=`
+$$A_d = \\frac{\\alpha \\cdot \\beta \\cdot A_o}{R} = \\frac{${alphaI} \\times ${beta} \\times ${Ao}}{R} = ${Ad.toFixed(4)}$$
+$$T^* = h^{0{,}75} = ${Htotal}^{0{,}75} = ${TStar.toFixed(2)} \\text{ s}$$
+$$\\mu = 1{,}40 \\cdot \\frac{n+9}{2n+12} = 1{,}40 \\cdot \\frac{${nNiv}+9}{${2*nNiv}+12} = ${mu.toFixed(4)}$$
+$$C = \\mu \\cdot A_d = ${mu.toFixed(4)} \\times ${Ad.toFixed(4)} = ${C.toFixed(4)}$$
+$$V_o = C \\times W = ${C.toFixed(4)} \\times ${fmt(Wtotal,1)} = ${fmt(Vo,1)} \\text{ kg}$$
+`;
+
+// Distribution
+const Wi=lcs.map(lc=>lc.q_sism*areaEdif);
+const hi=lcs.map((_,i)=>(nNiv-i)*hE);
+const Wihi=Wi.map((w,i)=>w*hi[i]);
+const sumWihi=Wihi.reduce((a,b)=>a+b,0);
+
+const Fi=Wihi.map(wh=>(wh/sumWihi)*Vo);
+
+// Build table
+let tbl=`<table class="mt"><tr><th>Nivel</th><th>W<sub>i</sub> (kg)</th><th>h<sub>i</sub> (m)</th><th>W<sub>i</sub>h<sub>i</sub></th><th>Factor</th><th>F<sub>i</sub> (kg)</th></tr>`;
+for(let i=0;i<nNiv;i++){
+const factor=Wihi[i]/sumWihi;
+tbl+=`<tr><td>${lcs[i].nombre.split('(')[0].trim()}</td><td>${fmt(Wi[i],1)}</td><td>${hi[i].toFixed(0)}</td><td>${fmt(Wihi[i],1)}</td><td>${factor.toFixed(4)}</td><td>${fmt(Fi[i],1)}</td></tr>`;
+}
+tbl+=`<tr class="tot"><td>TOTAL</td><td>${fmt(Wi.reduce((a,b)=>a+b,0),1)}</td><td></td><td>${fmt(sumWihi,1)}</td><td>1,0000</td><td>${fmt(Fi.reduce((a,b)=>a+b,0),1)}</td></tr>`;
+tbl+=`</table>`;
+
+$('sismo-dist').innerHTML=tbl;
+
+// Store for later use
+window._sismo={Ao,beta,R,alphaI,Ad,TStar,mu,C,Wtotal,Vo,Wi,hi,Fi,Wihi,sumWihi,areaEdif};
+ts();
+}
+
+// ===================== RIGIDEZ =====================
+function calcRigidez(){
+const bv_v=val('bv'),hv_v=val('hv');
+const hE=val('h-entre');
+const H=hE*100;
+const lcs=window._levelConfigs||[];
+const nNiv=val('n-niveles');
+const fc=val('fc');
+const alphaC=val('alpha-col');
+const Ec=15100*Math.sqrt(fc);
+const sismo=window._sismo||{};
+
+const Iv=bv_v*Math.pow(hv_v,3)/12;
+const kvX=S.lx.map(L=>Iv/(L*100));
+const kvY=S.ly.map(L=>Iv/(L*100));
+const nEjesX=S.ly.length+1;
+const nEjesY=S.lx.length+1;
+
+let sumKVx=0,sumKVy=0;
+for(let e=0;e<nEjesX;e++)kvX.forEach(k=>sumKVx+=k);
+for(let e=0;e<nEjesY;e++)kvY.forEach(k=>sumKVy+=k);
+
+// ====== CLASIFICAR COLUMNAS POR POSICION ======
+function calcAreaTributaria(ejX,ejY){
+const hs=(idx,sp)=>{if(!sp.length)return 0;if(idx===0)return sp[0]/2;if(idx===sp.length)return sp[sp.length-1]/2;return(sp[idx-1]+sp[idx])/2};
+return{tx:hs(ejX,S.lx),ty:hs(ejY,S.ly),area:hs(ejX,S.lx)*hs(ejY,S.ly)};
+}
+
+const cols=[];
+for(let ejY=0;ejY<=S.ly.length;ejY++){
+for(let ejX=0;ejX<=S.lx.length;ejX++){
+const esq=(ejX===0||ejX===S.lx.length)&&(ejY===0||ejY===S.ly.length);
+const bor=(ejX===0||ejX===S.lx.length)||(ejY===0||ejY===S.ly.length);
+const{tx,ty,area}=calcAreaTributaria(ejX,ejY);
+cols.push({ejX,ejY,tipo:esq?'Esquina':bor?'Borde':'Centro',tx,ty,Atrib:area,
+label:String.fromCharCode(65+ejY)+(ejX+1),esEsquina:esq,esBorde:bor});
+}}
+const nCols=cols.length;
+
+// ====== PREDIMENSIONADO INDIVIDUAL ======
+const dimOpts=['30x30','30x40','30x50','40x40','30x60','40x50','40x60','50x50','40x70','50x60','60x60'];
+const colsByLevel=[];
+for(let niv=0;niv<nNiv;niv++){
+const lc=lcs[niv];
+if(!lc){colsByLevel.push([]);continue}
+const levelCols=[];
+for(const col of cols){
+const P_nivel=lc.Q*col.Atrib;
+let P_acum=P_nivel;
+for(let k=0;k<niv;k++){if(lcs[k])P_acum+=lcs[k].Q*col.Atrib}
+const Ac_req=P_acum/(alphaC*fc);
+let selDim='30x30',selArea=900;
+for(const d of dimOpts){const[d1,d2]=d.split('x').map(Number);if(d1*d2>=Ac_req){selDim=d;selArea=d1*d2;break}}
+if(selDim==='30x70'){selDim='40x60';selArea=2400}
+const[bc,hc]=selDim.split('x').map(Number);
+const Ix=bc*Math.pow(hc,3)/12;
+const Iy=hc*Math.pow(bc,3)/12;
+levelCols.push({...col,P_nivel,P_acum,Ac_req,selDim,selArea,bc,hc,Ix,Iy,Kcx:Ix/H,Kcy:Iy/H});
+}
+colsByLevel.push(levelCols);
+}
+
+// ====== CALCULAR K-BAR Y ALPHA MUTO ======
+for(let niv=0;niv<nNiv;niv++){
+const lc=colsByLevel[niv];
+if(!lc.length)continue;
+const isPB=(niv===nNiv-1);
+for(const col of lc){
+let kvL=0,kvR=0;
+if(col.ejX>0)kvL=kvX[col.ejX-1];
+if(col.ejX<S.lx.length)kvR=kvX[col.ejX];
+let kvB=0,kvA=0;
+if(col.ejY>0)kvB=kvY[col.ejY-1];
+if(col.ejY<S.ly.length)kvA=kvY[col.ejY];
+
+const sumKvX=kvL+kvR;
+let Kbar_x,alpha_x;
+if(col.esBorde){
+Kbar_x=sumKvX/col.Kcx;
+alpha_x=isPB?(0.5+Kbar_x)/(1+2*Kbar_x):(0.5+Kbar_x)/(2+Kbar_x);
+}else{
+Kbar_x=sumKvX/(2*col.Kcx);
+alpha_x=Kbar_x/(2+Kbar_x);
+}
+
+const sumKvY=kvB+kvA;
+let Kbar_y,alpha_y;
+if(col.esBorde){
+Kbar_y=sumKvY/col.Kcy;
+alpha_y=isPB?(0.5+Kbar_y)/(1+2*Kbar_y):(0.5+Kbar_y)/(2+Kbar_y);
+}else{
+Kbar_y=sumKvY/(2*col.Kcy);
+alpha_y=Kbar_y/(2+Kbar_y);
+}
+
+col.Kbar_x=Kbar_x;col.alpha_x=alpha_x;col.Keff_x=alpha_x*col.Kcx;
+col.Kbar_y=Kbar_y;col.alpha_y=alpha_y;col.Keff_y=alpha_y*col.Kcy;
+col.kvLeft=kvL;col.kvRight=kvR;col.kvBelow=kvB;col.kvAbove=kvA;col.isPB=isPB;
+}}
+
+// ====== D FACTORS ======
+const mutoByLevel=[];
+for(let niv=0;niv<nNiv;niv++){
+const lc=colsByLevel[niv];
+if(!lc.length)continue;
+const sKx=lc.reduce((s,c)=>s+c.Keff_x,0);
+const sKy=lc.reduce((s,c)=>s+c.Keff_y,0);
+for(const c of lc){c.Dx=sKx>0?c.Keff_x/sKx:0;c.Dy=sKy>0?c.Keff_y/sKy:0}
+mutoByLevel.push({nivel:lcs[niv]?lcs[niv].nombre:'Nivel '+(niv+1),
+levelCols:lc,sumKeff_x:sKx,sumKeff_y:sKy,
+sumDx:lc.reduce((s,c)=>s+c.Dx,0),sumDy:lc.reduce((s,c)=>s+c.Dy,0)});
+}
+
+// ====== BUILD HTML ======
+let html='';
+
+// --- TEORIA MUTO ---
+html+=`<div class="cd"><div class="ct">METODO DE MUTO - FUNDAMENTOS TEORICOS</div>`;
+html+=`<div class="note" style="font-style:normal">El metodo de Muto calcula la rigidez lateral de porticos considerando la interaccion vigas-columnas. Se define el factor de rigidez relativa $\\bar{K}$ y el coeficiente $\\alpha$ que modifica la rigidez de la columna segun su posicion y condicion de apoyo.</div>`;
+
+html+=`<div class="sc" style="border-left:3px solid var(--acc);padding-left:12px;margin:12px 0">`;
+html+=`<div class="stg-h">1. RIGIDEZ DE MIEMBROS</div>`;
+html+=`<div class="fb">$$K_{viga} = \\frac{I_v}{L} \\quad \\text{(rigidez relativa de viga)}$$`;
+html+=`$$K_{col} = \\frac{I_c}{h} \\quad \\text{(rigidez relativa de columna)}$$</div></div>`;
+
+html+=`<div class="sc" style="border-left:3px solid var(--acc);padding-left:12px;margin:12px 0">`;
+html+=`<div class="stg-h">2. FACTOR DE RIGIDEZ RELATIVA ($\\bar{K}$)</div>`;
+html+=`<div class="fb"><strong>Columna Exterior (Esquina/Borde):</strong><br>`;
+html+=`$$\\bar{K} = \\frac{K_{v1} + K_{v2}}{K_c}$$`;
+html+=`<em>Solo las vigas que llegan al nudo de la columna.</em><br><br>`;
+html+=`<strong>Columna Interior (Nudo Tipico):</strong><br>`;
+html+=`$$\\bar{K} = \\frac{\\sum K_{vi}}{2K_c} = \\frac{K_{v1} + K_{v2} + K_{v3} + K_{v4}}{2K_c}$$`;
+html+=`<em>Se consideran las 4 vigas que concurren al nudo.</em></div></div>`;
+
+html+=`<div class="sc" style="border-left:3px solid var(--ok);padding-left:12px;margin:12px 0">`;
+html+=`<div class="stg-h" style="color:var(--ok)">3. COEFICIENTE $\\alpha$ (DISTRIBUCION)</div>`;
+html+=`<div class="fb"><strong>Columna Exterior - Base Empotrada:</strong><br>`;
+html+=`$$\\alpha = \\frac{0{,}5 + \\bar{K}}{2 + \\bar{K}}$$`;
+html+=`<em>Cuando $\\bar{K} \\to 0$: $\\alpha = 0{,}25$ | Cuando $\\bar{K} \\to \\infty$: $\\alpha \\to 1{,}0$</em><br><br>`;
+html+=`<strong>Columna Exterior - Base Articulada (PB):</strong><br>`;
+html+=`$$\\alpha = \\frac{0{,}5 + \\bar{K}}{1 + 2\\bar{K}}$$`;
+html+=`<em>Cuando $\\bar{K} \\to 0$: $\\alpha = 0{,}50$ | Cuando $\\bar{K} \\to \\infty$: $\\alpha \\to 0{,}50$</em><br><br>`;
+html+=`<strong>Columna Interior - Base Empotrada:</strong><br>`;
+html+=`$$\\alpha = \\frac{\\bar{K}}{2 + \\bar{K}}$$`;
+html+=`<em>Cuando $\\bar{K} \\to 0$: $\\alpha = 0$ | Cuando $\\bar{K} \\to \\infty$: $\\alpha \\to 1{,}0$</em></div></div>`;
+
+html+=`<div class="sc" style="border-left:3px solid var(--warn);padding-left:12px;margin:12px 0">`;
+html+=`<div class="stg-h" style="color:var(--warn)">4. RIGIDEZ EFECTIVA Y DISTRIBUCION</div>`;
+html+=`<div class="fb">$$K_{efectiva} = \\alpha \\cdot K_c = \\alpha \\cdot \\frac{I_c}{h}$$`;
+html+=`$$D_i = \\frac{K_{efectiva,i}}{\\sum K_{efectiva}} \\quad \\text{(factor de distribucion)}$$`;
+html+=`$$V_i = D_i \\cdot V_{nivel} \\quad \\text{(cortante en columna i)}$$`;
+html+=`<strong>Validacion:</strong> $\\sum D_i = 1{,}00$ (tolerancia $\\pm 0{,}01$)</div></div>`;
+html+=`</div>`;
+
+// --- CLASIFICACION COLUMNAS ---
+html+=`<div class="cd"><div class="ct">CLASIFICACION DE COLUMNAS POR POSICION</div>`;
+html+=`<table class="mt"><tr><th>Col</th><th>Eje Y</th><th>Eje X</th><th>Tipo</th><th>A<sub>trib</sub> (m&sup2;)</th></tr>`;
+for(const col of cols){
+const tc=col.tipo==='Esquina'?'var(--err)':col.tipo==='Borde'?'var(--warn)':'var(--ok)';
+html+=`<tr><td>${col.label}</td><td>${String.fromCharCode(65+col.ejY)}</td><td>${col.ejX+1}</td><td style="font-weight:800;color:${tc}">${col.tipo}</td><td>${col.Atrib.toFixed(1)}</td></tr>`;
+}
+const nE=cols.filter(c=>c.esEsquina).length,nB=cols.filter(c=>c.esBorde&&!c.esEsquina).length,nC=cols.filter(c=>!c.esBorde).length;
+html+=`<tr class="tot"><td colspan="3">TOTAL: ${nCols} cols</td><td>${nE}E+${nB}B+${nC}C</td><td>-</td></tr></table></div>`;
+
+// --- RIGIDEZ VIGAS ---
+html+=`<div class="cd"><div class="ct">RIGIDEZ DE VIGAS - K = I/L</div>`;
+html+=`<div class="fb">$$I_v = \\frac{${bv_v} \\times ${hv_v}^3}{12} = ${fmt(Iv,1)} \\text{ cm}^4$$</div>`;
+html+=`<div style="font-size:.7rem;font-weight:700;color:var(--mut);margin:8px 0 4px">DIRECCION X (${nEjesX} ejes)</div>`;
+html+=`<table class="mt"><tr><th>Tramo</th><th>L (m)</th><th>K=I/L (cm&sup3;)</th></tr>`;
+S.lx.forEach((L,i)=>{html+=`<tr><td>${i+1}-${i+2}</td><td>${L.toFixed(1)}</td><td>${kvX[i].toFixed(2)}</td></tr>`});
+html+=`<tr class="tot"><td colspan="2">&Sigma;K eje</td><td>${kvX.reduce((a,b)=>a+b,0).toFixed(2)}</td></tr>`;
+html+=`<tr class="tot"><td colspan="2">&Sigma;K<sub>VX</sub> (${nEjesX} ejes)</td><td>${sumKVx.toFixed(2)}</td></tr></table>`;
+html+=`<div style="font-size:.7rem;font-weight:700;color:var(--mut);margin:8px 0 4px">DIRECCION Y (${nEjesY} ejes)</div>`;
+html+=`<table class="mt"><tr><th>Tramo</th><th>L (m)</th><th>K=I/L (cm&sup3;)</th></tr>`;
+S.ly.forEach((L,i)=>{html+=`<tr><td>${String.fromCharCode(65+i)}-${String.fromCharCode(66+i)}</td><td>${L.toFixed(1)}</td><td>${kvY[i].toFixed(2)}</td></tr>`});
+html+=`<tr class="tot"><td colspan="2">&Sigma;K eje</td><td>${kvY.reduce((a,b)=>a+b,0).toFixed(2)}</td></tr>`;
+html+=`<tr class="tot"><td colspan="2">&Sigma;K<sub>VY</sub> (${nEjesY} ejes)</td><td>${sumKVy.toFixed(2)}</td></tr></table></div>`;
+
+// --- PREDIMENSIONADO INDIVIDUAL ---
+html+=`<div class="cd"><div class="ct">PREDIMENSIONADO INDIVIDUAL DE COLUMNAS</div>`;
+html+=`<div class="note" style="font-style:normal;margin-bottom:6px">Cada columna se dimensiona segun su carga axial acumulada y area tributaria propia.</div>`;
+for(let niv=0;niv<nNiv;niv++){
+const lc=colsByLevel[niv];
+if(!lc.length)continue;
+const nivName=lcs[niv]?lcs[niv].nombre.split('(')[0].trim():'Nivel '+(niv+1);
+html+=`<div style="font-size:.72rem;font-weight:800;color:var(--acc);margin:10px 0 4px;border-left:3px solid var(--acc);padding-left:8px">${nivName.toUpperCase()}</div>`;
+html+=`<table class="mt"><tr><th>Col</th><th>Tipo</th><th>A<sub>trib</sub></th><th>P<sub>acum</sub>(kg)</th><th>A<sub>c,req</sub></th><th>Secc.</th><th>I<sub>x</sub></th><th>K<sub>cx</sub></th></tr>`;
+for(const c of lc){
+const tc=c.tipo==='Esquina'?'var(--err)':c.tipo==='Borde'?'var(--warn)':'var(--ok)';
+html+=`<tr><td>${c.label}</td><td style="color:${tc}">${c.tipo.charAt(0)}</td><td>${c.Atrib.toFixed(1)}</td><td>${fmt(c.P_acum,0)}</td><td>${fmt(c.Ac_req,0)}</td><td style="font-weight:800">${c.selDim}</td><td>${fmt(c.Ix,0)}</td><td>${fmt(c.Kcx,2)}</td></tr>`;
+}
+html+=`</table>`;
+}
+html+=`</div>`;
+
+// --- MUTO ALPHA POR COLUMNA ---
+html+=`<div class="cd"><div class="ct">APLICACION METODO MUTO - CALCULO DE $\\alpha$</div>`;
+for(let niv=0;niv<nNiv;niv++){
+const ml=mutoByLevel[niv];
+if(!ml)continue;
+const nivName=ml.nivel.split('(')[0].trim();
+const isPB=(niv===nNiv-1);
+html+=`<div style="font-size:.72rem;font-weight:800;color:var(--acc);margin:10px 0 4px;border-left:3px solid var(--acc);padding-left:8px">${nivName.toUpperCase()} ${isPB?'(Base Articulada)':'(Base Empotrada)'}</div>`;
+html+=`<table class="mt"><tr><th>Col</th><th>Tipo</th><th>K<sub>v,izq</sub></th><th>K<sub>v,der</sub></th><th>K<sub>cx</sub></th><th>$\\bar{K}_x$</th><th>$\\alpha_x$</th><th>K<sub>ef,x</sub></th><th>$D_x$</th></tr>`;
+for(const c of ml.levelCols){
+const tc=c.tipo==='Esquina'?'var(--err)':c.tipo==='Borde'?'var(--warn)':'var(--ok)';
+const wd=c.Dx>0.30;
+html+=`<tr><td>${c.label}</td><td style="color:${tc}">${c.tipo.charAt(0)}</td><td>${c.kvLeft.toFixed(1)}</td><td>${c.kvRight.toFixed(1)}</td><td>${fmt(c.Kcx,2)}</td><td>${fmt(c.Kbar_x,3)}</td><td>${fmt(c.alpha_x,4)}</td><td>${fmt(c.Keff_x,2)}</td><td class="${wd?'fl':''}">${fmt(c.Dx,4)}${wd?' >0.30':''}</td></tr>`;
+}
+html+=`<tr class="tot"><td colspan="7">&Sigma;</td><td>${fmt(ml.sumKeff_x,2)}</td><td>${fmt(ml.sumDx,4)}</td></tr></table>`;
+html+=`<table class="mt" style="margin-top:4px"><tr><th>Col</th><th>K<sub>v,inf</sub></th><th>K<sub>v,sup</sub></th><th>K<sub>cy</sub></th><th>$\\bar{K}_y$</th><th>$\\alpha_y$</th><th>K<sub>ef,y</sub></th><th>$D_y$</th></tr>`;
+for(const c of ml.levelCols){
+const wd=c.Dy>0.30;
+html+=`<tr><td>${c.label}</td><td>${c.kvBelow.toFixed(1)}</td><td>${c.kvAbove.toFixed(1)}</td><td>${fmt(c.Kcy,2)}</td><td>${fmt(c.Kbar_y,3)}</td><td>${fmt(c.alpha_y,4)}</td><td>${fmt(c.Keff_y,2)}</td><td class="${wd?'fl':''}">${fmt(c.Dy,4)}${wd?' >0.30':''}</td></tr>`;
+}
+html+=`<tr class="tot"><td colspan="6">&Sigma;</td><td>${fmt(ml.sumKeff_y,2)}</td><td>${fmt(ml.sumDy,4)}</td></tr></table>`;
+}
+
+// --- EJEMPLO DETALLADO ---
+if(mutoByLevel.length>0){
+const ml=mutoByLevel[0];
+const nivName=ml.nivel.split('(')[0].trim();
+const colEsq=ml.levelCols.find(c=>c.esEsquina);
+const colCen=ml.levelCols.find(c=>!c.esBorde);
+html+=`<div class="sc" style="border-left:3px solid var(--acc);padding-left:12px;margin:12px 0">`;
+html+=`<div class="stg-h">EJEMPLO DE CALCULO DETALLADO - ${nivName.toUpperCase()}</div>`;
+if(colEsq){
+html+=`<div class="fb"><strong>Columna ${colEsq.label} (Esquina, Base Empotrada) - Dir. X:</strong><br>`;
+html+=`$$\\bar{K}_x = \\frac{${colEsq.kvLeft.toFixed(2)} + ${colEsq.kvRight.toFixed(2)}}{${fmt(colEsq.Kcx,2)}} = ${fmt(colEsq.Kbar_x,4)}$$`;
+html+=`$$\\alpha_x = \\frac{0{,}5 + ${fmt(colEsq.Kbar_x,4)}}{2 + ${fmt(colEsq.Kbar_x,4)}} = ${fmt(colEsq.alpha_x,4)}$$`;
+html+=`$$K_{ef,x} = ${fmt(colEsq.alpha_x,4)} \\times ${fmt(colEsq.Kcx,2)} = ${fmt(colEsq.Keff_x,2)}$$</div>`;
+}
+if(colCen){
+html+=`<div class="fb" style="margin-top:6px"><strong>Columna ${colCen.label} (Interior, Base Empotrada) - Dir. X:</strong><br>`;
+html+=`$$\\bar{K}_x = \\frac{${colCen.kvLeft.toFixed(2)} + ${colCen.kvRight.toFixed(2)}}{2 \\times ${fmt(colCen.Kcx,2)}} = ${fmt(colCen.Kbar_x,4)}$$`;
+html+=`$$\\alpha_x = \\frac{${fmt(colCen.Kbar_x,4)}}{2 + ${fmt(colCen.Kbar_x,4)}} = ${fmt(colCen.alpha_x,4)}$$`;
+html+=`$$K_{ef,x} = ${fmt(colCen.alpha_x,4)} \\times ${fmt(colCen.Kcx,2)} = ${fmt(colCen.Keff_x,2)}$$</div>`;
+}
+html+=`</div>`;
+}
+
+// --- VALIDACION ---
+html+=`<div class="cd"><div class="ct">VALIDACION DEL METODO</div>`;
+let allValid=true;const warnings=[];
+for(const ml of mutoByLevel){
+if(Math.abs(ml.sumDx-1)>0.01){allValid=false;warnings.push(`${ml.nivel}: &Sigma;D<sub>x</sub> = ${ml.sumDx.toFixed(4)} &ne; 1,00`)}
+if(Math.abs(ml.sumDy-1)>0.01){allValid=false;warnings.push(`${ml.nivel}: &Sigma;D<sub>y</sub> = ${ml.sumDy.toFixed(4)} &ne; 1,00`)}
+for(const c of ml.levelCols){
+if(c.Dx>0.30)warnings.push(`${c.label} @ ${ml.nivel}: D<sub>x</sub>=${c.Dx.toFixed(4)} > 0,30 (concentracion de rigidez)`);
+if(c.Dy>0.30)warnings.push(`${c.label} @ ${ml.nivel}: D<sub>y</sub>=${c.Dy.toFixed(4)} > 0,30 (concentracion de rigidez)`);
+}
+}
+if(allValid&&warnings.length===0){
+html+=`<div class="rb rb-ok" style="font-size:.8rem">&#10003; Todas las &Sigma;D<sub>i</sub> = 1,00 y ningun D<sub>i</sub> > 0,30</div>`;
+}else{
+if(!allValid)html+=`<div class="rb rb-fl" style="font-size:.8rem">&#10007; Verificar &Sigma;D<sub>i</sub></div>`;
+if(warnings.length>0){html+=`<div style="margin-top:6px">`;warnings.forEach(w=>{html+=`<div style="font-size:.7rem;color:var(--warn);padding:2px 0">&#9888; ${w}</div>`});html+=`</div>`}
+}
+html+=`</div>`;
+
+window._rigidez={Iv,kvX,kvY,sumKVx,sumKVy,Ec,nEjesX,nEjesY,mutoByLevel,colsByLevel,nCols};
+$('rigidez-content').innerHTML=html;
+ts();
+}
+
+// ===================== DERIVAS =====================
+function calcDerivas(){
+const hE=val('h-entre'),H=hE*100;
+const fc=val('fc');
+const R=val('R-seismic');
+const nNiv=val('n-niveles');
+const lcs=window._levelConfigs||[];
+const sismo=window._sismo||{};
+const rig=window._rigidez||{};
+const Ec=15100*Math.sqrt(fc);
+
+if(!sismo.Fi||!rig.mutoByLevel){$('derivas-content').innerHTML='<div class="cd" style="text-align:center;padding:30px;color:var(--mut)">Complete los datos anteriores primero</div>';return}
+
+const factor=(R*H*H)/(12*Ec);
+
+const cortantes=[];
+for(let i=0;i<nNiv;i++){let V=0;for(let j=0;j<=i;j++)V+=sismo.Fi[j];cortantes.push(V)}
+
+const derivasX=[],derivasY=[];
+for(let i=0;i<nNiv;i++){
+const ml=rig.mutoByLevel[i];
+if(!ml)continue;
+const sumKeff_x=ml.sumKeff_x;
+const sumKeff_y=ml.sumKeff_y;
+
+const factX=factor*(1/rig.sumKVx+1/sumKeff_x);
+const factY=factor*(1/rig.sumKVy+1/sumKeff_y);
+
+const dx=cortantes[i]*factX;
+const dy=cortantes[i]*factY;
+const derivaX=dx/H;
+const derivaY=dy/H;
+const limite=0.018;
+
+const piso=lcs[i]?lcs[i].nombre.split('(')[0].trim():'Nivel '+(i+1);
+derivasX.push({piso,Vi:cortantes[i],dx,deriva:derivaX,cumple:derivaX<=limite});
+derivasY.push({piso,Vi:cortantes[i],dy,deriva:derivaY,cumple:derivaY<=limite});
+}
+
+let html='';
+
+html+=`<div class="cd"><div class="ct">FACTOR DE DISTORSION</div>`;
+html+=`<div class="fb">$$E_c \\approx 15100\\sqrt{f'_c} = 15100\\sqrt{${fc}} = ${fmt(Ec,0)} \\text{ kg/cm}^2$$`;
+html+=`$$\\frac{R \\cdot H^2}{12 \\cdot E_c} = \\frac{${R} \\times ${H}^2}{12 \\times ${fmt(Ec,0)}} = ${factor.toFixed(6)}$$</div></div>`;
+
+html+=`<div class="cd"><div class="ct">DERIVAS - DIRECCION X</div>`;
+html+=`<table class="mt"><tr><th>Nivel</th><th>V<sub>i</sub> (kg)</th><th>&delta;<sub>x</sub> (cm)</th><th>Deriva</th><th>&iquest;Cumple?</th></tr>`;
+derivasX.forEach(d=>{html+=`<tr><td>${d.piso}</td><td>${fmt(d.Vi,0)}</td><td>${d.dx.toFixed(3)}</td><td>${d.deriva.toFixed(5)}</td><td class="${d.cumple?'pk':'fl'}">${d.cumple?'PASA':'NO PASA'}</td></tr>`});
+html+=`</table></div>`;
+
+html+=`<div class="cd"><div class="ct">DERIVAS - DIRECCION Y</div>`;
+html+=`<table class="mt"><tr><th>Nivel</th><th>V<sub>i</sub> (kg)</th><th>&delta;<sub>y</sub> (cm)</th><th>Deriva</th><th>&iquest;Cumple?</th></tr>`;
+derivasY.forEach(d=>{html+=`<tr><td>${d.piso}</td><td>${fmt(d.Vi,0)}</td><td>${d.dy.toFixed(3)}</td><td>${d.deriva.toFixed(5)}</td><td class="${d.cumple?'pk':'fl'}">${d.cumple?'PASA':'NO PASA'}</td></tr>`});
+html+=`</table></div>`;
+
+// --- DISTRIBUCION DE CORTANTE POR COLUMNA ---
+html+=`<div class="cd"><div class="ct">DISTRIBUCION DE CORTANTE POR COLUMNA (MUTO)</div>`;
+for(let i=0;i<nNiv;i++){
+const ml=rig.mutoByLevel[i];
+if(!ml)continue;
+const piso=lcs[i]?lcs[i].nombre.split('(')[0].trim():'Nivel '+(i+1);
+html+=`<div style="font-size:.72rem;font-weight:800;color:var(--acc);margin:8px 0 4px">${piso} - V<sub>i</sub>=${fmt(cortantes[i],0)} kg</div>`;
+html+=`<table class="mt"><tr><th>Col</th><th>Tipo</th><th>D<sub>x</sub></th><th>V<sub>ix</sub> (kg)</th><th>D<sub>y</sub></th><th>V<sub>iy</sub> (kg)</th></tr>`;
+for(const c of ml.levelCols){
+const Vix=c.Dx*cortantes[i];
+const Viy=c.Dy*cortantes[i];
+const tc=c.tipo==='Esquina'?'var(--err)':c.tipo==='Borde'?'var(--warn)':'var(--ok)';
+html+=`<tr><td>${c.label}</td><td style="color:${tc}">${c.tipo.charAt(0)}</td><td>${fmt(c.Dx,4)}</td><td>${fmt(Vix,0)}</td><td>${fmt(c.Dy,4)}</td><td>${fmt(Viy,0)}</td></tr>`;
+}
+html+=`</table>`;
+}
+html+=`</div>`;
+
+const failsX=derivasX.filter(d=>!d.cumple);
+const failsY=derivasY.filter(d=>!d.cumple);
+html+=`<div class="cd"><div class="ct">DIAGNOSTICO</div>`;
+if(failsX.length===0&&failsY.length===0){
+html+=`<div class="rb rb-ok">TODAS LAS DERIVAS CUMPLEN (&le; 0,018)</div>`;
+}else{
+html+=`<div class="rb rb-fl">DERIVAS NO CUMPLEN NORMA COVENIN 1756</div>`;
+if(failsX.length)html+=`<p style="font-size:.75rem;margin-top:6px;color:var(--err)">Dir. X: Pisos ${failsX.map(d=>d.piso).join(', ')} superan 0,018</p>`;
+if(failsY.length)html+=`<p style="font-size:.75rem;margin-top:4px;color:var(--err)">Dir. Y: Pisos ${failsY.map(d=>d.piso).join(', ')} superan 0,018</p>`;
+html+=`<p class="note" style="margin-top:8px">Sugerencia: Aumentar peralte de vigas o incorporar pantallas de concreto en los tramos mas largos para rigidizar la estructura.</p>`;
+}
+html+=`</div>`;
+
+$('derivas-content').innerHTML=html;
+ts();
+}
+
+// ===================== VIGA (Steel) =====================
+window.recalcViga=function(){
+const L=S.selT==='X'?S.lx[S.selI]:S.ly[S.selI];
+if(!L||L<=0) return;
+
+const pLosa=val('q-losa-v'),pVar=val('q-var-v'),ancho=val('anch-t');
+const sigma=val('sig-adm'),E=val('mod-e'),fDenom=val('f-lim');
+const ql=pLosa*ancho,qv=ql*0.15,qc=pVar*ancho;
+const q=ql+qv+qc,M=(q*L*L)/8,sxReq=(M*100)/sigma;
+
+const tag=$('viga-tag');
+tag.innerText=S.selT==='X'?`X${S.selI+1} (L=${L.toFixed(2)}m)`:`Y-${String.fromCharCode(65+S.selI)} (L=${L.toFixed(2)}m)`;
+
+let idx=IPN.findIndex(p=>p.Sx>=sxReq);
+let cumpleF=false,fReal=0;const fAdm=(L*100)/fDenom;
+let perfil=null;
+while(idx<IPN.length&&idx>=0){const p=IPN[idx];fReal=(5*(q/100)*Math.pow(L*100,4))/(384*E*p.Ix);if(fReal<=fAdm){cumpleF=true;perfil=p;break}idx++}
+if(!cumpleF&&idx<IPN.length)perfil=IPN[idx];else if(idx>=IPN.length)perfil=IPN[IPN.length-1];
+S.perfilSel=perfil;
+
+let html='';
+html+=`<div class="cd"><div class="sc" style="border-left-color:var(--acc)"><div class="stg-h">1. Momento Flector</div><div class="fb">$$q = ${fmt(q)} \\text{ kg/m}, \\quad L = ${L.toFixed(2)} \\text{ m}$$$$M_u = \\frac{q \\cdot L^2}{8} = \\frac{${fmt(q)} \\times ${L.toFixed(2)}^2}{8} = ${fmt(M)} \\text{ kg}\\cdot\\text{m}$$</div></div></div>`;
+
+html+=`<div class="cd"><div class="sc" style="border-left-color:var(--acc)"><div class="stg-h">2. M&oacute;dulo Resistente</div><div class="fb">$$\\sigma_{\\text{adm}} = ${fmt(sigma)} \\text{ kg/cm}^2$$$$S_{x,\\text{req}} = \\frac{M_u \\times 100}{\\sigma_{\\text{adm}}} = \\frac{${fmt(M)} \\times 100}{${fmt(sigma)}} = ${fmt(sxReq,2)} \\text{ cm}^3$$</div></div></div>`;
+
+html+=`<div class="cd"><div class="sc" style="border-left-color:var(--ok)"><div class="stg-h" style="color:var(--ok)">3. Perfil Seleccionado</div><div class="fb">${perfil?`Adoptado: <span class="hv">${perfil.n}</span><br>$$S_x = ${perfil.Sx} \\text{ cm}^3, \\quad I_x = ${fmt(perfil.Ix,1)} \\text{ cm}^4$$`:'Sin perfil disponible'}</div></div></div>`;
+
+html+=`<div class="cd"><div class="sc" style="border-left-color:var(--warn)"><div class="stg-h" style="color:var(--warn)">4. Verificaci&oacute;n por Flecha</div><div class="fb">$$f_{\\text{real}} = \\frac{5 \\cdot q_{\\text{cm}} \\cdot L^4}{384 \\cdot E \\cdot I_x} = ${fReal.toFixed(2)} \\text{ cm}$$$$f_{\\text{adm}} = \\frac{L}{${fDenom}} = \\frac{${L*100}}{${fDenom}} = ${fAdm.toFixed(2)} \\text{ cm}$$</div>`;
+html+=`<div style="margin-top:6px;font-weight:800;font-size:.82rem">${cumpleF?`<span style="color:var(--ok)">&#10003; CUMPLE: ${fReal.toFixed(2)} &le; ${fAdm.toFixed(2)} cm</span>`:`<span style="color:var(--err)">&#10007; SUPERA FLECHA</span>`}</div></div></div>`;
+
+// Profile properties
+if(perfil){
+html+=`<div class="cd"><div class="ct">PROPIEDADES ${perfil.n}</div><table class="prt">`;
+html+=`<tr><td class="pl">h</td><td class="pv">${perfil.h} mm</td></tr>`;
+html+=`<tr><td class="pl">b</td><td class="pv">${perfil.b} mm</td></tr>`;
+html+=`<tr><td class="pl">t<sub>w</sub></td><td class="pv">${perfil.tw} mm</td></tr>`;
+html+=`<tr><td class="pl">t<sub>f</sub></td><td class="pv">${perfil.tf} mm</td></tr>`;
+html+=`<tr><td class="pl">I<sub>x</sub></td><td class="pv">${fmt(perfil.Ix,1)} cm&#8308;</td></tr>`;
+html+=`<tr><td class="pl">S<sub>x</sub></td><td class="pv">${perfil.Sx} cm&sup3;</td></tr>`;
+html+=`<tr><td class="pl">I<sub>y</sub></td><td class="pv">${fmt(perfil.Iy,1)} cm&#8308;</td></tr>`;
+html+=`<tr><td class="pl">S<sub>y</sub></td><td class="pv">${perfil.Sy} cm&sup3;</td></tr>`;
+html+=`<tr><td class="pl">Peso</td><td class="pv">${perfil.p} kg/m</td></tr>`;
+html+=`</table></div>`;
+}
+
+$('viga-steps').innerHTML=html;
+
+const badge=$('viga-badge');
+if(perfil){
+if(cumpleF){badge.className='rb rb-ok';badge.innerText='USAR '+perfil.n}
+else{badge.className='rb rb-fl';badge.innerText='NO CUMPLE RIGIDEZ'}
+}else{badge.className='rb rb-n';badge.innerText='SIN PERFIL'}
+
+ts();
+};
+
+// ===================== INIT =====================
+initSpans();
+recalc();
+
+let rt;
+window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{renderCanvas()},100)});
+})();
+</script>
+</body>
+</html>

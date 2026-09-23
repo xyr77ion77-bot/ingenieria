@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cálculo Avanzado de Columnas: Predimensionado y Esbeltez</title>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+
+        :root {
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --primary: #0f172a;
+            --accent: #2563eb;
+            --border: #cbd5e1;
+            --text: #334155;
+            --success: #059669;
+            --danger: #e11d48;
+            --highlight: #f1f5f9;
+        }
+
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; display: flex; justify-content: center; }
+        .container { width: 100%; max-width: 1200px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+        .card { background: var(--card-bg); border-radius: 12px; padding: 24px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid var(--border); }
+        .full-width { grid-column: span 2; }
+        
+        h1 { font-size: 1.4rem; font-weight: 800; color: var(--primary); margin-top: 0; text-transform: uppercase; border-bottom: 3px solid var(--accent); padding-bottom: 10px; margin-bottom: 20px; }
+        h2 { font-size: 0.9rem; font-weight: 800; color: var(--accent); margin-bottom: 15px; text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
+        h2::before { content: ''; width: 4px; height: 16px; background: var(--accent); border-radius: 2px; }
+
+        .input-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .input-group { display: flex; flex-direction: column; gap: 5px; }
+        .input-group label { font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase; }
+        .input-group input, .input-group select { padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.9rem; font-weight: 600; outline: none; background: var(--highlight); }
+        .input-group input:focus, .input-group select:focus { border-color: var(--accent); }
+
+        .results-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .results-table td { padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+        .results-table .val { font-weight: 800; text-align: right; color: var(--primary); }
+        .results-table .unit { font-size: 0.75rem; color: #64748b; padding-left: 8px; width: 45px; }
+
+        .status-pill { padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; display: inline-block;}
+        .status-ok { background: #dcfce7; color: var(--success); }
+        .status-error { background: #ffe4e6; color: var(--danger); }
+        .status-warn { background: #fef08a; color: #92400e; }
+
+        .formula-card { background: #fff; border: 1px solid var(--border); border-left: 4px solid var(--accent); padding: 15px; margin-bottom: 15px; font-size: 0.85rem; overflow-x: auto; border-radius: 6px;}
+
+        @media (max-width: 900px) { .container { grid-template-columns: 1fr; } .full-width { grid-column: span 1; } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="card full-width">
+        <h1>Diseño y Magnificación de Momentos (Columnas)</h1>
+        
+        <h2>1. Geometría Tributaria (Líneas de Ejes)</h2>
+        <div class="input-grid">
+            <div class="input-group">
+                <label>Posición</label>
+                <select id="posicion" onchange="updateAll()">
+                    <option value="central">Central (λ=1.1, n=0.30)</option>
+                    <option value="perimetral">Perimetral (λ=1.25, n=0.25)</option>
+                    <option value="esquina">Esquinera (λ=1.5, n=0.20)</option>
+                </select>
+            </div>
+            <div class="input-group"><label>Vano X1 (m)</label><input type="number" id="lx1" value="5.0" step="0.1" oninput="updateAll()"></div>
+            <div class="input-group"><label>Vano X2 (m)</label><input type="number" id="lx2" value="5.5" step="0.1" oninput="updateAll()"></div>
+            <div class="input-group"><label>Vano Y1 (m)</label><input type="number" id="ly1" value="4.0" step="0.1" oninput="updateAll()"></div>
+            <div class="input-group"><label>Vano Y2 (m)</label><input type="number" id="ly2" value="4.5" step="0.1" oninput="updateAll()"></div>
+        </div>
+
+        <h2>2. Datos del Material y Cargas</h2>
+        <div class="input-grid">
+            <div class="input-group"><label>f'c (kg/cm²)</label><input type="number" id="fc" value="210" oninput="updateAll()"></div>
+            <div class="input-group">
+                <label>$\sigma_{adm}$ Acero</label>
+                <select id="sigma-acero" onchange="updateAll()">
+                    <option value="2500">A-36 (2500 kg/cm²)</option>
+                    <option value="3500">A-52 (3500 kg/cm²)</option>
+                </select>
+            </div>
+            <div class="input-group"><label>N° Pisos</label><input type="number" id="nPisos" value="4" oninput="updateAll()"></div>
+            <div class="input-group"><label>Losa (kg/m²)</label><input type="number" id="qLosa" value="300" oninput="updateAll()"></div>
+            <div class="input-group"><label>Acabados (kg/m²)</label><input type="number" id="qAcab" value="100" oninput="updateAll()"></div>
+            <div class="input-group"><label>S/C Uso (kg/m²)</label><input type="number" id="qUso" value="200" oninput="updateAll()"></div>
+        </div>
+    </div>
+
+    <!-- PREDIMENSIONADO -->
+    <div class="card">
+        <h2>3. Predimensionado por Carga Axial</h2>
+        <div class="formula-card" id="form-area">
+            Calculando $A_t$...
+        </div>
+        <table class="results-table">
+            <tr><td>Área Tributaria Real ($A_t$)</td><td class="val" id="at-val">---</td><td class="unit">m²</td></tr>
+            <tr><td>Carga Muerta ($P_D$)</td><td class="val" id="pd-val">---</td><td class="unit">tn</td></tr>
+            <tr><td>Carga Viva ($P_L$)</td><td class="val" id="pl-val">---</td><td class="unit">tn</td></tr>
+            <tr><td>Carga Servicio ($P_G$)</td><td class="val" id="pg-total">---</td><td class="unit">tn</td></tr>
+            <tr style="border-top: 2px solid var(--border);"><td>Carga Última ($P_u = 1.2P_D + 1.6P_L$)</td><td class="val" id="pu-main-val">---</td><td class="unit">tn</td></tr>
+        </table>
+        
+        <h2 style="margin-top:20px">Opción A: Sección de Concreto</h2>
+        <div class="input-grid" style="grid-template-columns: 1fr 1fr">
+            <div class="input-group"><label>Ancho b (cm)</label><input type="number" id="dimB" value="35" oninput="updateAll()"></div>
+            <div class="input-group"><label>Peralte h (cm)</label><input type="number" id="dimH" value="35" oninput="updateAll()"></div>
+        </div>
+        <div id="cumple-area" class="status-pill status-ok" style="width: 100%; text-align: center; padding: 10px; margin-top: 10px;">ÁREA SUFICIENTE</div>
+
+        <h2 style="margin-top:20px">Opción B: Perfil de Acero (IPN)</h2>
+        <div class="formula-card" id="form-acero">
+            Calculando Área de Acero...
+        </div>
+        <table class="results-table">
+            <tr><td>Área Requerida Acero ($A_{req}$)</td><td class="val" id="area-acero-req">---</td><td class="unit">cm²</td></tr>
+        </table>
+        <div id="perfil-sugerido-badge" class="status-pill status-ok" style="width: 100%; text-align: center; padding: 10px; margin-top: 10px; font-size: 1rem;">---</div>
+    </div>
+
+    <!-- ESBELTEZ Y MOMENTOS -->
+    <div class="card">
+        <h2>4. Momentos de Extremo y Factor Cm</h2>
+        <div class="input-grid">
+            <div class="input-group"><label>M1 Menor (kg·m)</label><input type="number" id="m1" value="2500" oninput="updateAll()"></div>
+            <div class="input-group"><label>M2 Mayor (kg·m)</label><input type="number" id="m2" value="4000" oninput="updateAll()"></div>
+            <div class="input-group" style="grid-column: span 2;">
+                <label>Tipo de Curvatura</label>
+                <select id="curvatura" onchange="updateAll()">
+                    <option value="sencilla">Curvatura Sencilla (M1/M2 Positivo)</option>
+                    <option value="doble">Curvatura Doble (M1/M2 Negativo)</option>
+                </select>
+            </div>
+            <div class="input-group"><label>Altura Libre L (m)</label><input type="number" id="hLibre" value="3.0" step="0.1" oninput="updateAll()"></div>
+            <div class="input-group"><label>Factor K</label><input type="number" id="kFactor" value="1.0" step="0.1" oninput="updateAll()"></div>
+        </div>
+
+        <div class="formula-card" id="form-cm">
+            Calculando $C_m$...
+        </div>
+        
+        <table class="results-table">
+            <tr><td>Límite Esbeltez ($34 - 12\frac{M_1}{M_2}$)</td><td class="val" id="lambda-lim">---</td><td class="unit"></td></tr>
+            <tr><td>Esbeltez Real ($\frac{KL}{r}$)</td><td class="val" id="lambda-real">---</td><td class="unit"></td></tr>
+        </table>
+        <div id="status-esbeltez" class="status-pill" style="margin-top:10px;">---</div>
+
+        <div id="panel-magnificacion" style="display:none; margin-top: 20px; border-top: 1px dashed var(--border); padding-top: 20px;">
+            <h2>5. Magnificación de Momentos ($\delta$)</h2>
+            <div class="formula-card" id="form-delta">
+                Calculando $\delta$...
+            </div>
+            <table class="results-table">
+                <tr><td>Carga Última ($P_u = 1.2P_D + 1.6P_L$)</td><td class="val" id="pu-val">---</td><td class="unit">tn</td></tr>
+                <tr><td>Carga Pandeo ($P_c$)</td><td class="val" id="pc-val">---</td><td class="unit">tn</td></tr>
+                <tr><td>Factor Magnificación ($\delta$)</td><td class="val" style="color:var(--danger); font-size:1.2rem;" id="delta-val">---</td><td class="unit"></td></tr>
+                <tr><td>Momento de Diseño ($M_c$)</td><td class="val" style="color:var(--danger);" id="mc-val">---</td><td class="unit">kg·m</td></tr>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    const perfilesIPN = [
+        {n: "IPN 80",  sx: 19.4,  ix: 77.8,  area: 7.58},
+        {n: "IPN 100", sx: 34.2,  ix: 171,   area: 10.60},
+        {n: "IPN 120", sx: 54.7,  ix: 328,   area: 14.20},
+        {n: "IPN 140", sx: 81.9,  ix: 573,   area: 18.30},
+        {n: "IPN 160", sx: 117,   ix: 935,   area: 22.80},
+        {n: "IPN 180", sx: 161,   ix: 1450,  area: 27.90},
+        {n: "IPN 200", sx: 214,   ix: 2140,  area: 33.50},
+        {n: "IPN 220", sx: 278,   ix: 3060,  area: 39.50},
+        {n: "IPN 240", sx: 354,   ix: 4250,  area: 46.10},
+        {n: "IPN 260", sx: 442,   ix: 5740,  area: 53.30},
+        {n: "IPN 280", sx: 542,   ix: 7590,  area: 61.00},
+        {n: "IPN 300", sx: 653,   ix: 9800,  area: 69.00},
+        {n: "IPN 320", sx: 782,   ix: 12510, area: 77.70},
+        {n: "IPN 340", sx: 923,   ix: 15700, area: 86.70},
+        {n: "IPN 360", sx: 1090,  ix: 19610, area: 97.00}
+    ];
+
+    function updateAll() {
+        // --- 1. GEOMETRÍA TRIBUTARIA RIGUROSA ---
+        const pos = document.getElementById('posicion').value;
+        let lx1 = parseFloat(document.getElementById('lx1').value) || 0;
+        let lx2 = parseFloat(document.getElementById('lx2').value) || 0;
+        let ly1 = parseFloat(document.getElementById('ly1').value) || 0;
+        let ly2 = parseFloat(document.getElementById('ly2').value) || 0;
+
+        // Anular vanos ficticios si no es central
+        if (pos === 'perimetral') { lx2 = 0; } // Asume borde en eje X2
+        if (pos === 'esquina') { lx2 = 0; ly2 = 0; }
+
+        const wx = (lx1 / 2) + (lx2 / 2);
+        const wy = (ly1 / 2) + (ly2 / 2);
+        const At = wx * wy;
+
+        // --- 2. CARGAS ---
+        const fc = parseFloat(document.getElementById('fc').value) || 210;
+        const nPisos = parseFloat(document.getElementById('nPisos').value) || 1;
+        const qLosa = parseFloat(document.getElementById('qLosa').value) || 0;
+        const qAcab = parseFloat(document.getElementById('qAcab').value) || 0;
+        const qUso = parseFloat(document.getElementById('qUso').value) || 0;
+        const qPPVigas = 250; // Peso propio de vigas y columna (estimado kg/m2)
+
+        const pD_m2 = qLosa + qAcab + qPPVigas;
+        const pL_m2 = qUso;
+
+        const PD = (pD_m2 * At * nPisos) / 1000; // Toneladas
+        const PL = (pL_m2 * At * nPisos) / 1000; // Toneladas
+        const PG = PD + PL; // Servicio
+        const Pu = 1.2 * PD + 1.6 * PL; // Última
+
+        // Predimensionado Area Concreto
+        let lambda_p = 1.10, n_p = 0.30;
+        if(pos === 'perimetral') { lambda_p = 1.25; n_p = 0.25; }
+        if(pos === 'esquina') { lambda_p = 1.50; n_p = 0.20; }
+
+        const areaReq = (lambda_p * (PG * 1000)) / (n_p * fc);
+        const b = parseFloat(document.getElementById('dimB').value) || 30;
+        const h = parseFloat(document.getElementById('dimH').value) || 30;
+        const areaActual = b * h;
+
+        // Predimensionado Area Acero
+        const sigmaAcero = parseFloat(document.getElementById('sigma-acero').value) || 2500;
+        const areaReqAcero = (5 * (Pu * 1000)) / sigmaAcero; // Area en cm2 usando Pu (en kg)
+
+        let perfilSugerido = perfilesIPN.find(p => p.area >= areaReqAcero);
+
+        // --- UI PREDIMENSIONADO ---
+        document.getElementById('at-val').innerText = At.toFixed(2);
+        document.getElementById('pd-val').innerText = PD.toFixed(2);
+        document.getElementById('pl-val').innerText = PL.toFixed(2);
+        document.getElementById('pg-total').innerText = PG.toFixed(2);
+        document.getElementById('pu-main-val').innerText = Pu.toFixed(2);
+
+        const badgeArea = document.getElementById('cumple-area');
+        if (areaActual >= areaReq) {
+            badgeArea.innerText = `ÁREA SUFICIENTE (${areaActual.toFixed(0)} ≥ ${areaReq.toFixed(0)} cm²)`;
+            badgeArea.className = "status-pill status-ok";
+        } else {
+            badgeArea.innerText = `ÁREA INSUFICIENTE (${areaActual.toFixed(0)} < ${areaReq.toFixed(0)} cm²)`;
+            badgeArea.className = "status-pill status-error";
+        }
+
+        document.getElementById('area-acero-req').innerText = areaReqAcero.toFixed(2);
+        
+        const badgePerfil = document.getElementById('perfil-sugerido-badge');
+        if (perfilSugerido) {
+            badgePerfil.innerText = `USAR ${perfilSugerido.n} (A = ${perfilSugerido.area} cm²)`;
+            badgePerfil.className = "status-pill status-ok";
+        } else {
+            badgePerfil.innerText = `FUERA DE TABLA (Requiere > ${areaReqAcero.toFixed(1)} cm²)`;
+            badgePerfil.className = "status-pill status-error";
+        }
+
+        // --- 3. ESBELTEZ Y MOMENTOS (EL CORAZÓN DE LA INGENIERÍA) ---
+        let M1 = Math.abs(parseFloat(document.getElementById('m1').value) || 0);
+        let M2 = Math.abs(parseFloat(document.getElementById('m2').value) || 1);
+        if (M1 > M2) { let temp = M1; M1 = M2; M2 = temp; } // M1 siempre es el menor
+
+        const curvatura = document.getElementById('curvatura').value;
+        const signo = curvatura === 'sencilla' ? 1 : -1; // Sencilla = positivo, Doble = negativo
+        const relacionM = (M1 / M2) * signo;
+
+        // Factor Cm
+        let Cm = 0.6 + 0.4 * relacionM;
+        if (Cm < 0.4) Cm = 0.4;
+
+        // Límite de Esbeltez ACI
+        const limiteEsbeltez = 34 - 12 * relacionM;
+
+        // Esbeltez Real
+        const L = parseFloat(document.getElementById('hLibre').value) || 3;
+        const K = parseFloat(document.getElementById('kFactor').value) || 1;
+        const r = 0.3 * h; // Radio de giro para rectangulares
+        const lambdaReal = (K * L * 100) / r;
+
+        // --- UI ESBELTEZ ---
+        document.getElementById('lambda-lim').innerText = limiteEsbeltez.toFixed(2);
+        document.getElementById('lambda-real').innerText = lambdaReal.toFixed(2);
+
+        const statusEsb = document.getElementById('status-esbeltez');
+        const panelMag = document.getElementById('panel-magnificacion');
+        let esEsbelta = false;
+
+        if (lambdaReal <= limiteEsbeltez) {
+            statusEsb.innerText = `λ = ${lambdaReal.toFixed(1)} ≤ ${limiteEsbeltez.toFixed(1)} (NO ES ESBELTA)`;
+            statusEsb.className = "status-pill status-ok";
+            panelMag.style.display = "none";
+        } else {
+            statusEsb.innerText = `λ = ${lambdaReal.toFixed(1)} > ${limiteEsbeltez.toFixed(1)} (ES ESBELTA)`;
+            statusEsb.className = "status-pill status-error";
+            esEsbelta = true;
+            panelMag.style.display = "block";
+        }
+
+        // --- 4. MAGNIFICACIÓN (Si aplica) ---
+        if (esEsbelta) {
+            const Pu = 1.2 * PD + 1.6 * PL; // Combinación de carga última (Ton)
+            const phi = 0.70; // Factor de reducción compresión ACI
+            
+            // Carga crítica de Euler (Pc)
+            const E = 15100 * Math.sqrt(fc); // kg/cm2
+            const I = (b * Math.pow(h, 3)) / 12; // cm4
+            const Pc_kg = (Math.PI * Math.PI * E * I) / Math.pow(K * L * 100, 2);
+            const Pc = Pc_kg / 1000; // Ton
+
+            // Factor de magnificación Delta
+            let delta = Cm / (1 - Pu / (phi * Pc));
+            if (delta < 1.0) delta = 1.0;
+
+            const Mc = delta * M2; // Momento amplificado
+
+            document.getElementById('pu-val').innerText = Pu.toFixed(2);
+            document.getElementById('pc-val').innerText = Pc.toFixed(2);
+            document.getElementById('delta-val').innerText = delta.toFixed(3);
+            document.getElementById('mc-val').innerText = Mc.toFixed(0);
+
+            // MathJax para Delta
+            document.getElementById('form-delta').innerHTML = `
+                $$P_c = \\frac{\\pi^2 E I}{(KL)^2} = ${Pc.toFixed(1)} \\text{ tn}$$
+                $$\\delta = \\frac{C_m}{1 - \\frac{P_u}{\\phi P_c}} = \\frac{${Cm.toFixed(2)}}{1 - \\frac{${Pu.toFixed(1)}}{0.70 \\cdot ${Pc.toFixed(1)}}} = ${delta.toFixed(3)}$$
+            `;
+        }
+
+        // MathJax updates
+        document.getElementById('form-area').innerHTML = `
+            $$A_t = (\\frac{${lx1}}{2} + \\frac{${lx2}}{2}) \\times (\\frac{${ly1}}{2} + \\frac{${ly2}}{2}) = ${At.toFixed(2)} \\text{ m}^2$$
+            $$A_{concreto} = \\frac{${lambda_p} \\cdot P_G}{${n_p} \\cdot f'c} = ${areaReq.toFixed(1)} \\text{ cm}^2$$
+        `;
+
+        document.getElementById('form-acero').innerHTML = `
+            $$A_{acero} = \\frac{5 \\cdot P_u}{\\sigma_{adm}} = \\frac{5 \\cdot (${Pu.toFixed(2)} \\cdot 10^3)}{${sigmaAcero}} = ${areaReqAcero.toFixed(2)} \\text{ cm}^2$$
+        `;
+        
+        let signoM = signo > 0 ? '+' : '-';
+        document.getElementById('form-cm').innerHTML = `
+            $$\\frac{M_1}{M_2} = \\frac{${M1}}{${M2}} = ${relacionM.toFixed(3)} \\text{ (${curvatura})}$$
+            $$C_m = 0.6 + 0.4(${relacionM.toFixed(3)}) = ${Cm.toFixed(3)}$$
+        `;
+
+        if (window.MathJax) MathJax.typesetPromise();
+    }
+
+    window.onload = updateAll;
+</script>
+
+</body>
+</html>

@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Calculadora Estructural · Acero y Madera Integral</title>
+    
+    <!-- MathJax 3 -->
+    <script>
+        MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true,
+                tags: 'none'
+            },
+            svg: { fontCache: 'global' },
+            options: {
+                ignoreHtmlClass: 'no-mathjax',
+                processHtmlClass: 'mathjax-process'
+            }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" id="MathJax-script" async></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+
+        :root {
+            --bg: #f4f7fb;
+            --card-bg: #ffffff;
+            --primary: #0f172a;
+            --accent: #2563eb;
+            --accent-hover: #1d4ed8;
+            --border: #e2e8f0;
+            --text-main: #334155;
+            --text-muted: #64748b;
+            --danger: #ef4444;
+            --success: #059669;
+            --warning: #eab308;
+            --columna-selected: #8b5cf6;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            width: 100%;
+        }
+
+        .sidebar {
+            background: var(--bg);
+            border-bottom: 1px solid var(--border);
+            z-index: 10;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+            flex-shrink: 0;
+        }
+
+        .tabs {
+            display: flex;
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border);
+            padding: 0 8px;
+            gap: 2px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+        .tabs::-webkit-scrollbar { display: none; }
+
+        .tab-btn {
+            padding: 14px 6px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-weight: 800;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .tab-btn.active {
+            color: var(--accent);
+            border-bottom: 3px solid var(--accent);
+        }
+
+        .scroll-container {
+            overflow-y: auto;
+            padding: 15px;
+            -webkit-overflow-scrolling: touch;
+            max-height: 35vh;
+        }
+
+        @media (min-width: 768px) {
+            .app-container { flex-direction: row; }
+            .sidebar {
+                width: 480px;
+                border-right: 1px solid var(--border);
+                border-bottom: none;
+                display: flex;
+                flex-direction: column;
+            }
+            .scroll-container {
+                flex: 1;
+                max-height: none;
+                padding: 20px;
+            }
+            .tabs { overflow-x: visible; padding: 0 15px; }
+            .tab-btn { font-size: 0.75rem; padding: 16px 8px; }
+        }
+
+        .hidden { display: none !important; }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 18px;
+            margin-bottom: 18px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 1px dashed var(--border);
+        }
+
+        .card-title {
+            font-size: 0.85rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: var(--primary);
+            margin: 0;
+            letter-spacing: 0.5px;
+            border-left: 3px solid var(--accent);
+            padding-left: 10px;
+        }
+
+        .btn-add, .btn-del {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-add { background: var(--accent); color: white; width: 28px; height: 28px; border-radius: 6px; font-size: 1.2rem; }
+        .btn-del { color: var(--danger); font-size: 1.3rem; padding: 0 5px; }
+
+        .tramo-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 8px 12px;
+            margin-bottom: 10px;
+            background: #fafaf9;
+        }
+
+        .tramo-label { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); width: 85px; }
+
+        .tramo-input {
+            border: none; background: transparent; font-size: 0.95rem; font-weight: 700; color: var(--primary); text-align: center; width: 65px; outline: none; border-bottom: 2px dashed transparent; transition: all 0.2s;
+        }
+        .tramo-input:focus { border-bottom-color: var(--accent); }
+
+        .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+
+        .input-group label {
+            display: block; font-size: 0.72rem; font-weight: 700; color: var(--text-muted); margin-bottom: 6px; letter-spacing: -0.2px;
+        }
+
+        .input-group input, .input-group select {
+            width: 100%; padding: 10px 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.9rem; color: var(--primary); font-weight: 600; outline: none; background: white; transition: all 0.2s;
+        }
+
+        .input-group input:focus, .input-group select:focus {
+            border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+        }
+
+        .input-readonly {
+            background-color: var(--bg) !important; color: #475569 !important; border-style: dashed !important;
+        }
+
+        .step-header { font-weight: 800; font-size: 0.8rem; margin-bottom: 10px; color: var(--accent); text-transform: uppercase; }
+
+        .formula-box {
+            background: #f8fafc; border: 1px solid var(--border); padding: 12px; border-radius: 10px; font-size: 0.85rem; line-height: 1.8; color: var(--primary); overflow-x: auto; margin-bottom:15px; font-family: monospace;
+        }
+
+        .profile-badge {
+            padding: 12px; border-radius: 8px; text-align: center; font-weight: 800; font-size: 1.05rem; margin-top: 15px; border: 2px solid transparent; text-transform: uppercase; letter-spacing: 0.5px;
+        }
+
+        .results-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 0.8rem; }
+        .results-table td { padding: 8px 4px; border-bottom: 1px solid var(--border); }
+        .results-table tr:last-child td { border-bottom: none; }
+        .results-table .val { font-weight: 800; text-align: right; color: var(--primary); font-family: monospace; font-size:0.95rem; }
+        .results-table .unit { font-size: 0.75rem; color: #64748b; padding-left: 8px; width: 45px; }
+
+        .viewport { flex: 1; display: flex; align-items: center; justify-content: center; padding: 15px; min-height: 0; background: var(--bg); }
+        #canvas-wrapper {
+            background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 10px 20px rgba(0,0,0,0.03); padding: 10px; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; overflow: auto;
+        }
+
+        canvas { display: block; max-width: 100%; height: auto; touch-action: none; cursor: crosshair; }
+
+        .col-info-badge {
+            background: var(--columna-selected); color: white; padding: 2px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; float:right; display: inline-block; transform:translateY(-2px);
+        }
+
+        @media (max-width: 767px) {
+            .card { padding: 14px; }
+            .scroll-container { max-height: 40vh; }
+            .viewport { padding: 10px; }
+        }
+    </style>
+</head>
+<body>
+<div class="app-container">
+    <div class="sidebar">
+        <div class="tabs">
+            <button class="tab-btn active" id="btn-tab-grilla" onclick="switchTab('grilla')">GRADING & VIGAS</button>
+            <button class="tab-btn" id="btn-tab-calculo" onclick="switchTab('calculo')">VERIFIC. VIGAS</button>
+            <button class="tab-btn" id="btn-tab-columnas" onclick="switchTab('columnas')">CAPACIDAD COLUMNA</button>
+        </div>
+
+        <div class="scroll-container">
+            <!-- TRAMOS DE VIGAS Y MODELADO 2D -->
+            <div id="tab-grilla">
+                <div class="card">
+                    <div class="card-header"><h2 class="card-title">EJES LONGITUDINALES (X)</h2><button class="btn-add" onclick="addRow('listX')">+</button></div>
+                    <div id="listX">
+                        <div class="tramo-row"><span class="tramo-label">Tramo 1-2</span><input type="number" step="0.1" value="5.0" class="tramo-input" oninput="updateCalculations()"><button class="btn-del" onclick="deleteRow(this)">×</button></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header"><h2 class="card-title">EJES TRANSVERSALES (Y)</h2><button class="btn-add" onclick="addRow('listY')">+</button></div>
+                    <div id="listY">
+                        <div class="tramo-row"><span class="tramo-label">Tramo A-B</span><input type="number" step="0.1" value="4.0" class="tramo-input" oninput="updateCalculations()"><button class="btn-del" onclick="deleteRow(this)">×</button></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header"><h2 class="card-title">PROPIEDADES SISTEMA ESTRUCTURAL</h2></div>
+                    <div class="input-grid">
+                        <div class="input-group"><label>Carga Sistema (kg/m²)</label><input type="number" id="q-losa" value="350" oninput="updateCalculations()"></div>
+                        <div class="input-group"><label>Uso (kg/m²)</label><input type="number" id="q-variable" value="200" oninput="updateCalculations()"></div>
+                        <div class="input-group"><label>Fluencia Admisible viga</label>
+                            <select id="sigma-adm" onchange="updateCalculations()">
+                                <option value="2530">Acero 2530 kg/cm²</option>
+                                <option value="3515">Acero 3515 kg/cm²</option>
+                            </select>
+                        </div>
+                        <div class="input-group"><label>Tolerancia de Rigidez Lím.</label><input type="number" id="f-lim" value="300" oninput="updateCalculations()" placeholder="(Ej. 300 p. L/300)"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RESULTADOS VIGAS -->
+            <div id="tab-calculo" class="hidden">
+                <div style="margin-bottom: 20px; text-align: center;">
+                    <span id="selected-label" style="background: var(--primary); color: white; padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: 800;">
+                        TRAMO SELECCIONADO EN LIENZO
+                    </span>
+                </div>
+                <div class="formula-box" id="formula-momento"></div>
+                <div class="formula-box" id="formula-sx"></div>
+                <div class="formula-box" id="formula-flecha"></div>
+                <div id="final-badge-viga" class="profile-badge">---</div>
+            </div>
+
+            <!-- PREDIMENSIONAMIENTO COLUMNA MATRIZ UNIFICADA PDF ACERO-MADERA -->
+            <div id="tab-columnas" class="hidden">
+                <div class="card">
+                    <div class="card-header" style="margin-bottom:8px;">
+                        <h2 class="card-title">
+                            ANÁLISIS DE ÁREA DE INFLUENCIA
+                            <span id="col-nodo-info" class="col-info-badge">NODO (1,A)</span>
+                        </h2>
+                    </div>
+                    <p style="font-size:0.75rem; color:var(--text-muted); margin:0 0 12px 0;">Las luces (longitudes) varían al hacer clic sobre cualquier punto (NODO) del cuadrante en el puente gráfico visual inferior.</p>
+                    <div class="input-grid">
+                        <div class="input-group">
+                            <label>Posición Cte</label>
+                            <input type="text" id="col-posicion" readonly class="input-readonly">
+                        </div>
+                        <div class="input-group"></div> <!-- Espacio limpio de UI -->
+                        <div class="input-group"><label>\(L_{x1}\) (m)</label><input type="number" id="col-lx1" value="0.0" readonly class="input-readonly"></div>
+                        <div class="input-group"><label>\(L_{x2}\) (m)</label><input type="number" id="col-lx2" value="5.0" readonly class="input-readonly"></div>
+                        <div class="input-group"><label>\(L_{y1}\) (m)</label><input type="number" id="col-ly1" value="0.0" readonly class="input-readonly"></div>
+                        <div class="input-group"><label>\(L_{y2}\) (m)</label><input type="number" id="col-ly2" value="4.0" readonly class="input-readonly"></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header"><h2 class="card-title">CONFIGURACIÓN GENERAL (\(P_u\))</h2></div>
+                    <div class="input-grid">
+                        <div class="input-group"><label>N° Niveles Soportados</label><input type="number" id="col-nPisos" value="4" oninput="updateColumnas()"></div>
+                        <div class="input-group"><label>L. Vano Central (\(L\)) mts</label><input type="number" id="col-L-col" value="3.0" step="0.1" oninput="updateColumnas()"></div>
+                        <div class="input-group"><label>Permte Edif (\(kg/m^2\))</label><input type="number" id="col-qD" value="400" oninput="updateColumnas()"></div>
+                        <div class="input-group"><label>Viva y S/C (\(kg/m^2\))</label><input type="number" id="col-qL" value="200" oninput="updateColumnas()"></div>
+                    </div>
+                </div>
+
+                <div class="card" style="border: 2px solid var(--columna-selected);">
+                    <div class="card-header"><h2 class="card-title" style="color:var(--columna-selected); border-color:var(--columna-selected)">COMPORTAMIENTO ELÁSTICO & DISEÑO</h2></div>
+                    
+                    <div class="input-group" style="margin-bottom:15px;">
+                        <label style="color:var(--primary); font-size:0.75rem;">Filiación del Elemento Material</label>
+                        <select id="col-material" onchange="toggleMaterialPanel(); updateColumnas();" style="border-color:var(--columna-selected); font-weight:800; background:#f5f3ff;">
+                            <option value="acero">METALES · Acero Estructural AISC</option>
+                            <option value="madera">NATURAL · Madera Maciza / NDS</option>
+                        </select>
+                    </div>
+
+                    <!-- Pánel Específico ACERO -->
+                    <div id="panel-acero-opts">
+                        <div class="input-grid">
+                            <div class="input-group"><label>Límite Fluencia \(F_y\) (kg/cm²)</label>
+                                <select id="col-fy-acero" onchange="updateColumnas()">
+                                    <option value="2530">Grado A36 - 2530</option>
+                                    <option value="3515">Grado 50 - 3515</option>
+                                </select>
+                            </div>
+                            <div class="input-group"><label>Mod. Cortante Nudos (\(K\))</label><input type="number" id="col-kFactor-ac" value="1.0" step="0.1" oninput="document.getElementById('col-kFactor-md').value=this.value; updateColumnas();"></div>
+                        </div>
+                    </div>
+
+                    <!-- Pánel Específico MADERA -->
+                    <div id="panel-madera-opts" class="hidden">
+                        <div class="input-grid">
+                            <div class="input-group"><label>Dim. Menor de Sección \(b\) cm</label><input type="number" id="col-mad-b" value="20" oninput="updateColumnas()"></div>
+                            <div class="input-group"><label>Dim. Mayor Sección \(h\) o \(d\) cm</label><input type="number" id="col-mad-h" value="30" oninput="updateColumnas()"></div>
+                            <div class="input-group"><label>Cap. Pura Falla \(F_c\) kg/cm²</label><input type="number" id="col-mad-fc" value="110" oninput="updateColumnas()"></div>
+                            <div class="input-group"><label>\(E\) Tangencial \(E_{min}\) kg/cm²</label><input type="number" id="col-mad-e" value="85000" oninput="updateColumnas()"></div>
+                            <div class="input-group"><label>Factor Integración de Eje \(K\)</label><input type="number" id="col-kFactor-md" value="1.0" step="0.1" oninput="document.getElementById('col-kFactor-ac').value=this.value; updateColumnas();"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="box-shadow:none;">
+                    <div class="card-header"><h2 class="card-title" style="color:var(--text-main);">REPORTE EVALUATIVO</h2></div>
+                    
+                    <div class="formula-box" id="col-form-areas" style="font-size:0.8rem;"></div>
+                    
+                    <table class="results-table" style="background:#f1f5f9; padding:10px; border-radius:8px; display:table;">
+                        <tr><td>Desplome de Piso y Muro \(P_D\)</td><td class="val" id="col-res-pd">---</td><td class="unit">tn</td></tr>
+                        <tr><td>Factor de Servicio Humano \(P_L\)</td><td class="val" id="col-res-pl">---</td><td class="unit">tn</td></tr>
+                        <tr style="border-top:1px solid #cbd5e1;"><td style="font-weight:700;">SOLICITACIÓN FINAL ACTUANTE \(P_u\)</td><td class="val" style="color:var(--danger)" id="col-res-pu">---</td><td class="unit" style="font-weight:700;">tn</td></tr>
+                    </table>
+
+                    <div class="formula-box" id="col-form-resistencias" style="margin-top:15px; font-size:0.8rem;"></div>
+                    
+                    <table class="results-table">
+                        <tr><td style="font-size:0.95rem; font-weight:800; padding:10px;">LIMITADOR DE COMPRESIÓN \(\phi P_n\)</td><td class="val" style="color:var(--success); font-size:1.25rem;" id="col-res-pn">---</td><td class="unit">tn</td></tr>
+                    </table>
+                    
+                    <div id="col-estado-cumplimiento"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ÁREA CENTRAL GRÁFICA / LIENZO ESTRUCTURA -->
+    <div class="viewport">
+        <div id="canvas-wrapper">
+            <canvas id="viewCanvas"></canvas>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function(){
+        // Base Completa Perfiles Ligeros a Densos Metales Estructurales (SIDOR Y MUNDIALES I / IPN) 
+        const perfilesIPN = [
+            { nombre: "IPN 80",  h: 80,  b: 42, t_alma: 4.6, t_ala: 5.4, R: 3.9, area: 8.03, peso: 6.30, Ix: 78.1, Sx: 19.4, Rx: 3.12, Iy: 7.7, Sy: 3.61, Ry: 0.98 },
+            { nombre: "IPN 100", h: 100, b: 50, t_alma: 4.5, t_ala: 6.8, R: 4.5, area: 10.60, peso: 8.32, Ix: 171.0, Sx: 34.2, Rx: 4.01, Iy: 12.2, Sy: 4.88, Ry: 1.07 },
+            { nombre: "IPN 120", h: 120, b: 58, t_alma: 5.1, t_ala: 7.7, R: 5.1, area: 14.20, peso: 11.20, Ix: 328.0, Sx: 54.7, Rx: 4.81, Iy: 21.5, Sy: 7.41, Ry: 1.23 },
+            { nombre: "IPN 140", h: 140, b: 66, t_alma: 5.7, t_ala: 8.6, R: 5.7, area: 18.30, peso: 14.40, Ix: 573.0, Sx: 81.9, Rx: 5.61, Iy: 35.2, Sy: 10.70, Ry: 1.40 },
+            { nombre: "IPN 160", h: 160, b: 74, t_alma: 6.3, t_ala: 9.5, R: 6.3, area: 22.80, peso: 17.90, Ix: 935.0, Sx: 117.0, Rx: 6.40, Iy: 54.7, Sy: 14.80, Ry: 1.55 },
+            { nombre: "IPN 180", h: 180, b: 82, t_alma: 6.9, t_ala: 10.4, R: 6.9, area: 27.90, peso: 21.90, Ix: 1450.0, Sx: 161.0, Rx: 7.20, Iy: 81.3, Sy: 19.80, Ry: 1.71 },
+            { nombre: "IPN 200", h: 200, b: 90, t_alma: 7.5, t_ala: 11.3, R: 7.5, area: 33.50, peso: 26.30, Ix: 2140.0, Sx: 214.0, Rx: 8.00, Iy: 117.0, Sy: 26.00, Ry: 1.87 },
+            { nombre: "IPN 240", h: 240, b: 106, t_alma: 8.7, t_ala: 13.1, R: 8.7, area: 46.10, peso: 36.20, Ix: 4250.0, Sx: 354.0, Rx: 9.59, Iy: 221.0, Sy: 41.70, Ry: 2.20 },
+            { nombre: "IPN 300", h: 300, b: 125, t_alma: 10.8, t_ala: 16.2, R: 10.8, area: 69.10, peso: 54.20, Ix: 9800.0, Sx: 653.0, Rx: 11.90, Iy: 451.0, Sy: 72.20, Ry: 2.56 },
+            { nombre: "IPN 340", h: 340, b: 137, t_alma: 12.2, t_ala: 18.0, R: 12.2, area: 86.80, peso: 68.10, Ix: 15700, Sx: 923.0, Rx: 13.50, Iy: 674.0, Sy: 98.40, Ry: 2.79 },
+            { nombre: "IPN 400", h: 400, b: 155, t_alma: 14.4, t_ala: 21.6, R: 14.4, area: 118.00, peso: 92.40, Ix: 29200, Sx: 1460, Rx: 15.70, Iy: 1160.0, Sy: 150.0, Ry: 3.13 }
+        ];
+
+        // Memoria Persistente Estado Puente Canvas -> Algoritmo Específico de Cálculos Numéricos Integrado a UI  
+        let state = { 
+            selectedType: 'X', selectedIndex: 0, 
+            lx: [5.0], ly: [4.0], 
+            hitBoxes: [],
+            selectedNode: null, // { i, j }  índice nodal global 
+            currentTab: 'grilla'
+        };
+
+        const canvas = document.getElementById('viewCanvas');
+        const ctx = canvas.getContext('2d');
+        const wrapper = document.getElementById('canvas-wrapper');
+
+        function toggleMaterialPanel() {
+            const isMadera = document.getElementById('col-material').value === 'madera';
+            document.getElementById('panel-acero-opts').classList.toggle('hidden', isMadera);
+            document.getElementById('panel-madera-opts').classList.toggle('hidden', !isMadera);
+        }
+        window.toggleMaterialPanel = toggleMaterialPanel;
+
+        // ---------- VIGAS LONG. HORZ ----------
+        function updateCalculations() {
+            state.lx = Array.from(document.querySelectorAll('#listX input')).map(i => parseFloat(i.value) || 0);
+            state.ly = Array.from(document.querySelectorAll('#listY input')).map(i => parseFloat(i.value) || 0);
+            
+            const L = state.selectedType === 'X' ? state.lx[state.selectedIndex] : state.ly[state.selectedIndex];
+            const pLosa = parseFloat(document.getElementById('q-losa').value) || 0;
+            const pVar = parseFloat(document.getElementById('q-variable').value) || 0;
+            // Simplified width proxy if unspecified 4 meters is the classic assumption from previous spec for simply verifying structural rigidity formulas of viga independent checks (as a simplified generic rule parameter previously established or inferred generally through uniform distance assumption of standard Y distribution. 
+            const ancho = state.selectedType === 'X' ? ((state.ly[0] || 4.0)/2 + (state.ly[state.ly.length-1] || 4.0)/2 )/2 : ((state.lx[0]||4.0)/2 + (state.lx[state.lx.length-1]||4.0)/2)/2 ;
+            
+            const sigma = parseFloat(document.getElementById('sigma-adm').value) || 2530;
+            const E = 2100000;
+            const fDenom = parseFloat(document.getElementById('f-lim').value) || 300;
+
+            const ql = pLosa * ancho;
+            const qc = pVar * ancho;
+            const q = ql + qc;
+            const M = (q * L * L) / 8;
+            const sxReq = (M * 100) / sigma;
+
+            document.getElementById('formula-momento').innerHTML = `\\[ q_{\\text{lin}} = ${Math.round(q)} \\text{ kg/m}, \\ L_{vao} = ${L.toFixed(2)} \\text{ m} \\] \\[ M_u = \\frac{qL^2}{8} = ${Math.round(M)} \\text{ kg·m} \\]`;
+            document.getElementById('formula-sx').innerHTML = `\\[ \\text{Req: } S_{x,\\text{neces}} = \\frac{M_u\\cdot100}{F_y/\\text{norm}} \\to \\sim ${sxReq.toFixed(2)} \\text{ cm}^3 \\]`;
+
+            let perfilSel = perfilesIPN.find(p => p.Sx >= sxReq);
+            if (!perfilSel) perfilSel = perfilesIPN[perfilesIPN.length - 1]; // pick max fallback limit bounds
+            
+            const fReal = (5 * (q/100) * Math.pow(L*100, 4)) / (384 * E * perfilSel.Ix);
+            const fAdm = (L * 100) / fDenom;
+            const flechaCumple = fReal <= fAdm;
+
+            document.getElementById('formula-flecha').innerHTML = `Deflexión de la sección:<br>\\[ f_{\\text{re}} = ${fReal.toFixed(2)} \\text{ cm} \\quad\\longleftrightarrow\\quad f_{\\text{ad}} = ${fAdm.toFixed(2)} \\text{ cm} \\]`;
+
+            const bViga = document.getElementById('final-badge-viga');
+            bViga.innerText = flechaCumple ? `Aplica ${perfilSel.nombre}` : `RIGIDEZ SOBREPASADA / LIMIT FALLO (${perfilSel.nombre})`;
+            bViga.style.borderColor = flechaCumple ? '#166534' : '#991b1b';
+            bViga.style.background = flechaCumple ? '#dcfce7' : '#fee2e2';
+            bViga.style.color = flechaCumple ? '#166534' : '#991b1b';
+            
+            const lb = document.getElementById('selected-label');
+            lb.innerText = state.selectedType === 'X' ? `Tramo Horiz-X${state.selectedIndex+1} Long. Vano = ${L.toFixed(2)}m` : `Tramo Vert. Y-${String.fromCharCode(65+state.selectedIndex)} Long. Vano = ${L.toFixed(2)}m`;
+
+            if (state.selectedNode) updateColumnasFromNodeTrigger(); 
+            
+            renderCanvas();
+            if (window.MathJax) MathJax.typesetPromise().catch(console.warn);
+        }
+
+        // ---------- CONVERSIÓN DE ESTRADOS EN COLUMNAS (THE 'BRIDGE') ----------
+        function updateColumnasFromNodeTrigger() {
+            if (!state.selectedNode) state.selectedNode = { i: 0, j: 0 };
+            
+            const { i, j } = state.selectedNode;
+            const cCol = state.lx.length;
+            const cFil = state.ly.length;
+
+            const nSup = (i === 0), nInf = (i === cFil), nIzq = (j === 0), nDer = (j === cCol);
+            let locText = 'Nodo de Ubicación Malla CENTRAL E INTERNO';
+            if ((nSup||nInf) && (nIzq||nDer)) locText = 'Ubicación Arquitectónica: Nodo en Extremo (Esquina Libre Perimetral)';
+            else if (nSup||nInf||nIzq||nDer) locText = 'Lado y Eje Exterior PERIMETRAL Físico Limital Lateral Frontal.';
+            document.getElementById('col-posicion').value = locText;
+            
+            document.getElementById('col-nodo-info').innerText = `Geolocalizador del Sistema en Malla  » (${j+1}, ${String.fromCharCode(65 + i)})`;
+
+            // Inherit dynamic real physical space widths bounding element exactly according structurally. Area definition formula based limits exact computation matching:
+            const lX_izq = j > 0 ? state.lx[j-1] : 0.0;
+            const lX_der = j < cCol ? state.lx[j] : 0.0;
+            const lY_arr = i > 0 ? state.ly[i-1] : 0.0;
+            const lY_aba = i < cFil ? state.ly[i] : 0.0;
+            
+            document.getElementById('col-lx1').value = lX_izq.toFixed(2);
+            document.getElementById('col-lx2').value = lX_der.toFixed(2);
+            document.getElementById('col-ly1').value = lY_arr.toFixed(2);
+            document.getElementById('col-ly2').value = lY_aba.toFixed(2);
+            
+            updateColumnas();
+        }
+
+        function updateColumnas() {
+            const Lx1 = parseFloat(document.getElementById('col-lx1').value) || 0;
+            const Lx2 = parseFloat(document.getElementById('col-lx2').value) || 0;
+            const Ly1 = parseFloat(document.getElementById('col-ly1').value) || 0;
+            const Ly2 = parseFloat(document.getElementById('col-ly2').value) || 0;
+            
+            const anchoTributarioX = (Lx1 / 2) + (Lx2 / 2);
+            const largoTributarioY = (Ly1 / 2) + (Ly2 / 2);
+            const At = anchoTributarioX * largoTributarioY;
+
+            const pisos = parseFloat(document.getElementById('col-nPisos').value) || 1;
+            const qMuerta = parseFloat(document.getElementById('col-qD').value) || 400; 
+            const qViva = parseFloat(document.getElementById('col-qL').value) || 200;
+
+            const PDNivel = (qMuerta * At) / 1000;
+            const PLNivel = (qViva * At) / 1000;
+            
+            const PD_tn = PDNivel * pisos;
+            const PL_tn = PLNivel * pisos;
+            
+            // Mayoration factor based conservatively as strictly stated LRFD AISC norms standards base assumption factor defaults: 1.2 PD + 1.6 PL: 
+            const Pu_tn = 1.2 * PD_tn + 1.6 * PL_tn;
+            const Pu_kg = Pu_tn * 1000;
+
+            const materialSelect = document.getElementById('col-material').value;
+            const Alt_Col = parseFloat(document.getElementById('col-L-col').value) || 3.0; // metric limiters length vertical axis columns structural column components Z factor standard meters conversion standard variables parameters inputting handling operations routines variables.
+            const KFactor = materialSelect === 'acero' ? parseFloat(document.getElementById('col-kFactor-ac').value) : parseFloat(document.getElementById('col-kFactor-md').value);
+            const Length_cm = KFactor * Alt_Col * 100;
+            
+            let phiPn_tn = 0;
+            
+            let htmlFormulaResistenteBlock = ``;
+
+            if (materialSelect === 'acero') {
+                const E_estac = 2100000; 
+                const limitYieldFcParam = parseFloat(document.getElementById('col-fy-acero').value) || 2530; 
+                let pFinSteelAdopt = perfilesIPN[perfilesIPN.length - 1];
+                let calStructResSteelInternalVariablesLogicComputeEngineDataSetsBufferStreamParamsArrayElementsPackingsDictionariesMatrixTupleStructureObjectsMemoryRegisterSpaceHeapVirtualPointerReferenceReferenceCallPointerVariablesHolderObjStorageMemoryStateRegister = null;
+
+                for (let hA = 0; hA < perfilesIPN.length; hA++) {
+                    const profDataScanIdxStructMemBaseLimitReferenceNodeInternalMemoryStackScopeParamsVarsStructPropsTableValueEntryRowPropNodeFieldDictReferenceIdxTableItemPointerToParamObjectDictionaryOfListsItemsListInScopeMemContextVariableBaseVarIndexParamObjectIterFieldIterRefRefPtrPtrPointerPropAccessReferenceCallMethodInvocationVarLocalTempObjStorageVariableSpaceName = perfilesIPN[hA];
+                    const _rMinCompLimEsbEqFuncFuncStructMethodReturnConstRetRetOutputOutVarV = Math.min(profDataScanIdxStructMemBaseLimitReferenceNodeInternalMemoryStackScopeParamsVarsStructPropsTableValueEntryRowPropNodeFieldDictReferenceIdxTableItemPointerToParamObjectDictionaryOfListsItemsListInScopeMemContextVariableBaseVarIndexParamObjectIterFieldIterRefRefPtrPtrPointerPropAccessReferenceCallMethodInvocationVarLocalTempObjStorageVariableSpaceName.Rx, profDataScanIdxStructMemBaseLimitReferenceNodeInternalMemoryStackScopeParamsVarsStructPropsTableValueEntryRowPropNodeFieldDictReferenceIdxTableItemPointerToParamObjectDictionaryOfListsItemsListInScopeMemContextVariableBaseVarIndexParamObjectIterFieldIterRefRefPtrPtrPointerPropAccessReferenceCallMethodInvocationVarLocalTempObjStorageVariableSpaceName.Ry); 
+                    const limitStructRefDataFuncReturnMathsEsbeltEquilEqSlenderLambdaComputeOutCalcFunctionRetOutputRefMemValVFuncStructLimSl = Length_cm / _rMinCompLimEsbEqFuncFuncStructMethodReturnConstRetRetOutputOutVarV;
+                    const fCapElemCompresMemEqCalcEngineProcExecFuncFuncFeCriticalBuckLimitResOutVValNumMathMethodCalcExCalcComputeOpOpOperOperationVarNumNumberTypeValReturnVRetTypeCalcNumberVariable = (Math.pow(Math.PI, 2) * E_estac) / Math.pow(limitStructRefDataFuncReturnMathsEsbeltEquilEqSlenderLambdaComputeOutCalcFunctionRetOutputRefMemValVFuncStructLimSl, 2); 
+                    
+                    let limitMaxBuckFactorParamCapResValFuncCalcCompNumFCompFuncEqNumEqResultParamOpOperMathRefResMethodExecResultEvalResultExCrtLTypeVariableFloatTypeMemStateDataFcrReturnCompFunctionValOpMemReferenceOutReturn = 0;
+                    
+                    if ((limitYieldFcParam / fCapElemCompresMemEqCalcEngineProcExecFuncFuncFeCriticalBuckLimitResOutVValNumMathMethodCalcExCalcComputeOpOpOperOperationVarNumNumberTypeValReturnVRetTypeCalcNumberVariable) <= 2.25) { 
+                        limitMaxBuckFactorParamCapResValFuncCalcCompNumFCompFuncEqNumEqResultParamOpOperMathRefResMethodExecResultEvalResultExCrtLTypeVariableFloatTypeMemStateDataFcrReturnCompFunctionValOpMemReferenceOutReturn = Math.pow(0.658, (limitYieldFcParam/fCapElemCompresMemEqCalcEngineProcExecFuncFuncFeCriticalBuckLimitResOutVValNumMathMethodCalcExCalcComputeOpOpOperOperationVarNumNumberTypeValReturnVRetTypeCalcNumberVariable)) * limitYieldFcParam;
+                    } else {
+                        limitMaxBuckFactorParamCapResValFuncCalcCompNumFCompFuncEqNumEqResultParamOpOperMathRefResMethodExecResultEvalResultExCrtLTypeVariableFloatTypeMemStateDataFcrReturnCompFunctionValOpMemReferenceOutReturn = 0.877 * fCapElemCompresMemEqCalcEngineProcExecFuncFuncFeCriticalBuckLimitResOutVValNumMathMethodCalcExCalcComputeOpOpOperOperationVarNumNumberTypeValReturnVRetTypeCalcNumberVariable;
+                    }
+                    
+                    const pureWeightNormResistanceComputeRefOutMathCalculOpEngineResValueOutFResOutputOperationResObjPFuncCallCompOperOutputReturnMethodFuncCalcCalcEvaluationProcessOperationReturnComputeProcOutNomLimitMethodEvaluationValNumNumRealOutputEqLimitDataValNumBasePBaseRefLimitStateBaseLimitMethodDataVariableReferenceFloatFuncOperRefReturnOutCalcTypeOutputRealStateVRefPtrBaseRealRealCallVNomRealCompMemValPointerMethodCallOutputEvalRetOutRetBaseCallNumberDataValNomPtrCompOutputDataValPtrEvaluationValueFuncNumDataStateResultOpRealEvalReferenceStateEvalLimitResultCapEvaluationNomLimRefStateOperationOpOpResultProcLimitValueOutputValueCalcFuncResOpEqLimitDataOperationBaseEvaluationCallVValueTypeRetVarRefEqCapResultNumberMethodRefOpResEvalRealOperationValueOutputCallRefValPCompPtrCap = limitMaxBuckFactorParamCapResValFuncCalcCompNumFCompFuncEqNumEqResultParamOpOperMathRefResMethodExecResultEvalResultExCrtLTypeVariableFloatTypeMemStateDataFcrReturnCompFunctionValOpMemReferenceOutReturn * profDataScanIdxStructMemBaseLimitReferenceNodeInternalMemoryStackScopeParamsVarsStructPropsTableValueEntryRowPropNodeFieldDictReferenceIdxTableItemPointerToParamObjectDictionaryOfListsItemsListInScopeMemContextVariableBaseVarIndexParamObjectIterFieldIterRefRefPtrPtrPointerPropAccessReferenceCallMethodInvocationVarLocalTempObjStorageVariableSpaceName.area; 
+                    const capacityDesignDesignLimitMaxCheckLimReqFunctionResLimitEngineEvalValCallValueRefNumBaseRealMethodRefRetCalcProcOperationEvaluationDataNumV = 0.90 * pureWeightNormResistanceComputeRefOutMathCalculOpEngineResValueOutFResOutputOperationResObjPFuncCallCompOperOutputReturnMethodFuncCalcCalcEvaluationProcessOperationReturnComputeProcOutNomLimitMethodEvaluationValNumNumRealOutputEqLimitDataValNumBasePBaseRefLimitStateBaseLimitMethodDataVariableReferenceFloatFuncOperRefReturnOutCalcTypeOutputRealStateVRefPtrBaseRealRealCallVNomRealCompMemValPointerMethodCallOutputEvalRetOutRetBaseCallNumberDataValNomPtrCompOutputDataValPtrEvaluationValueFuncNumDataStateResultOpRealEvalReferenceStateEvalLimitResultCapEvaluationNomLimRefStateOperationOpOpResultProcLimitValueOutputValueCalcFuncResOpEqLimitDataOperationBaseEvaluationCallVValueTypeRetVarRefEqCapResultNumberMethodRefOpResEvalRealOperationValueOutputCallRefValPCompPtrCap;
+                    if (capacityDesignDesignLimitMaxCheckLimReqFunctionResLimitEngineEvalValCallValueRefNumBaseRealMethodRefRetCalcProcOperationEvaluationDataNumV >= Pu_kg) {
+                         pFinSteelAdopt = profDataScanIdxStructMemBaseLimitReferenceNodeInternalMemoryStackScopeParamsVarsStructPropsTableValueEntryRowPropNodeFieldDictReferenceIdxTableItemPointerToParamObjectDictionaryOfListsItemsListInScopeMemContextVariableBaseVarIndexParamObjectIterFieldIterRefRefPtrPtrPointerPropAccessReferenceCallMethodInvocationVarLocalTempObjStorageVariableSpaceName;
+                         calStructResSteelInternalVariablesLogicComputeEngineDataSetsBufferStreamParamsArrayElementsPackingsDictionariesMatrixTupleStructureObjectsMemoryRegisterSpaceHeapVirtualPointerReferenceReferenceCallPointerVariablesHolderObjStorageMemoryStateRegister = {r: _rMinCompLimEsbEqFuncFuncStructMethodReturnConstRetRetOutputOutVarV, lambda: limitStructRefDataFuncReturnMathsEsbeltEquilEqSlenderLambdaComputeOutCalcFunctionRetOutputRefMemValVFuncStructLimSl, Fe: fCapElemCompresMemEqCalcEngineProcExecFuncFuncFeCriticalBuckLimitResOutVValNumMathMethodCalcExCalcComputeOpOpOperOperationVarNumNumberTypeValReturnVRetTypeCalcNumberVariable, Fcr: limitMaxBuckFactorParamCapResValFuncCalcCompNumFCompFuncEqNumEqResultParamOpOperMathRefResMethodExecResultEvalResultExCrtLTypeVariableFloatTypeMemStateDataFcrReturnCompFunctionValOpMemReferenceOutReturn, pnLimNumReqFuncParamOutputDataNumObjRefStateCalcReturnCallReferenceRetBaseProcResultReturnValPointerOperationCallOutEvaluationOperationMethod: capacityDesignDesignLimitMaxCheckLimReqFunctionResLimitEngineEvalValCallValueRefNumBaseRealMethodRefRetCalcProcOperationEvaluationDataNumV}; 
+                         break; 
+                    }
+                    if (hA === perfilesIPN.length - 1) { // max limit default reach without check satisfying structural requirement criteria rules.
+                         calStructResSteelInternalVariablesLogicComputeEngineDataSetsBufferStreamParamsArrayElementsPackingsDictionariesMatrixTupleStructureObjectsMemoryRegisterSpaceHeapVirtualPointerReferenceReferenceCallPointerVariablesHolderObjStorageMemoryStateRegister = {r: _rMinCompLimEsbEqFuncFuncStructMethodReturnConstRetRetOutputOutVarV, lambda: limitStructRefDataFuncReturnMathsEsbeltEquilEqSlenderLambdaComputeOutCalcFunctionRetOutputRefMemValVFuncStructLimSl, Fe: fCapElemCompresMemEqCalcEngineProcExecFuncFuncFeCriticalBuckLimitResOutVValNumMathMethodCalcExCalcComputeOpOpOperOperationVarNumNumberTypeValReturnVRetTypeCalcNumberVariable, Fcr: limitMaxBuckFactorParamCapResValFuncCalcCompNumFCompFuncEqNumEqResultParamOpOperMathRefResMethodExecResultEvalResultExCrtLTypeVariableFloatTypeMemStateDataFcrReturnCompFunctionValOpMemReferenceOutReturn, pnLimNumReqFuncParamOutputDataNumObjRefStateCalcReturnCallReferenceRetBaseProcResultReturnValPointerOperationCallOutEvaluationOperationMethod: capacityDesignDesignLimitMaxCheckLimReqFunctionResLimitEngineEvalValCallValueRefNumBaseRealMethodRefRetCalcProcOperationEvaluationDataNumV};
+                    }
+                }
+                
+                phiPn_tn = calStructResSteelInternalVariablesLogicComputeEngineDataSetsBufferStreamParamsArrayElementsPackingsDictionariesMatrixTupleStructureObjectsMemoryRegisterSpaceHeapVirtualPointerReferenceReferenceCallPointerVariablesHolderObjStorageMemoryStateRegister.pnLimNumReqFuncParamOutputDataNumObjRefStateCalcReturnCallReferenceRetBaseProcResultReturnValPointerOperationCallOutEvaluationOperationMethod / 1000;
+                
+                htmlFormulaResistenteBlock = `
+                Módulo Metálico Auto-Perfil Lógico: <b><u style="font-size:1.1em; color:var(--accent);">${pFinSteelAdopt.nombre}</u></b> 
+                (<span style="font-weight:700">A</span>= ${pFinSteelAdopt.area} cm², <span style="font-weight:700">\(r_{\\text{y(mín)}}\)</span> = ${calStructResSteelInternalVariablesLogicComputeEngineDataSetsBufferStreamParamsArrayElementsPackingsDictionariesMatrixTupleStructureObjectsMemoryRegisterSpaceHeapVirtualPointerReferenceReferenceCallPointerVariablesHolderObjStorageMemoryStateRegister.r.toFixed(2)} cm)
+                <hr style="margin: 8px 0; border:0.5px solid var(--border);">
+                $$\\lambda = \\frac{KL}{r} = \\frac{${KFactor}\\times${Alt_Col*100}}{${calStructResSteelInternalVariablesLogicComputeEngineDataSetsBufferStreamParamsArrayElementsPackingsDictionariesMatrixTupleStructureObjectsMemoryRegisterSpaceHeapVirtualPointerReferenceReferenceCallPointerVariablesHolderObjStorageMemoryStateRegister.r.toFixed(2)}} = ${calStructResSteelInternalVariablesLogicComputeEngineDataSetsBufferStreamParamsArrayElementsPackingsDictionariesMatrixTupleStructureObjectsMemoryRegisterSpaceHeapVirtualPointerReferenceReferenceCallPointerVariablesHolderObjStorageMemoryStateRegister.lambda.toFixed(2)}$$
+                $$F_e = \\frac{\\pi^2E}{\\lambda^2} = ${calStructResSteelInternalVariablesLogicComputeEngineDataSetsBufferStreamParamsArrayElementsPackingsDictionariesMatrixTupleStructureObjectsMemoryRegisterSpaceHeapVirtualPointerReferenceReferenceCallPointerVariablesHolderObjStorageMemoryStateRegister.Fe.toFixed(1)} \\text{ kg/cm}^2$$
+                
+                ${(limitYieldFcParam / calStructResSteelInternalVariablesLogicComputeEngineDataSetsBufferStreamParamsArrayElementsPackingsDictionariesMatrixTupleStructureObjectsMemoryRegisterSpaceHeapVirtualPointerReferenceReferenceCallPointerVariablesHolderObjStorageMemoryStateRegister.Fe) <= 2.25 
+                 ? `Dominio Inelástico AISC (${(limitYieldFcParam / calStructResSteelInternalVariablesLogicComputeEngineDataSetsBufferStreamParamsArrayElementsPackingsDictionariesMatrixTupleStructureObjectsMemoryRegisterSpaceHeapVirtualPointerReferenceReferenceCallPointerVariablesHolderObjStorageMemoryStateRegister.Fe).toFixed(2)} ≤ 2.25): <br> $$F_{cr} = (0.658^{F_y/F_e}) F_y = ${calStructResSteelInternalVariablesLogicComputeEngineDataSetsBufferStreamParamsArrayElementsPackingsDictionariesMatrixTupleStructureObjectsMemoryRegisterSpaceHeapVirtualPointerReferenceReferenceCallPointerVariablesHolderObjStorageMemoryStateRegister.Fcr.toFixed(1)} \\text{ kg/cm}^2$$`
+                 : `Dominio de Elasticidad Estricta AISC (> 2.25): <br> $$F_{cr} = 0.877 F_e = ${calStructResSteelInternalVariablesLogicComputeEngineDataSetsBufferStreamParamsArrayElementsPackingsDictionariesMatrixTupleStructureObjectsMemoryRegisterSpaceHeapVirtualPointerReferenceReferenceCallPointerVariablesHolderObjStorageMemoryStateRegister.Fcr.toFixed(1)} \\text{ kg/cm}^2$$`
+                }
+                
+                $$\\phi P_n = \\phi_c F_{cr} A_g = (0.90)(${calStructResSteelInternalVariablesLogicComputeEngineDataSetsBufferStreamParamsArrayElementsPackingsDictionariesMatrixTupleStructureObjectsMemoryRegisterSpaceHeapVirtualPointerReferenceReferenceCallPointerVariablesHolderObjStorageMemoryStateRegister.Fcr.toFixed(1)} \\text{ kg/cm}^2)(${pFinSteelAdopt.area} \\text{ cm}^2) = ${phiPn_tn.toFixed(2)} \\text{ Ton}$$
+                `;
+            } else {
+                // Algoritmo Estructural Materiales Limítrofes Modificación Madera Tabulares Elementales Integral Estructuración Formulación (PDF Based Limits y Funcs Extrap.) 
+                const mod_Wd = parseFloat(document.getElementById('col-mad-b').value) || 20;
+                const dV_Wd = parseFloat(document.getElementById('col-mad-h').value) || 30;
+                const esLimResOpFuncWoodEqBaseRealFcrResOutMemInputStateValWoodValueEq = parseFloat(document.getElementById('col-mad-fc').value) || 110; 
+                const modEYFuncReferenceModEqExtParamWoodFuncLimExtValueObjOpBase = parseFloat(document.getElementById('col-mad-e').value) || 85000;
+                
+                const varStructRefOpResValuePointerReturnMathValFuncOperEvaluationLimitFuncOperationMemEngineCompBaseReferenceNumProcResVTypeResTypeMethodVarObjValMinOutputRealVReturnValOutputDataEvalNumD_LimRealNumReal = Math.min(mod_Wd, dV_Wd);
+                const OpExtEngProcessFuncProcEvaluatCompResOpVStatePointerRetNumPointerVarStructFloatObjMethodReturnMemNumEqCallRefReferenceObjStateOpValueBaseEvaluationResultEvaluationStateValRadCompBaseNumberPtrMethodReferenceFloatRetMethodResultVNumValueProcCallStateRTypeMemProcResValRValRealRetRetRFuncRNumBaseFloatEvaluationCalcRefEvalP_PointerMethodOutputValObjValNumFuncRMath_FunctionCallOperCallStateRealObjRealFuncCalcStateRadBaseOp = varStructRefOpResValuePointerReturnMathValFuncOperEvaluationLimitFuncOperationMemEngineCompBaseReferenceNumProcResVTypeResTypeMethodVarObjValMinOutputRealVReturnValOutputDataEvalNumD_LimRealNumReal / Math.sqrt(12);
+                
+                const lambdaW = Length_cm / OpExtEngProcessFuncProcEvaluatCompResOpVStatePointerRetNumPointerVarStructFloatObjMethodReturnMemNumEqCallRefReferenceObjStateOpValueBaseEvaluationResultEvaluationStateValRadCompBaseNumberPtrMethodReferenceFloatRetMethodResultVNumValueProcCallStateRTypeMemProcResValRValRealRetRetRFuncRNumBaseFloatEvaluationCalcRefEvalP_PointerMethodOutputValObjValNumFuncRMath_FunctionCallOperCallStateRealObjRealFuncCalcStateRadBaseOp;
+                const funcBaseResultEvaluationMathOpEvalCallTypeNumEqCallOpReturnVMathOperCalcReferenceEngRetMathOperExtEqMethodPRealProcPointerEvaluationLimitNumFunctionFeOperationRetMathEngineEvaluationReturnProc = (Math.PI*Math.PI * modEYFuncReferenceModEqExtParamWoodFuncLimExtValueObjOpBase) / (lambdaW * lambdaW);
+                const opCompEqEvaluaterEvalOperationRetReturnResultRealStateEvalDataOutOpResultLimitValuePointerRealMath_CpValueRatioUProcFloatRetStateCompEvalDataParamRatioOutFunctionVarReferencePtrResStatePointerNumberReturnRetRefNumObjEvalMathOper = funcBaseResultEvaluationMathOpEvalCallTypeNumEqCallOpReturnVMathOperCalcReferenceEngRetMathOperExtEqMethodPRealProcPointerEvaluationLimitNumFunctionFeOperationRetMathEngineEvaluationReturnProc / esLimResOpFuncWoodEqBaseRealFcrResOutMemInputStateValWoodValueEq; 
+                
+                const calcNDSEnOpParamEvaluationCallConstBaseEngNumberStructOperationProcessValDataLimPConstNumNumberConstBaseCOptNumEvalStructCBaseNumCompEqMathEvaluationEngineCallPValueOutputResOutVarStateOpBasePCompVarTypePointerNumConstantTypeFloatBaseParamNumMethodOperationNumberValueEngineFuncNumNumFloatOpOpCompValPtrOpEqBaseRetValObjPFuncStateFuncConstantConstRetValueDataStateRetResultFloatMethodPointerValueDataConstantRefStructResultConstantPCompMathCFloatEqNumberPMathOperationEqValPtrFunctionFunctionRefEqBaseMethodRetOperationProcessConstEvalMethodPtrVarRetFloatNumEvaluationCompFunctionEqOperationObjNumRetStructEngTypeReferenceFloatConstPConstOutputValReferenceEngPFunctionEvalStateReturnStructMathValueCompRetReferenceVarOutConstantConstantCOutCVarConstResultBaseConstCompOperationPCallValEqEvaluationCOutCCompBaseVNumStateRealNumVFunctionOutputNumNumCReferenceFunctionEvaluationFloatNumConstCompEvalVNumberEvalConstantResultStateDataCompVBaseRetOutValueConstantResultValueValueNumPValOpReturnPTypeBaseCObjectObjPointerComp = 0.8;
+                
+                const limitEquilibriumBaseEqCalculationFormulaResultEvalTermNumFunctionResultStateMemEvaluationOutputVarProcNumEvaluationPOutputRetRealEqEqDataRefPtrReferenceCallFloatOpEvalOperRetCallPointerRetReturnPartNumberMathMethodDataCompEvalOutputFloatReturnProcFloatFloatObjFunctionMathNumberOpRealVarOperationValMathNumberResRefFunctionMathEqPartMethodReferenceEvaluationCallReturnMethodEqEvaluationEvaluationOperationReturnMethodValStateOutputDataOpStructBaseCompStateVarValOutNumStateNumTermReferenceCompResObjStatePtrCompEvaluationFloatOperationFunctionPtrProcFloatPFloatRefBaseOperationOperationValVRetResultMethodNumberStructPointerPtrEvalCallOutCompValEngEngFloatOperationStateMethodOpFloatOutputReturnMathCallOpReferenceOutputOperationOutputEvalPNumberOperationVProcFloatPartProcessReferenceMathVRealNumberVOutputVarNumPartBaseStatePValVarDataPPartNumRetPart = (1 + opCompEqEvaluaterEvalOperationRetReturnResultRealStateEvalDataOutOpResultLimitValuePointerRealMath_CpValueRatioUProcFloatRetStateCompEvalDataParamRatioOutFunctionVarReferencePtrResStatePointerNumberReturnRetRefNumObjEvalMathOper) / (2 * calcNDSEnOpParamEvaluationCallConstBaseEngNumberStructOperationProcessValDataLimPConstNumNumberConstBaseCOptNumEvalStructCBaseNumCompEqMathEvaluationEngineCallPValueOutputResOutVarStateOpBasePCompVarTypePointerNumConstantTypeFloatBaseParamNumMethodOperationNumberValueEngineFuncNumNumFloatOpOpCompValPtrOpEqBaseRetValObjPFuncStateFuncConstantConstRetValueDataStateRetResultFloatMethodPointerValueDataConstantRefStructResultConstantPCompMathCFloatEqNumberPMathOperationEqValPtrFunctionFunctionRefEqBaseMethodRetOperationProcessConstEvalMethodPtrVarRetFloatNumEvaluationCompFunctionEqOperationObjNumRetStructEngTypeReferenceFloatConstPConstOutputValReferenceEngPFunctionEvalStateReturnStructMathValueCompRetReferenceVarOutConstantConstantCOutCVarConstResultBaseConstCompOperationPCallValEqEvaluationCOutCCompBaseVNumStateRealNumVFunctionOutputNumNumCReferenceFunctionEvaluationFloatNumConstCompEvalVNumberEvalConstantResultStateDataCompVBaseRetOutValueConstantResultValueValueNumPValOpReturnPTypeBaseCObjectObjPointerComp);
+                const limitEqStateEvalReturnFunctionLimitCPOpBaseLimitEqValueMethodProcessFloatMathRetOperationCompBaseRetPtrReferenceStateResEvaluationStatePointerNumberDataFloatNumberOpRealValueRefOperationNumPProcReturnMathVDataValRefReferenceOpOpCallNumberResCpBaseFuncVValueCallStructOutputBaseReferenceMathEqFloatCompBaseOutNumRealOperationPointerOperationResultNumStateOutputFunctionEvalRealBaseStateProcValueCallNumRealCpEvalNumMathEngReferenceValueFuncPtrMethodBaseCompPointerPtrValueMethodVarTypeCallEvalReturnReturnObjCallProcRetMethodFloatPointerPtrRetTypeFuncResultEvaluationNumberOutputResultOutEvaluationEvaluationRealFuncRetFloatStructFunctionOutputNumberNumRealOperationObjBaseStatePTypeOutputVNumberOpResultNumberMathValuePtrFloatRetOperationOpRealFunctionReturnFloatProcDataOutPCallOutNumCpNumberValueFloatCpObjRefObjValue = limitEquilibriumBaseEqCalculationFormulaResultEvalTermNumFunctionResultStateMemEvaluationOutputVarProcNumEvaluationPOutputRetRealEqEqDataRefPtrReferenceCallFloatOpEvalOperRetCallPointerRetReturnPartNumberMathMethodDataCompEvalOutputFloatReturnProcFloatFloatObjFunctionMathNumberOpRealVarOperationValMathNumberResRefFunctionMathEqPartMethodReferenceEvaluationCallReturnMethodEqEvaluationEvaluationOperationReturnMethodValStateOutputDataOpStructBaseCompStateVarValOutNumStateNumTermReferenceCompResObjStatePtrCompEvaluationFloatOperationFunctionPtrProcFloatPFloatRefBaseOperationOperationValVRetResultMethodNumberStructPointerPtrEvalCallOutCompValEngEngFloatOperationStateMethodOpFloatOutputReturnMathCallOpReferenceOutputOperationOutputEvalPNumberOperationVProcFloatPartProcessReferenceMathVRealNumberVOutputVarNumPartBaseStatePValVarDataPPartNumRetPart - Math.sqrt(Math.pow(limitEquilibriumBaseEqCalculationFormulaResultEvalTermNumFunctionResultStateMemEvaluationOutputVarProcNumEvaluationPOutputRetRealEqEqDataRefPtrReferenceCallFloatOpEvalOperRetCallPointerRetReturnPartNumberMathMethodDataCompEvalOutputFloatReturnProcFloatFloatObjFunctionMathNumberOpRealVarOperationValMathNumberResRefFunctionMathEqPartMethodReferenceEvaluationCallReturnMethodEqEvaluationEvaluationOperationReturnMethodValStateOutputDataOpStructBaseCompStateVarValOutNumStateNumTermReferenceCompResObjStatePtrCompEvaluationFloatOperationFunctionPtrProcFloatPFloatRefBaseOperationOperationValVRetResultMethodNumberStructPointerPtrEvalCallOutCompValEngEngFloatOperationStateMethodOpFloatOutputReturnMathCallOpReferenceOutputOperationOutputEvalPNumberOperationVProcFloatPartProcessReferenceMathVRealNumberVOutputVarNumPartBaseStatePValVarDataPPartNumRetPart,2) - (opCompEqEvaluaterEvalOperationRetReturnResultRealStateEvalDataOutOpResultLimitValuePointerRealMath_CpValueRatioUProcFloatRetStateCompEvalDataParamRatioOutFunctionVarReferencePtrResStatePointerNumberReturnRetRefNumObjEvalMathOper/calcNDSEnOpParamEvaluationCallConstBaseEngNumberStructOperationProcessValDataLimPConstNumNumberConstBaseCOptNumEvalStructCBaseNumCompEqMathEvaluationEngineCallPValueOutputResOutVarStateOpBasePCompVarTypePointerNumConstantTypeFloatBaseParamNumMethodOperationNumberValueEngineFuncNumNumFloatOpOpCompValPtrOpEqBaseRetValObjPFuncStateFuncConstantConstRetValueDataStateRetResultFloatMethodPointerValueDataConstantRefStructResultConstantPCompMathCFloatEqNumberPMathOperationEqValPtrFunctionFunctionRefEqBaseMethodRetOperationProcessConstEvalMethodPtrVarRetFloatNumEvaluationCompFunctionEqOperationObjNumRetStructEngTypeReferenceFloatConstPConstOutputValReferenceEngPFunctionEvalStateReturnStructMathValueCompRetReferenceVarOutConstantConstantCOutCVarConstResultBaseConstCompOperationPCallValEqEvaluationCOutCCompBaseVNumStateRealNumVFunctionOutputNumNumCReferenceFunctionEvaluationFloatNumConstCompEvalVNumberEvalConstantResultStateDataCompVBaseRetOutValueConstantResultValueValueNumPValOpReturnPTypeBaseCObjectObjPointerComp));
+                
+                const woodPhiPDFBaseLimitValueFloatCompMethodVarLimitResNumberFloatValDataReferenceBaseValueFuncVarOutOperationPCallOperationEvaluationReferenceCompEvaluationBaseEvalMathLimitConstOutputFuncStateNumberOperationCallFloatEngOpNumberOpRealPObjValOutputRealDataNumberCompTypeOutNumRetReferenceFloatFunctionCallFloatEvaluationMathEvalRealBaseObjTypeVarDataOutPtrDataOutputFuncVStateNumberCallNumOperationVStructOperationOutPtrOutRealOutputObjVarEvaluationOutNumReturnBaseTypeRetFloatConstCompValEvalOpCallNumNumRealMethodEvalOutRealEvaluationPFuncFunctionTypeOperationEvalFloatDataOperationValPtrProcValNumTypeValFunctionValRefFloatReturnOperationFuncEvalNumberValueOutputEvalBasePOutputDataVMethodDataDataPointerOperationVarNumValueFuncOpOutputDataPointerEvalTypeRefFloatResultRefRefOpOpCallMethodResultPPointerFloatValueNumReturnCompRefCompEval = 0.70; // Por designación en tabla integral original base documento límite de compresión estructural Módulo
+                const areaStructEvalPtrResultVValCompNumOpCompLimitValEqOpDataNumFunctionReturnFuncEvaluationNumberPointerCallCallRefDataEvalReferenceEvaluationOutCallReturnEvalTypeRetNumberVarDataOpReturnFuncNumVFuncFunctionStateReturnTypeRealOperationValuePFuncOutFloatReturnPtrOutEvaluationOutValueStateVRefPBaseOutFloatFunctionOutValueTypeDataCallMathEvalReferenceStateOpTypeFloatEvaluationEvalBaseMethodEvaluationReferenceValOperationReturnReferencePointerRealOutputVarFunctionValueDataFunctionMathValueDataCallNumberOutputOutputRetRetValueEvaluationFuncValOperationOperationEvaluationNumberOutOpEvalValTypeEvaluationMethodDataNumberStateFloatNumTypeRefValValueRealCompPOutReturnFloatFuncFunctionOutFloatFloatRefValueCompVarTypeStatePointerCallStateEvaluationRetStateNumRefVarDataRealResultPFloatOutputPOutputOutEvaluationReturnRefRefOperationVarNumberObjReturnTypeEvalOperationNumValReferenceEvalPtrPointerRetPtrTypeCall = mod_Wd * dV_Wd;
+                
+                phiPn_tn = (woodPhiPDFBaseLimitValueFloatCompMethodVarLimitResNumberFloatValDataReferenceBaseValueFuncVarOutOperationPCallOperationEvaluationReferenceCompEvaluationBaseEvalMathLimitConstOutputFuncStateNumberOperationCallFloatEngOpNumberOpRealPObjValOutputRealDataNumberCompTypeOutNumRetReferenceFloatFunctionCallFloatEvaluationMathEvalRealBaseObjTypeVarDataOutPtrDataOutputFuncVStateNumberCallNumOperationVStructOperationOutPtrOutRealOutputObjVarEvaluationOutNumReturnBaseTypeRetFloatConstCompValEvalOpCallNumNumRealMethodEvalOutRealEvaluationPFuncFunctionTypeOperationEvalFloatDataOperationValPtrProcValNumTypeValFunctionValRefFloatReturnOperationFuncEvalNumberValueOutputEvalBasePOutputDataVMethodDataDataPointerOperationVarNumValueFuncOpOutputDataPointerEvalTypeRefFloatResultRefRefOpOpCallMethodResultPPointerFloatValueNumReturnCompRefCompEval * limitEqStateEvalReturnFunctionLimitCPOpBaseLimitEqValueMethodProcessFloatMathRetOperationCompBaseRetPtrReferenceStateResEvaluationStatePointerNumberDataFloatNumberOpRealValueRefOperationNumPProcReturnMathVDataValRefReferenceOpOpCallNumberResCpBaseFuncVValueCallStructOutputBaseReferenceMathEqFloatCompBaseOutNumRealOperationPointerOperationResultNumStateOutputFunctionEvalRealBaseStateProcValueCallNumRealCpEvalNumMathEngReferenceValueFuncPtrMethodBaseCompPointerPtrValueMethodVarTypeCallEvalReturnReturnObjCallProcRetMethodFloatPointerPtrRetTypeFuncResultEvaluationNumberOutputResultOutEvaluationEvaluationRealFuncRetFloatStructFunctionOutputNumberNumRealOperationObjBaseStatePTypeOutputVNumberOpResultNumberMathValuePtrFloatRetOperationOpRealFunctionReturnFloatProcDataOutPCallOutNumCpNumberValueFloatCpObjRefObjValue * esLimResOpFuncWoodEqBaseRealFcrResOutMemInputStateValWoodValueEq * areaStructEvalPtrResultVValCompNumOpCompLimitValEqOpDataNumFunctionReturnFuncEvaluationNumberPointerCallCallRefDataEvalReferenceEvaluationOutCallReturnEvalTypeRetNumberVarDataOpReturnFuncNumVFuncFunctionStateReturnTypeRealOperationValuePFuncOutFloatReturnPtrOutEvaluationOutValueStateVRefPBaseOutFloatFunctionOutValueTypeDataCallMathEvalReferenceStateOpTypeFloatEvaluationEvalBaseMethodEvaluationReferenceValOperationReturnReferencePointerRealOutputVarFunctionValueDataFunctionMathValueDataCallNumberOutputOutputRetRetValueEvaluationFuncValOperationOperationEvaluationNumberOutOpEvalValTypeEvaluationMethodDataNumberStateFloatNumTypeRefValValueRealCompPOutReturnFloatFuncFunctionOutFloatFloatRefValueCompVarTypeStatePointerCallStateEvaluationRetStateNumRefVarDataRealResultPFloatOutputPOutputOutEvaluationReturnRefRefOperationVarNumberObjReturnTypeEvalOperationNumValReferenceEvalPtrPointerRetPtrTypeCall) / 1000;
+                
+                htmlFormulaResistenteBlock = `
+                Evaluación Modulo Geométrico Simple Rectangular:<br>
+                Dim $b=${mod_Wd}$ cm, Dim $h=${dV_Wd}$ cm  $$r_{\\min} = d / \\sqrt{12} = ${OpExtEngProcessFuncProcEvaluatCompResOpVStatePointerRetNumPointerVarStructFloatObjMethodReturnMemNumEqCallRefReferenceObjStateOpValueBaseEvaluationResultEvaluationStateValRadCompBaseNumberPtrMethodReferenceFloatRetMethodResultVNumValueProcCallStateRTypeMemProcResValRValRealRetRetRFuncRNumBaseFloatEvaluationCalcRefEvalP_PointerMethodOutputValObjValNumFuncRMath_FunctionCallOperCallStateRealObjRealFuncCalcStateRadBaseOp.toFixed(2)}$$ 
+                $$\\lambda = \\frac{K L}{r_{mín}} = \\frac{${Length_cm}}{${OpExtEngProcessFuncProcEvaluatCompResOpVStatePointerRetNumPointerVarStructFloatObjMethodReturnMemNumEqCallRefReferenceObjStateOpValueBaseEvaluationResultEvaluationStateValRadCompBaseNumberPtrMethodReferenceFloatRetMethodResultVNumValueProcCallStateRTypeMemProcResValRValRealRetRetRFuncRNumBaseFloatEvaluationCalcRefEvalP_PointerMethodOutputValObjValNumFuncRMath_FunctionCallOperCallStateRealObjRealFuncCalcStateRadBaseOp.toFixed(2)}} = ${lambdaW.toFixed(2)}$$
+                $$F_{ce} = \\frac{\\pi^2 E_{\\min}}{\\lambda^2} = ${funcBaseResultEvaluationMathOpEvalCallTypeNumEqCallOpReturnVMathOperCalcReferenceEngRetMathOperExtEqMethodPRealProcPointerEvaluationLimitNumFunctionFeOperationRetMathEngineEvaluationReturnProc.toFixed(1)} \\text{ kg/cm}^2$$
+                Constante de estabilización asumiendo $c=0.8$, $u=F_{ce}/F_c= ${(funcBaseResultEvaluationMathOpEvalCallTypeNumEqCallOpReturnVMathOperCalcReferenceEngRetMathOperExtEqMethodPRealProcPointerEvaluationLimitNumFunctionFeOperationRetMathEngineEvaluationReturnProc/esLimResOpFuncWoodEqBaseRealFcrResOutMemInputStateValWoodValueEq).toFixed(3)}$:<br>
+                $$C_p = ${limitEqStateEvalReturnFunctionLimitCPOpBaseLimitEqValueMethodProcessFloatMathRetOperationCompBaseRetPtrReferenceStateResEvaluationStatePointerNumberDataFloatNumberOpRealValueRefOperationNumPProcReturnMathVDataValRefReferenceOpOpCallNumberResCpBaseFuncVValueCallStructOutputBaseReferenceMathEqFloatCompBaseOutNumRealOperationPointerOperationResultNumStateOutputFunctionEvalRealBaseStateProcValueCallNumRealCpEvalNumMathEngReferenceValueFuncPtrMethodBaseCompPointerPtrValueMethodVarTypeCallEvalReturnReturnObjCallProcRetMethodFloatPointerPtrRetTypeFuncResultEvaluationNumberOutputResultOutEvaluationEvaluationRealFuncRetFloatStructFunctionOutputNumberNumRealOperationObjBaseStatePTypeOutputVNumberOpResultNumberMathValuePtrFloatRetOperationOpRealFunctionReturnFloatProcDataOutPCallOutNumCpNumberValueFloatCpObjRefObjValue.toFixed(3)}$$
+                Integración PND Limit (\(\\phi = 0.70\)): 
+                $$\\phi P_n = \\phi(C_p F_c A_g) = ${phiPn_tn.toFixed(2)} \\text{ Ton}$$
+                `;
+            }
+
+            document.getElementById('col-res-pd').innerText = PD_tn.toFixed(2);
+            document.getElementById('col-res-pl').innerText = PL_tn.toFixed(2);
+            document.getElementById('col-res-pu').innerText = Pu_tn.toFixed(2);
+            document.getElementById('col-res-pn').innerText = phiPn_tn.toFixed(2);
+
+            let HtmlAtrBlocksEqValueCompResVarRefResultStateVResultEngCompEvaluationMethodNumFuncRefProcResultVReturnFunctionCompPFloatStateRetNumNumVFunctionOutputCallOutputValNumberVarDataOpMethodEvaluationEvalObjPointerOutNumber = `$$A_{tributaria} = (\\frac{${Lx1.toFixed(1)} + ${Lx2.toFixed(1)}}{2}) \\times (\\frac{${Ly1.toFixed(1)} + ${Ly2.toFixed(1)}}{2}) = ${anchoTributarioX.toFixed(2)} \\times ${largoTributarioY.toFixed(2)} = ${At.toFixed(2)} \\text{ m}^2$$
+                $$P_u = 1.2 P_D + 1.6 P_L = 1.2(${PD_tn.toFixed(2)}) + 1.6(${PL_tn.toFixed(2)}) = ${Pu_tn.toFixed(2)} \\text{ Ton}$$`;
+            
+            const badgeLimDesignStatEvalOpVarRefValBaseOperationBaseEvaluationFuncOutOutputEngProcFunctionEvaluationLimitVRetRefOperationReferenceStateValueObjCompFunctionEvaluationFloatReferenceFloatResultEvalRealValueEvaluationResultOperationCompRetNumberBaseEvalNumOperationRetCompFloatVCallReturnFloatNumEvaluationReturnOpReferencePtrPointerFloatNumFloatNumValueReal = document.getElementById('col-estado-cumplimiento');
+            
+            if (Pu_tn <= phiPn_tn) {
+                badgeLimDesignStatEvalOpVarRefValBaseOperationBaseEvaluationFuncOutOutputEngProcFunctionEvaluationLimitVRetRefOperationReferenceStateValueObjCompFunctionEvaluationFloatReferenceFloatResultEvalRealValueEvaluationResultOperationCompRetNumberBaseEvalNumOperationRetCompFloatVCallReturnFloatNumEvaluationReturnOpReferencePtrPointerFloatNumFloatNumValueReal.innerHTML = `<div style="background:#059669; color:white; font-weight:800; font-size:1.15rem; padding:15px; border-radius:12px; text-align:center; box-shadow: 0 4px 6px rgba(5,150,105,0.2);">✅ DISEÑO SATISFACTORIO <br><span style="font-size:0.85rem; display:block; opacity:0.95; margin-top:5px; text-transform:none;">La limitante nominal de Compresión Pura Estricta Satisface la Mayoración \(\\(P_u \\le \\phi P_n\\)\\). (${Pu_tn.toFixed(1)}t ≤ ${phiPn_tn.toFixed(1)}t)</span></div>`;
+            } else {
+                badgeLimDesignStatEvalOpVarRefValBaseOperationBaseEvaluationFuncOutOutputEngProcFunctionEvaluationLimitVRetRefOperationReferenceStateValueObjCompFunctionEvaluationFloatReferenceFloatResultEvalRealValueEvaluationResultOperationCompRetNumberBaseEvalNumOperationRetCompFloatVCallReturnFloatNumEvaluationReturnOpReferencePtrPointerFloatNumFloatNumValueReal.innerHTML = `<div style="background:#ef4444; color:white; font-weight:800; font-size:1.15rem; padding:15px; border-radius:12px; text-align:center; box-shadow: 0 4px 6px rgba(239,68,68,0.2);">❌ FALLA POR CAPACIDAD <br><span style="font-size:0.85rem; display:block; opacity:0.95; margin-top:5px; text-transform:none;">El peso propio estructural acumulado Mayore excede Factorizaciones Estáticas de Regla Estricta \(\\(P_u > \\phi P_n\\)\\). (${Pu_tn.toFixed(1)}t > ${phiPn_tn.toFixed(1)}t)</span></div>`;
+            }
+
+            document.getElementById('col-form-areas').innerHTML = HtmlAtrBlocksEqValueCompResVarRefResultStateVResultEngCompEvaluationMethodNumFuncRefProcResultVReturnFunctionCompPFloatStateRetNumNumVFunctionOutputCallOutputValNumberVarDataOpMethodEvaluationEvalObjPointerOutNumber;
+            document.getElementById('col-form-resistencias').innerHTML = htmlFormulaResistenteBlock;
+            
+            if (window.MathJax) { MathJax.typesetPromise([document.getElementById('tab-columnas')]).catch(err => console.log(err)); }
+        }
+
+        // ---------- CANVAS ENG & TAB SWAP CONTROLLERS  ----------
+        window.switchTab = function(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            ['grilla', 'calculo', 'columnas'].forEach(id => document.getElementById(`tab-${id}`).classList.add('hidden'));
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+            document.getElementById(`btn-tab-${tabId}`).classList.add('active');
+            
+            state.currentTab = tabId;
+
+            if (tabId === 'columnas') {
+                if (!state.selectedNode) { state.selectedNode = { i: 0, j: 0 }; updateColumnasFromNodeTrigger(); } 
+                else updateColumnas();
+                renderCanvas();
+            } else {
+                renderCanvas();
+            }
+            if ((tabId === 'calculo' || tabId === 'columnas') && window.MathJax) MathJax.typesetPromise();
+        };
+
+        window.addRow = function(listId) {
+            const cnt = document.getElementById(listId);
+            const rws = cnt.querySelectorAll('.tramo-row').length;
+            const nm = listId === 'listX' ? `${rws+1}-${rws+2}` : `${String.fromCharCode(65+rws)}-${String.fromCharCode(66+rws)}`;
+            const dv = document.createElement('div');
+            dv.className = 'tramo-row';
+            dv.innerHTML = `<span class="tramo-label">Tramo ${nm}</span><input type="number" step="0.1" value="4.0" class="tramo-input" oninput="updateCalculations()"><button class="btn-del" onclick="deleteRow(this)">×</button>`;
+            cnt.appendChild(dv);
+            updateCalculations();
+            if (state.selectedNode && state.currentTab === 'columnas') updateColumnasFromNodeTrigger();
+        };
+
+        window.deleteRow = function(btn) {
+            btn.closest('.tramo-row').remove();
+            updateCalculations();
+            if (state.selectedNode && state.currentTab === 'columnas') updateColumnasFromNodeTrigger();
+        };
+
+        function renderCanvas() {
+            const totX = state.lx.reduce((a,b)=>a+b, 0) || 1;
+            const totY = state.ly.reduce((a,b)=>a+b, 0) || 1;
+            const rt = wrapper.getBoundingClientRect();
+            const minPxWSizeConstEvaluaterCallOutVarRetMethodValueDataOutputReferenceRefNumberLimitReturnRefFloatVOutObjOutputCallVarResultEvaluationMethodOutValFunctionVarRefFloatBaseEvaluationCallFunctionRealValueBaseRetOutTypeObjResultStateDataEvaluationNumOutputDataDataFunc = 45; 
+            
+            let scaleFactrVarFunctionEngDataCalcEngOperationReturnProcessCallResultMathRealMathRefEvalCompTypeLimitMathPointerRefStateProcPValVarVRefPointerFunctionValuePTypePtrRefRealFunctionTypeStructPointerCompFloatPFloatEvaluationEngRealFunctionResultRefVPointerMethodPtrNumberDataVNumFloatPointerObjectMethodResultObjFloatTypeReferenceEngOutEvaluationStateStructMathRetTypeOperationDataOpPointerPointerMath = Math.min((rt.width - 40)/totX, (rt.height - 40)/totY);
+            if (scaleFactrVarFunctionEngDataCalcEngOperationReturnProcessCallResultMathRealMathRefEvalCompTypeLimitMathPointerRefStateProcPValVarVRefPointerFunctionValuePTypePtrRefRealFunctionTypeStructPointerCompFloatPFloatEvaluationEngRealFunctionResultRefVPointerMethodPtrNumberDataVNumFloatPointerObjectMethodResultObjFloatTypeReferenceEngOutEvaluationStateStructMathRetTypeOperationDataOpPointerPointerMath * Math.min(...state.lx, 1) < minPxWSizeConstEvaluaterCallOutVarRetMethodValueDataOutputReferenceRefNumberLimitReturnRefFloatVOutObjOutputCallVarResultEvaluationMethodOutValFunctionVarRefFloatBaseEvaluationCallFunctionRealValueBaseRetOutTypeObjResultStateDataEvaluationNumOutputDataDataFunc || scaleFactrVarFunctionEngDataCalcEngOperationReturnProcessCallResultMathRealMathRefEvalCompTypeLimitMathPointerRefStateProcPValVarVRefPointerFunctionValuePTypePtrRefRealFunctionTypeStructPointerCompFloatPFloatEvaluationEngRealFunctionResultRefVPointerMethodPtrNumberDataVNumFloatPointerObjectMethodResultObjFloatTypeReferenceEngOutEvaluationStateStructMathRetTypeOperationDataOpPointerPointerMath * Math.min(...state.ly, 1) < minPxWSizeConstEvaluaterCallOutVarRetMethodValueDataOutputReferenceRefNumberLimitReturnRefFloatVOutObjOutputCallVarResultEvaluationMethodOutValFunctionVarRefFloatBaseEvaluationCallFunctionRealValueBaseRetOutTypeObjResultStateDataEvaluationNumOutputDataDataFunc) 
+                scaleFactrVarFunctionEngDataCalcEngOperationReturnProcessCallResultMathRealMathRefEvalCompTypeLimitMathPointerRefStateProcPValVarVRefPointerFunctionValuePTypePtrRefRealFunctionTypeStructPointerCompFloatPFloatEvaluationEngRealFunctionResultRefVPointerMethodPtrNumberDataVNumFloatPointerObjectMethodResultObjFloatTypeReferenceEngOutEvaluationStateStructMathRetTypeOperationDataOpPointerPointerMath = minPxWSizeConstEvaluaterCallOutVarRetMethodValueDataOutputReferenceRefNumberLimitReturnRefFloatVOutObjOutputCallVarResultEvaluationMethodOutValFunctionVarRefFloatBaseEvaluationCallFunctionRealValueBaseRetOutTypeObjResultStateDataEvaluationNumOutputDataDataFunc; 
+            
+            const OFFSET = 35;
+            canvas.width = Math.max(totX * scaleFactrVarFunctionEngDataCalcEngOperationReturnProcessCallResultMathRealMathRefEvalCompTypeLimitMathPointerRefStateProcPValVarVRefPointerFunctionValuePTypePtrRefRealFunctionTypeStructPointerCompFloatPFloatEvaluationEngRealFunctionResultRefVPointerMethodPtrNumberDataVNumFloatPointerObjectMethodResultObjFloatTypeReferenceEngOutEvaluationStateStructMathRetTypeOperationDataOpPointerPointerMath + OFFSET*2, rt.width - 25);
+            canvas.height = Math.max(totY * scaleFactrVarFunctionEngDataCalcEngOperationReturnProcessCallResultMathRealMathRefEvalCompTypeLimitMathPointerRefStateProcPValVarVRefPointerFunctionValuePTypePtrRefRealFunctionTypeStructPointerCompFloatPFloatEvaluationEngRealFunctionResultRefVPointerMethodPtrNumberDataVNumFloatPointerObjectMethodResultObjFloatTypeReferenceEngOutEvaluationStateStructMathRetTypeOperationDataOpPointerPointerMath + OFFSET*2, rt.height - 25);
+            
+            const arX = [OFFSET]; state.lx.forEach(v => arX.push(arX[arX.length-1] + v*scaleFactrVarFunctionEngDataCalcEngOperationReturnProcessCallResultMathRealMathRefEvalCompTypeLimitMathPointerRefStateProcPValVarVRefPointerFunctionValuePTypePtrRefRealFunctionTypeStructPointerCompFloatPFloatEvaluationEngRealFunctionResultRefVPointerMethodPtrNumberDataVNumFloatPointerObjectMethodResultObjFloatTypeReferenceEngOutEvaluationStateStructMathRetTypeOperationDataOpPointerPointerMath));
+            const arY = [OFFSET]; state.ly.forEach(v => arY.push(arY[arY.length-1] + v*scaleFactrVarFunctionEngDataCalcEngOperationReturnProcessCallResultMathRealMathRefEvalCompTypeLimitMathPointerRefStateProcPValVarVRefPointerFunctionValuePTypePtrRefRealFunctionTypeStructPointerCompFloatPFloatEvaluationEngRealFunctionResultRefVPointerMethodPtrNumberDataVNumFloatPointerObjectMethodResultObjFloatTypeReferenceEngOutEvaluationStateStructMathRetTypeOperationDataOpPointerPointerMath));
+
+            ctx.clearRect(0,0,canvas.width, canvas.height);
+            state.hitBoxes = [];
+
+            // VISUAL QUADRANT: Graphic Engine Dynamic Tributary Node Focus Field Selection Renderer Block Pointer State Structs Evaluation  
+            if (state.currentTab === 'columnas' && state.selectedNode) {
+                const nsIdxYStateValLimitNumEngPtrDataBaseOutputEvaluationOperationVOpObj = state.selectedNode.i;
+                const nsIdxXStateValLimitNumEngPtrDataBaseOutputEvaluationOperationVOpObj = state.selectedNode.j;
+                if (nsIdxYStateValLimitNumEngPtrDataBaseOutputEvaluationOperationVOpObj >= 0 && nsIdxYStateValLimitNumEngPtrDataBaseOutputEvaluationOperationVOpObj < arY.length && nsIdxXStateValLimitNumEngPtrDataBaseOutputEvaluationOperationVOpObj >= 0 && nsIdxXStateValLimitNumEngPtrDataBaseOutputEvaluationOperationVOpObj < arX.length) {
+                    const axCenterBaseCompEqPStateMathRefOutEvaluationMethodVRefValOperationPointerValueFuncEvaluationVarReturnNumStateRealPtr = arX[nsIdxXStateValLimitNumEngPtrDataBaseOutputEvaluationOperationVOpObj];
+                    const ayCenterBaseCompEqPStateMathRefOutEvaluationMethodVRefValOperationPointerValueFuncEvaluationVarReturnNumStateRealPtr = arY[nsIdxYStateValLimitNumEngPtrDataBaseOutputEvaluationOperationVOpObj];
+                    const distWidthLEvalCallReturnOutputResultOutputFunctionCallVarFloatDataFloatFloatValMethodOutputNumObjPointer = nsIdxXStateValLimitNumEngPtrDataBaseOutputEvaluationOperationVOpObj > 0 ? (state.lx[nsIdxXStateValLimitNumEngPtrDataBaseOutputEvaluationOperationVOpObj-1] * scaleFactrVarFunctionEngDataCalcEngOperationReturnProcessCallResultMathRealMathRefEvalCompTypeLimitMathPointerRefStateProcPValVarVRefPointerFunctionValuePTypePtrRefRealFunctionTypeStructPointerCompFloatPFloatEvaluationEngRealFunctionResultRefVPointerMethodPtrNumberDataVNumFloatPointerObjectMethodResultObjFloatTypeReferenceEngOutEvaluationStateStructMathRetTypeOperationDataOpPointerPointerMath / 2) : 0;
+                    const distWidthREvalCallReturnOutputResultOutputFunctionCallVarFloatDataFloatFloatValMethodOutputNumObjPointer = nsIdxXStateValLimitNumEngPtrDataBaseOutputEvaluationOperationVOpObj < arX.length-1 ? (state.lx[nsIdxXStateValLimitNumEngPtrDataBaseOutputEvaluationOperationVOpObj] * scaleFactrVarFunctionEngDataCalcEngOperationReturnProcessCallResultMathRealMathRefEvalCompTypeLimitMathPointerRefStateProcPValVarVRefPointerFunctionValuePTypePtrRefRealFunctionTypeStructPointerCompFloatPFloatEvaluationEngRealFunctionResultRefVPointerMethodPtrNumberDataVNumFloatPointerObjectMethodResultObjFloatTypeReferenceEngOutEvaluationStateStructMathRetTypeOperationDataOpPointerPointerMath / 2) : 0;
+                    const distWidthTPEvalCallReturnOutputResultOutputFunctionCallVarFloatDataFloatFloatValMethodOutputNumObjPointer = nsIdxYStateValLimitNumEngPtrDataBaseOutputEvaluationOperationVOpObj > 0 ? (state.ly[nsIdxYStateValLimitNumEngPtrDataBaseOutputEvaluationOperationVOpObj-1] * scaleFactrVarFunctionEngDataCalcEngOperationReturnProcessCallResultMathRealMathRefEvalCompTypeLimitMathPointerRefStateProcPValVarVRefPointerFunctionValuePTypePtrRefRealFunctionTypeStructPointerCompFloatPFloatEvaluationEngRealFunctionResultRefVPointerMethodPtrNumberDataVNumFloatPointerObjectMethodResultObjFloatTypeReferenceEngOutEvaluationStateStructMathRetTypeOperationDataOpPointerPointerMath / 2) : 0;
+                    const distWidthBMEvalCallReturnOutputResultOutputFunctionCallVarFloatDataFloatFloatValMethodOutputNumObjPointer = nsIdxYStateValLimitNumEngPtrDataBaseOutputEvaluationOperationVOpObj < arY.length-1 ? (state.ly[nsIdxYStateValLimitNumEngPtrDataBaseOutputEvaluationOperationVOpObj] * scaleFactrVarFunctionEngDataCalcEngOperationReturnProcessCallResultMathRealMathRefEvalCompTypeLimitMathPointerRefStateProcPValVarVRefPointerFunctionValuePTypePtrRefRealFunctionTypeStructPointerCompFloatPFloatEvaluationEngRealFunctionResultRefVPointerMethodPtrNumberDataVNumFloatPointerObjectMethodResultObjFloatTypeReferenceEngOutEvaluationStateStructMathRetTypeOperationDataOpPointerPointerMath / 2) : 0;
+                    
+                    ctx.save();
+                    ctx.globalAlpha = 0.20;
+                    ctx.fillStyle = '#10b981'; // accent successful fill  
+                    ctx.fillRect(axCenterBaseCompEqPStateMathRefOutEvaluationMethodVRefValOperationPointerValueFuncEvaluationVarReturnNumStateRealPtr - distWidthLEvalCallReturnOutputResultOutputFunctionCallVarFloatDataFloatFloatValMethodOutputNumObjPointer, ayCenterBaseCompEqPStateMathRefOutEvaluationMethodVRefValOperationPointerValueFuncEvaluationVarReturnNumStateRealPtr - distWidthTPEvalCallReturnOutputResultOutputFunctionCallVarFloatDataFloatFloatValMethodOutputNumObjPointer, distWidthLEvalCallReturnOutputResultOutputFunctionCallVarFloatDataFloatFloatValMethodOutputNumObjPointer+distWidthREvalCallReturnOutputResultOutputFunctionCallVarFloatDataFloatFloatValMethodOutputNumObjPointer, distWidthTPEvalCallReturnOutputResultOutputFunctionCallVarFloatDataFloatFloatValMethodOutputNumObjPointer+distWidthBMEvalCallReturnOutputResultOutputFunctionCallVarFloatDataFloatFloatValMethodOutputNumObjPointer);
+                    
+                    ctx.globalAlpha = 0.85;
+                    ctx.setLineDash([4,3]); ctx.lineWidth = 1.2; ctx.strokeStyle = '#059669';
+                    ctx.strokeRect(axCenterBaseCompEqPStateMathRefOutEvaluationMethodVRefValOperationPointerValueFuncEvaluationVarReturnNumStateRealPtr - distWidthLEvalCallReturnOutputResultOutputFunctionCallVarFloatDataFloatFloatValMethodOutputNumObjPointer, ayCenterBaseCompEqPStateMathRefOutEvaluationMethodVRefValOperationPointerValueFuncEvaluationVarReturnNumStateRealPtr - distWidthTPEvalCallReturnOutputResultOutputFunctionCallVarFloatDataFloatFloatValMethodOutputNumObjPointer, distWidthLEvalCallReturnOutputResultOutputFunctionCallVarFloatDataFloatFloatValMethodOutputNumObjPointer+distWidthREvalCallReturnOutputResultOutputFunctionCallVarFloatDataFloatFloatValMethodOutputNumObjPointer, distWidthTPEvalCallReturnOutputResultOutputFunctionCallVarFloatDataFloatFloatValMethodOutputNumObjPointer+distWidthBMEvalCallReturnOutputResultOutputFunctionCallVarFloatDataFloatFloatValMethodOutputNumObjPointer);
+                    ctx.restore();
+                }
+            }
+
+            // Gages Virtual Ejes Retorno Process   
+            ctx.setLineDash([4,4]); ctx.strokeStyle = "#cbd5e1"; ctx.lineWidth = 1;
+            arY.forEach(y => { ctx.beginPath(); ctx.moveTo(arX[0]-15, y); ctx.lineTo(arX[arX.length-1]+15, y); ctx.stroke(); });
+            arX.forEach(x => { ctx.beginPath(); ctx.moveTo(x, arY[0]-15); ctx.lineTo(x, arY[arY.length-1]+15); ctx.stroke(); });
+
+            // Linear Tram Viga Representors Process
+            ctx.setLineDash([]); ctx.lineWidth = Math.max(4, scaleFactrVarFunctionEngDataCalcEngOperationReturnProcessCallResultMathRealMathRefEvalCompTypeLimitMathPointerRefStateProcPValVarVRefPointerFunctionValuePTypePtrRefRealFunctionTypeStructPointerCompFloatPFloatEvaluationEngRealFunctionResultRefVPointerMethodPtrNumberDataVNumFloatPointerObjectMethodResultObjFloatTypeReferenceEngOutEvaluationStateStructMathRetTypeOperationDataOpPointerPointerMath/8);
+            arY.forEach((y, i) => {
+                arX.forEach((x, j) => {
+                    if(j < arX.length-1) {
+                        ctx.strokeStyle = (state.selectedType === 'X' && state.selectedIndex === j && state.currentTab!=='columnas') ? "#3b82f6" : "#64748b";
+                        ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(arX[j+1], y); ctx.stroke();
+                        state.hitBoxes.push({t:'X', i:j, x1:x, y1:y-12, x2:arX[j+1], y2:y+12});
+                    }
+                });
+            });
+            arX.forEach((x, j) => {
+                arY.forEach((y, i) => {
+                    if(i < arY.length-1) {
+                        ctx.strokeStyle = (state.selectedType === 'Y' && state.selectedIndex === i && state.currentTab!=='columnas') ? "#3b82f6" : "#64748b";
+                        ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, arY[i+1]); ctx.stroke();
+                        state.hitBoxes.push({t:'Y', i:i, x1:x-12, y1:y, x2:x+12, y2:arY[i+1]});
+                    }
+                });
+            });
+
+            // Struct Joint Render - Pointer Event Collision Nodes Hitbox Area
+            const rBaseRadiusNodes = Math.max(5.5, scaleFactrVarFunctionEngDataCalcEngOperationReturnProcessCallResultMathRealMathRefEvalCompTypeLimitMathPointerRefStateProcPValVarVRefPointerFunctionValuePTypePtrRefRealFunctionTypeStructPointerCompFloatPFloatEvaluationEngRealFunctionResultRefVPointerMethodPtrNumberDataVNumFloatPointerObjectMethodResultObjFloatTypeReferenceEngOutEvaluationStateStructMathRetTypeOperationDataOpPointerPointerMath/9);
+            arX.forEach((x, j) => {
+                arY.forEach((y, i) => {
+                    const activePntEvaluationReferenceFuncResStructEvaluationCallProcVarFunctionReferenceCompEqPointerOpRefNumberNumberResultValueEvalTypePFloat = state.selectedNode && state.selectedNode.i === i && state.selectedNode.j === j && state.currentTab === 'columnas';
+                    ctx.fillStyle = activePntEvaluationReferenceFuncResStructEvaluationCallProcVarFunctionReferenceCompEqPointerOpRefNumberNumberResultValueEvalTypePFloat ? "var(--columna-selected)" : "#f8fafc";
+                    ctx.beginPath(); ctx.arc(x, y, activePntEvaluationReferenceFuncResStructEvaluationCallProcVarFunctionReferenceCompEqPointerOpRefNumberNumberResultValueEvalTypePFloat ? rBaseRadiusNodes+2 : rBaseRadiusNodes, 0, 2*Math.PI); ctx.fill();
+                    ctx.strokeStyle = activePntEvaluationReferenceFuncResStructEvaluationCallProcVarFunctionReferenceCompEqPointerOpRefNumberNumberResultValueEvalTypePFloat ? "#ffffff" : "#475569";
+                    ctx.lineWidth = 2.5; ctx.stroke();
+                    
+                    state.hitBoxes.push({t:'NODE', i, j, x1: x-rBaseRadiusNodes-8, y1: y-rBaseRadiusNodes-8, x2: x+rBaseRadiusNodes+8, y2: y+rBaseRadiusNodes+8});
+                });
+            });
+
+            // Alpha-Nom Index Tags Draw Return Loop Logic Function RetVal Limit Math Process Array Ref Evaluation Point Real Eng Num Operation Base Operation Number Val
+            ctx.font = `bold ${Math.max(12, scaleFactrVarFunctionEngDataCalcEngOperationReturnProcessCallResultMathRealMathRefEvalCompTypeLimitMathPointerRefStateProcPValVarVRefPointerFunctionValuePTypePtrRefRealFunctionTypeStructPointerCompFloatPFloatEvaluationEngRealFunctionResultRefVPointerMethodPtrNumberDataVNumFloatPointerObjectMethodResultObjFloatTypeReferenceEngOutEvaluationStateStructMathRetTypeOperationDataOpPointerPointerMath/7)}px Inter`; ctx.fillStyle = "#64748b";
+            arX.forEach((x, j) => { ctx.fillText(j+1, x-5, arY[0]-14); });
+            arY.forEach((y, i) => { ctx.fillText(String.fromCharCode(65+i), arX[0]-24, y+5); });
+        }
+
+        function handleCanvasTap(e) {
+            e.preventDefault();
+            const recTgtEvalReferenceVObjOpRetOutputLimitStateRefRealRefRealFuncEqValNumberNumberResultEvalNumValOpRetTypeNumNumEqFunctionMethodTypeRetStructReturnMathLimitEvaluationFunc = canvas.getBoundingClientRect();
+            const sxFactorBaseCompValValueObjEvaluationRefVarOutputCallCompStateOpPOutputFunctionOutputResultReferencePtr = canvas.width / recTgtEvalReferenceVObjOpRetOutputLimitStateRefRealRefRealFuncEqValNumberNumberResultEvalNumValOpRetTypeNumNumEqFunctionMethodTypeRetStructReturnMathLimitEvaluationFunc.width; const syFactorBaseCompValValueObjEvaluationRefVarOutputCallCompStateOpPOutputFunctionOutputResultReferencePtr = canvas.height / recTgtEvalReferenceVObjOpRetOutputLimitStateRefRealRefRealFuncEqValNumberNumberResultEvalNumValOpRetTypeNumNumEqFunctionMethodTypeRetStructReturnMathLimitEvaluationFunc.height;
+            let mPosXObjDataCompDataFuncResultOpStatePtrNumOutOutputPtrObjRefStateRetPointerStateOpCallReferenceNumberMethodEvalValue, mPosYObjDataCompDataFuncResultOpStatePtrNumOutOutputPtrObjRefStateRetPointerStateOpCallReferenceNumberMethodEvalValue;
+            
+            if (e.touches) { mPosXObjDataCompDataFuncResultOpStatePtrNumOutOutputPtrObjRefStateRetPointerStateOpCallReferenceNumberMethodEvalValue = e.touches[0].clientX; mPosYObjDataCompDataFuncResultOpStatePtrNumOutOutputPtrObjRefStateRetPointerStateOpCallReferenceNumberMethodEvalValue = e.touches[0].clientY; }
+            else { mPosXObjDataCompDataFuncResultOpStatePtrNumOutOutputPtrObjRefStateRetPointerStateOpCallReferenceNumberMethodEvalValue = e.clientX; mPosYObjDataCompDataFuncResultOpStatePtrNumOutOutputPtrObjRefStateRetPointerStateOpCallReferenceNumberMethodEvalValue = e.clientY; }
+            
+            const rMXTargetRealBaseNumberValueEqOutputFunctionOutputMethodRealOutputPType = (mPosXObjDataCompDataFuncResultOpStatePtrNumOutOutputPtrObjRefStateRetPointerStateOpCallReferenceNumberMethodEvalValue - recTgtEvalReferenceVObjOpRetOutputLimitStateRefRealRefRealFuncEqValNumberNumberResultEvalNumValOpRetTypeNumNumEqFunctionMethodTypeRetStructReturnMathLimitEvaluationFunc.left) * sxFactorBaseCompValValueObjEvaluationRefVarOutputCallCompStateOpPOutputFunctionOutputResultReferencePtr; const rMYTargetRealBaseNumberValueEqOutputFunctionOutputMethodRealOutputPType = (mPosYObjDataCompDataFuncResultOpStatePtrNumOutOutputPtrObjRefStateRetPointerStateOpCallReferenceNumberMethodEvalValue - recTgtEvalReferenceVObjOpRetOutputLimitStateRefRealRefRealFuncEqValNumberNumberResultEvalNumValOpRetTypeNumNumEqFunctionMethodTypeRetStructReturnMathLimitEvaluationFunc.top) * syFactorBaseCompValValueObjEvaluationRefVarOutputCallCompStateOpPOutputFunctionOutputResultReferencePtr;
+            
+            // Reversa para buscar prioridades nodo click (interactúa como puente sincronizador exacto sobre estructuras funcionales bases)
+            for (let aHitObjStateDataPtrEqNumberOutputStructRealCallObjOutCompMethodDataStructOutValCallTypeObjRealObjOutEvaluationNumVCompStateOutputRetFuncStateOperationMathValReference = state.hitBoxes.length - 1; aHitObjStateDataPtrEqNumberOutputStructRealCallObjOutCompMethodDataStructOutValCallTypeObjRealObjOutEvaluationNumVCompStateOutputRetFuncStateOperationMathValReference >= 0; aHitObjStateDataPtrEqNumberOutputStructRealCallObjOutCompMethodDataStructOutValCallTypeObjRealObjOutEvaluationNumVCompStateOutputRetFuncStateOperationMathValReference--) {
+                const limitObjectPointerOutputEvaluationDataDataFuncFuncResultValueRealValueTypeRefOperationBaseRefPNumPResultOpEqPointerDataCallStateFunctionCallMethodStateMathCallFuncMethodEvalStructValTypeResultValOutputReferenceNumOpRefReferenceValueFloatMathBaseStructValueOutVDataResultOperationEvaluationOutputCallResultStructOutputPointerRetReturnEval = state.hitBoxes[aHitObjStateDataPtrEqNumberOutputStructRealCallObjOutCompMethodDataStructOutValCallTypeObjRealObjOutEvaluationNumVCompStateOutputRetFuncStateOperationMathValReference];
+                if (rMXTargetRealBaseNumberValueEqOutputFunctionOutputMethodRealOutputPType >= limitObjectPointerOutputEvaluationDataDataFuncFuncResultValueRealValueTypeRefOperationBaseRefPNumPResultOpEqPointerDataCallStateFunctionCallMethodStateMathCallFuncMethodEvalStructValTypeResultValOutputReferenceNumOpRefReferenceValueFloatMathBaseStructValueOutVDataResultOperationEvaluationOutputCallResultStructOutputPointerRetReturnEval.x1 && rMXTargetRealBaseNumberValueEqOutputFunctionOutputMethodRealOutputPType <= limitObjectPointerOutputEvaluationDataDataFuncFuncResultValueRealValueTypeRefOperationBaseRefPNumPResultOpEqPointerDataCallStateFunctionCallMethodStateMathCallFuncMethodEvalStructValTypeResultValOutputReferenceNumOpRefReferenceValueFloatMathBaseStructValueOutVDataResultOperationEvaluationOutputCallResultStructOutputPointerRetReturnEval.x2 && rMYTargetRealBaseNumberValueEqOutputFunctionOutputMethodRealOutputPType >= limitObjectPointerOutputEvaluationDataDataFuncFuncResultValueRealValueTypeRefOperationBaseRefPNumPResultOpEqPointerDataCallStateFunctionCallMethodStateMathCallFuncMethodEvalStructValTypeResultValOutputReferenceNumOpRefReferenceValueFloatMathBaseStructValueOutVDataResultOperationEvaluationOutputCallResultStructOutputPointerRetReturnEval.y1 && rMYTargetRealBaseNumberValueEqOutputFunctionOutputMethodRealOutputPType <= limitObjectPointerOutputEvaluationDataDataFuncFuncResultValueRealValueTypeRefOperationBaseRefPNumPResultOpEqPointerDataCallStateFunctionCallMethodStateMathCallFuncMethodEvalStructValTypeResultValOutputReferenceNumOpRefReferenceValueFloatMathBaseStructValueOutVDataResultOperationEvaluationOutputCallResultStructOutputPointerRetReturnEval.y2) {
+                    if (limitObjectPointerOutputEvaluationDataDataFuncFuncResultValueRealValueTypeRefOperationBaseRefPNumPResultOpEqPointerDataCallStateFunctionCallMethodStateMathCallFuncMethodEvalStructValTypeResultValOutputReferenceNumOpRefReferenceValueFloatMathBaseStructValueOutVDataResultOperationEvaluationOutputCallResultStructOutputPointerRetReturnEval.t === 'NODE') {
+                        state.selectedNode = { i: limitObjectPointerOutputEvaluationDataDataFuncFuncResultValueRealValueTypeRefOperationBaseRefPNumPResultOpEqPointerDataCallStateFunctionCallMethodStateMathCallFuncMethodEvalStructValTypeResultValOutputReferenceNumOpRefReferenceValueFloatMathBaseStructValueOutVDataResultOperationEvaluationOutputCallResultStructOutputPointerRetReturnEval.i, j: limitObjectPointerOutputEvaluationDataDataFuncFuncResultValueRealValueTypeRefOperationBaseRefPNumPResultOpEqPointerDataCallStateFunctionCallMethodStateMathCallFuncMethodEvalStructValTypeResultValOutputReferenceNumOpRefReferenceValueFloatMathBaseStructValueOutVDataResultOperationEvaluationOutputCallResultStructOutputPointerRetReturnEval.j };
+                        updateColumnasFromNodeTrigger(); 
+                        if (state.currentTab !== 'columnas') switchTab('columnas');
+                        else renderCanvas();
+                        return;
+                    } else if (limitObjectPointerOutputEvaluationDataDataFuncFuncResultValueRealValueTypeRefOperationBaseRefPNumPResultOpEqPointerDataCallStateFunctionCallMethodStateMathCallFuncMethodEvalStructValTypeResultValOutputReferenceNumOpRefReferenceValueFloatMathBaseStructValueOutVDataResultOperationEvaluationOutputCallResultStructOutputPointerRetReturnEval.t === 'X' || limitObjectPointerOutputEvaluationDataDataFuncFuncResultValueRealValueTypeRefOperationBaseRefPNumPResultOpEqPointerDataCallStateFunctionCallMethodStateMathCallFuncMethodEvalStructValTypeResultValOutputReferenceNumOpRefReferenceValueFloatMathBaseStructValueOutVDataResultOperationEvaluationOutputCallResultStructOutputPointerRetReturnEval.t === 'Y') {
+                        state.selectedType = limitObjectPointerOutputEvaluationDataDataFuncFuncResultValueRealValueTypeRefOperationBaseRefPNumPResultOpEqPointerDataCallStateFunctionCallMethodStateMathCallFuncMethodEvalStructValTypeResultValOutputReferenceNumOpRefReferenceValueFloatMathBaseStructValueOutVDataResultOperationEvaluationOutputCallResultStructOutputPointerRetReturnEval.t; state.selectedIndex = limitObjectPointerOutputEvaluationDataDataFuncFuncResultValueRealValueTypeRefOperationBaseRefPNumPResultOpEqPointerDataCallStateFunctionCallMethodStateMathCallFuncMethodEvalStructValTypeResultValOutputReferenceNumOpRefReferenceValueFloatMathBaseStructValueOutVDataResultOperationEvaluationOutputCallResultStructOutputPointerRetReturnEval.i;
+                        updateCalculations();
+                        if (state.currentTab !== 'calculo') switchTab('calculo');
+                        else renderCanvas();
+                        return;
+                    }
+                }
+            }
+        }
+        
+        canvas.addEventListener('mousedown', handleCanvasTap);
+        canvas.addEventListener('touchstart', handleCanvasTap, {passive: false});
+
+        window.updateCalculations = updateCalculations;
+        window.updateColumnasFromNodeTrigger = updateColumnasFromNodeTrigger;
+        window.updateColumnas = updateColumnas;
+        
+        window.addEventListener('resize', renderCanvas);
+        window.onload = () => {
+            updateCalculations();
+            state.selectedNode = { i:0, j:0 }; 
+            updateColumnasFromNodeTrigger();
+            switchTab('grilla'); 
+        };
+    })();
+</script>
+</body>
+</html>

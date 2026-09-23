@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calculadora Sísmica · Pórticos de Acero · COVENIN 1756-1:2019</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Calculadora Sísmica — Pórticos de Acero</h1>
+    <div class="sub">COVENIN 1756-1:2019 · Fase 1–2: geometría editable en planta + espectro A<sub>d</sub>(T) + peso sísmico W y fuerzas V<sub>0</sub>/F<sub>i</sub></div>
+  </div>
+  <div class="acciones">
+    <button id="btn-guardar" title="Descargar proyecto .json">Guardar</button>
+    <button id="btn-abrir" title="Abrir proyecto .json">Abrir</button>
+    <input type="file" id="file-abrir" accept=".json,application/json" hidden>
+    <button id="btn-calcular" class="primario">Calcular análisis sísmico</button>
+  </div>
+</header>
+
+<main>
+
+  <!-- ==================== PANEL DE ENTRADAS ==================== -->
+  <aside>
+
+    <div class="card">
+      <h2><span class="num">1</span> Proyecto</h2>
+      <label class="campo" for="in-proyecto">Nombre</label>
+      <input type="text" id="in-proyecto" placeholder="Edificio sin nombre">
+      <div class="chips">
+        <span class="chip" id="chip-geo">—</span>
+        <span class="chip" id="chip-niv">—</span>
+        <span class="chip" id="chip-w">W = — · V0 = —</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><span class="num">2</span> Parámetros sísmicos</h2>
+      <div class="grid3">
+        <div class="caja-campo">
+          <label class="campo" for="s-A0">A<sub>0</sub> (mapa 4.1)</label>
+          <input type="number" id="s-A0" step="0.01" min="0">
+        </div>
+        <div class="caja-campo">
+          <label class="campo" for="s-A1">A<sub>1</sub> (mapa 4.2)</label>
+          <input type="number" id="s-A1" step="0.01" min="0">
+        </div>
+        <div class="caja-campo">
+          <label class="campo" for="s-TL">T<sub>L</sub> (mapa 4.3)</label>
+          <input type="number" id="s-TL" step="0.1" min="0">
+        </div>
+        <div class="caja-campo">
+          <label class="campo" for="s-grupo">Grupo de uso (Tabla 14)</label>
+          <select id="s-grupo"></select>
+        </div>
+        <div class="caja-campo">
+          <label class="campo" for="s-nd">Nivel de desempeño (Tablas 15–16)</label>
+          <select id="s-nd"></select>
+        </div>
+        <div class="caja-campo">
+          <label class="campo" for="s-sitio">Clase de sitio (Tabla 3)</label>
+          <select id="s-sitio"></select>
+        </div>
+        <div class="caja-campo">
+          <label class="campo" for="s-topo">Topografía (Tabla 11)</label>
+          <select id="s-topo"></select>
+        </div>
+        <div class="caja-campo">
+          <label class="campo" for="s-H">H media del sitio (m)</label>
+          <input type="number" id="s-H" step="10" min="0">
+        </div>
+        <div class="caja-campo">
+          <label class="campo" for="s-rho">ρ (§7.3.4)</label>
+          <input type="number" id="s-rho" step="0.1" min="1">
+        </div>
+        <div class="caja-campo">
+          <label class="campo" for="s-FI">FI (§7.3.5)</label>
+          <input type="number" id="s-FI" step="0.05" min="1">
+        </div>
+        <div class="caja-campo">
+          <label class="campo" for="s-tabique">Límite deriva (Tabla 25)</label>
+          <input type="number" id="s-tabique" step="0.001" min="0.001">
+        </div>
+      </div>
+      <p class="mini" style="margin-top:8px">A<sub>0</sub>/A<sub>1</sub>/T<sub>L</sub> se leen de los mapas 4.1–4.3 (p. ej. Higuerote ≈ 0,21 / 0,18 / 3,9 s). ρ = 1,0 con 3+ pórticos de 3+ vanos; FI = 1,0 regular.</p>
+    </div>
+
+    <div class="card">
+      <h2><span class="num">3</span> Geometría en planta (editable)</h2>
+      <div class="caja-campo">
+        <label class="campo" for="g-hpiso">Altura típica de piso (m) — pre-llena niveles</label>
+        <input type="number" id="g-hpiso" step="0.05" min="1">
+      </div>
+      <div class="lista-titulo"><span>Vanos dirección X (m)</span>
+        <button id="btn-vx-add" class="btn-micro" title="Agregar vano X">+ vano</button></div>
+      <div id="lista-vx"></div>
+      <div class="lista-titulo"><span>Vanos dirección Y (m)</span>
+        <button id="btn-vy-add" class="btn-micro" title="Agregar vano Y">+ vano</button></div>
+      <div id="lista-vy"></div>
+    </div>
+
+    <div class="card">
+      <h2><span class="num">4</span> Niveles y cargas (peso sísmico, Tabla 20)</h2>
+      <div class="tabla-scroll">
+        <table>
+          <thead>
+            <tr><th>Nº</th><th>h acum. (m)</th><th>CP (kg/m²)</th><th>CV (kg/m²)</th><th>Uso</th><th>Columna</th><th>Área W (m²)</th><th></th></tr>
+          </thead>
+          <tbody id="cuerpo-niveles"></tbody>
+        </table>
+      </div>
+      <div style="margin-top:8px"><button id="btn-nivel-add">+ nivel</button></div>
+      <p class="mini" style="margin-top:8px">h = altura <b>acumulada</b> al nivel. Área vacía = área de planta completa. La fracción de CV la fija el uso (Tabla 20).</p>
+    </div>
+
+    <div class="card">
+      <h2><span class="num">5</span> Material y perfiles</h2>
+      <div class="grid2">
+        <div class="caja-campo">
+          <label class="campo" for="m-viga">Viga de piso (perfil)</label>
+          <select id="m-viga"></select>
+        </div>
+        <div class="caja-campo">
+          <label class="campo" for="m-ppest">PP vigas + columnas (kg/m²)</label>
+          <input type="number" id="m-ppest" step="5" min="0">
+        </div>
+        <div class="caja-campo">
+          <label class="campo" for="m-Fy">F<sub>y</sub> (kg/cm²)</label>
+          <input type="number" id="m-Fy" step="10" min="0">
+        </div>
+        <div class="caja-campo">
+          <label class="campo" for="m-E">E (kg/cm²)</label>
+          <input type="number" id="m-E" step="10000" min="0">
+        </div>
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- ==================== VISOR Y RESULTADOS ==================== -->
+  <section id="vis">
+
+    <div class="card">
+      <div class="toolbar">
+        <span class="badge" id="badge-motor">—</span>
+        <label class="check"><input type="checkbox" id="toggle-perfil-real"> Esquema con perfil real (peralte + huella)</label>
+        <span style="flex:1"></span>
+        <button id="btn-png" title="Descargar la planta como PNG">Exportar PNG</button>
+      </div>
+      <div id="wrap-planta" style="margin-top:10px">
+        <canvas id="planta"></canvas>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Inspector de selección</h2>
+      <div id="inspector"></div>
+    </div>
+
+    <div class="card" id="resultados">
+      <h2>Resultados del análisis sísmico</h2>
+      <div id="kpis" class="kpis"></div>
+
+      <h3>Espectro de diseño A<sub>d</sub>(T) y punto de cálculo T = T<sub>a</sub></h3>
+      <div id="espectro-wrap"><canvas id="espectro"></canvas></div>
+
+      <h3>Fuerzas por nivel (base → tope)</h3>
+      <div class="tabla-scroll">
+        <table>
+          <thead>
+            <tr><th>Nivel</th><th>hᵢ (m)</th><th>Wᵢ (kg)</th><th>Wᵢ·hᵢ</th><th>Fᵢ (kg)</th><th>V entrepiso (kg)</th></tr>
+          </thead>
+          <tbody id="tabla-fuerzas"></tbody>
+        </table>
+      </div>
+      <p class="mini" id="ft-nota" style="margin-top:8px"></p>
+    </div>
+
+  </section>
+</main>
+
+<footer>
+  Fase 1–2 lista: geometría editable · espectro · W · V<sub>0</sub> · F<sub>i</sub>/F<sub>t</sub> · áreas tributarias.
+  Fase 3 (Muto, derivas, torsión 6 %) y Fase 4 (verificación de miembros, P-Δ) pendientes — ver js/muto.js y js/verificaciones.js.
+</footer>
+
+<!-- Orden de carga: catálogo → motor → stubs → estado → canvas → orquestador -->
+<script src="js/datos_perfiles.js" defer></script>
+<script src="js/covenin1756.js" defer></script>
+<script src="js/muto.js" defer></script>
+<script src="js/verificaciones.js" defer></script>
+<script src="js/estado.js" defer></script>
+<script src="js/canvas_planta.js" defer></script>
+<script src="js/app.js" defer></script>
+</body>
+</html>

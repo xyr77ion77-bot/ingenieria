@@ -1,0 +1,1687 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculadora Sismorresistente — Pórticos de Acero · COVENIN 1756-1:2019</title>
+<style>
+  :root{--az:#0b3d6b;--az2:#1a5c99;--gris:#f4f6f9;--ok:#1d8a4e;--mal:#c0392b;--amb:#b9770e}
+  *{box-sizing:border-box;font-family:'Segoe UI',system-ui,Arial,sans-serif}
+  body{margin:0;background:var(--gris);color:#1d2733}
+  header{background:linear-gradient(135deg,var(--az),var(--az2));color:#fff;padding:18px 24px}
+  header h1{margin:0;font-size:1.35rem}
+  header p{margin:4px 0 0;font-size:.85rem;opacity:.9}
+  main{max-width:1180px;margin:0 auto;padding:18px}
+  section{background:#fff;border:1px solid #dde3ea;border-radius:10px;padding:16px;margin-bottom:16px}
+  h2{font-size:1.05rem;color:var(--az);margin:0 0 12px;border-bottom:2px solid var(--az);padding-bottom:6px}
+  h3{font-size:.92rem;color:var(--az2);margin:14px 0 6px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+  .campo{display:flex;flex-direction:column;gap:3px}
+  .campo label{font-size:.78rem;font-weight:600;color:#445}
+  .campo input,.campo select{font-size:.9rem;padding:6px 8px;border:1px solid #c4cdd6;border-radius:6px;background:#fbfcfd}
+  .campo input:focus,.campo select:focus{outline:2px solid var(--az2)}
+  .mini{font-size:.72rem;color:#778;margin-top:2px}
+  table{border-collapse:collapse;width:100%;font-size:.82rem;margin:8px 0}
+  th,td{border:1px solid #d5dbe2;padding:5px 7px;text-align:right}
+  th{background:var(--az);color:#fff;font-weight:600;text-align:center}
+  td:first-child,th:first-child{text-align:left}
+  tr:nth-child(even) td{background:#f6f8fa}
+  .ok{color:var(--ok);font-weight:700}
+  .mal{color:var(--mal);font-weight:700}
+  .amb{color:var(--amb);font-weight:700}
+  .caja{border:1px solid #d5dbe2;border-radius:8px;padding:10px 12px;margin:6px 0;background:#fbfcfd}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
+  .kpi{background:var(--az);color:#fff;border-radius:8px;padding:10px;text-align:center}
+  .kpi .v{font-size:1.1rem;font-weight:800}
+  .kpi .l{font-size:.68rem;opacity:.9}
+  button{background:var(--az2);color:#fff;border:0;border-radius:7px;padding:10px 18px;font-size:.95rem;font-weight:600;cursor:pointer}
+  button:hover{background:var(--az)}
+  button.sec{background:#e7ecf1;color:var(--az);border:1px solid #c4cdd6}
+  button.sec:hover{background:#d9e1e9}
+  .nota{font-size:.78rem;color:#556;background:#f0f4f8;border-left:4px solid var(--az2);padding:8px 12px;border-radius:0 6px 6px 0;margin:8px 0}
+  details{font-size:.82rem;margin-top:6px}
+  details summary{cursor:pointer;color:var(--az2);font-weight:600}
+  .alerta{background:#fdecea;border:1px solid #f5c6c2;color:#a93226;padding:10px 14px;border-radius:8px;margin:8px 0;font-size:.85rem}
+  .aviso{background:#fef9e7;border:1px solid #f7dc6f;color:#7d6608;padding:10px 14px;border-radius:8px;margin:8px 0;font-size:.85rem}
+  footer{text-align:center;font-size:.75rem;color:#889;padding:14px}
+  .tabwrap{overflow-x:auto}
+  /* ---- Modelo interactivo estilo ai_studio_code ---- */
+  .ai-side{display:flex;flex-direction:column;background:#f4f7fb;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden}
+  .ai-tabs{display:flex;background:#fff;border-bottom:1px solid #e2e8f0;padding:0 6px}
+  .aitab{padding:12px 8px;border:none;background:none;cursor:pointer;font-weight:800;font-size:.66rem;color:#64748b;border-bottom:3px solid transparent;white-space:nowrap;flex:1}
+  .aitab.active{color:#2563eb;border-bottom-color:#2563eb}
+  .ai-scroll{overflow-y:auto;padding:12px;max-height:560px}
+  .aicard{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:12px;margin-bottom:12px}
+  .aicard-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+  .aicard h3{font-size:.74rem;font-weight:800;text-transform:uppercase;color:#0f172a;margin:0;border-left:3px solid #2563eb;padding-left:8px;letter-spacing:.4px}
+  .btn-add-ai{background:#2563eb;color:#fff;border:none;width:26px;height:26px;border-radius:6px;font-size:1.1rem;font-weight:800;cursor:pointer;line-height:1}
+  .btn-del-ai{background:none;border:none;color:#ef4444;font-size:1.15rem;cursor:pointer;font-weight:800}
+  .ai-row{display:flex;justify-content:space-between;align-items:center;border:1px solid #e2e8f0;border-radius:6px;padding:6px 10px;margin-bottom:7px;background:#fafaf9}
+  .ai-lbl{font-size:.75rem;font-weight:600;color:#64748b;width:80px}
+  .ai-input{border:none;background:transparent;font-size:.9rem;font-weight:700;color:#0f172a;text-align:center;width:60px;outline:none;border-bottom:2px dashed transparent}
+  .ai-input:focus{border-bottom-color:#2563eb}
+  .ai-input2{width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:7px;font-size:.85rem;font-weight:600;color:#0f172a;outline:none;background:#fff}
+  .ai-input2:focus{border-color:#2563eb}
+  .ai-lbl2{display:block;font-size:.68rem;font-weight:700;color:#64748b;margin-bottom:4px}
+  .ai-grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+  .ai-badge{background:#0f172a;color:#fff;padding:6px 12px;border-radius:20px;font-size:.72rem;font-weight:800;text-align:center;display:block;margin-bottom:10px}
+  .ai-formula{background:#f8fafc;border:1px solid #e2e8f0;padding:10px;border-radius:8px;font-size:.78rem;line-height:1.9;color:#0f172a;overflow-x:auto;margin-bottom:9px;font-family:monospace}
+  .ai-result{background:#0f172a;color:#fff;padding:8px 12px;border-radius:20px;font-size:.72rem;font-weight:800;text-align:center;display:inline-block;margin-bottom:8px}
+  .col-info-badge{background:#8b5cf6;color:#fff;padding:2px 10px;border-radius:20px;font-size:.7rem;font-weight:700;float:right;display:inline-block;transform:translateY(-2px)}
+  .viewp{flex:1;display:flex;align-items:center;justify-content:center;padding:6px;background:#fff;border:1px solid #e2e8f0;border-radius:10px;overflow:auto;max-height:560px}
+
+  .nivel-row td:first-child{font-weight:600}
+</style>
+</head>
+<body>
+<header>
+  <h1>🏗️ Calculadora Sismorresistente — Pórticos de Acero</h1>
+  <p>Análisis estático elástico · COVENIN 1756-1:2019 · Prediseño y verificación rápida (no sustituye SAP2000/ETABS) · Etapa 1: sismo + reparto por rigideces (Muto) + derivas + verificación de miembros</p>
+</header>
+<main>
+
+<section>
+  <h2>1. Parámetros sísmicos y sitio (COVENIN 1756-1:2019)</h2>
+  <div class="grid">
+    <div class="campo"><label>A0 — aceleración del terreno (Fig. 4.1)</label><input type="number" id="A0" step="0.01" value="0.27"></div>
+    <div class="campo"><label>A1 — pseudo-aceleración T=1 s (Fig. 4.2)</label><input type="number" id="A1" step="0.01" value="0.24"></div>
+    <div class="campo"><label>TL — período de transición s (Fig. 4.3)</label><input type="number" id="TL" step="0.1" value="3.9"></div>
+    <div class="campo"><label>Grupo de importancia (α)</label>
+      <select id="grupo">
+        <option value="A1">A1 (α=2.0)</option><option value="A2">A2 (α=1.5)</option>
+        <option value="B1">B1 (α=1.2)</option><option value="B2" selected>B2 (α=1.0)</option>
+        <option value="C">C (α=0.7)</option>
+      </select></div>
+    <div class="campo"><label>Nivel de diseño (pórticos de acero)</label>
+      <select id="nd">
+        <option value="ND3" selected>ND3 — R=6 · Cd=4¼ · Ωo=3</option>
+        <option value="ND2">ND2 — R=3½ · Cd=3¼</option>
+        <option value="ND1">ND1 — R=2½ · Cd=2¼</option>
+      </select></div>
+    <div class="campo"><label>Clase de sitio (VS30, m/s)</label>
+      <select id="sitio">
+        <option value="A">A — roca cristalina (&gt;1500)</option>
+        <option value="AB">AB (1300–1500)</option>
+        <option value="B">B (850–1300)</option>
+        <option value="BC">BC (650–850)</option>
+        <option value="C">C (400–650)</option>
+        <option value="CD">CD (300–400)</option>
+        <option value="D">D (200–300)</option>
+        <option value="DE" selected>DE (170–200)</option>
+        <option value="E">E (120–170)</option>
+        <option value="F">F (&lt;120 — requiere estudio de sitio)</option>
+      </select></div>
+  </div>
+  <div class="grid" style="margin-top:10px">
+    <div class="campo"><label>Condición topográfica</label>
+      <select id="topo"><option value="leve" selected>Leve</option><option value="mod">Moderada</option><option value="sev">Severa</option></select></div>
+    <div class="campo"><label>Profundidad del basamento H (m)</label><input type="number" id="H" step="1" value="30"></div>
+    <div class="campo"><label>ρ — redundancia</label>
+      <select id="rho"><option value="1" selected>ρ=1.0 (≥3 pórticos de ≥3 vanos)</option><option value="1.2">ρ=1.2 (2 pórticos, ≥2 vanos)</option><option value="1.5">ρ=1.5 (2 pórticos, 1 vano)</option><option value="2">ρ=2.0 (1 pórtico)</option></select></div>
+    <div class="campo"><label>FI — irregularidad</label><input type="number" id="FI" step="0.05" value="1.0"><div class="mini">1.0 si regular · 1.4 máximo (Tabla 14)</div></div>
+    <div class="campo"><label>Tabiquería → límite deriva (Tabla 25, B2)</label>
+      <select id="tabique"><option value="0.012">Frágil adosada — 0.012</option><option value="0.018" selected>Dúctil — 0.018</option><option value="0.022">No susceptible — 0.022</option></select></div>
+  </div>
+  <div class="nota">A0, A1 y TL se leen de los mapas 4.1–4.3 para el sitio (o de la microzonificación avalada, p. ej. PMSC Caracas). Los factores de sitio FA/FV/FD se interpolaron de las Tablas 8–12. El diseño solo es válido si la estructura es <b>regular</b> y ≤ 10 pisos ≤ 30 m (Tabla 22); de lo contrario, análisis dinámico obligatorio.</div>
+</section>
+
+<section>
+  <h2>2. Geometría del edificio</h2>
+  <div class="grid">
+    <div class="campo"><label>Número de niveles N</label><input type="number" id="N" min="1" max="10" value="4"></div>
+    <div class="campo"><label>Altura típica de piso (m)</label><input type="number" id="hpiso" step="0.05" value="3.0"><div class="mini">usada solo para pre-llenar alturas por nivel</div></div>
+    <div class="campo"><label>Fy acero (kg/cm²)</label><input type="number" id="Fy" step="10" value="3515">
+      <div class="mini">Atajos: <button type="button" class="sec" style="padding:2px 6px;font-size:.72rem" onclick="setFy(2500)">A-36 (2500)</button> <button type="button" class="sec" style="padding:2px 6px;font-size:.72rem" onclick="setFy(3500)">A-52 (3500)</button> <button type="button" class="sec" style="padding:2px 6px;font-size:.72rem" onclick="setFy(3515)">A572-50 (3515)</button></div></div>
+    <div class="campo"><label>E acero (kg/cm²)</label><input type="number" id="Eac" step="1000" value="2100000"></div>
+    <div class="campo"><label>Orientar eje fuerte de columnas en X</label><select id="orient"><option value="1" selected>Sí (fuerte → X)</option><option value="0">No (fuerte → Y)</option></select></div>
+  </div>
+  <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:12px">
+    <div style="flex:1 1 260px;min-width:230px">
+      <div class="aicard" style="margin-bottom:0">
+        <div class="aicard-head"><h3>EJES LONGITUDINALES (X)</h3><button class="btn-add-ai" onclick="addTramo('X')">+</button></div>
+        <div id="listX"></div>
+        <div class="mini" style="margin-top:6px">N° vanos = nº de tramos · luz total X = Σ luces</div>
+      </div>
+    </div>
+    <div style="flex:1 1 260px;min-width:230px">
+      <div class="aicard" style="margin-bottom:0">
+        <div class="aicard-head"><h3>EJES TRANSVERSALES (Y)</h3><button class="btn-add-ai" onclick="addTramo('Y')">+</button></div>
+        <div id="listY"></div>
+        <div class="mini" style="margin-top:6px">N° vanos = nº de tramos · luz total Y = Σ luces</div>
+      </div>
+    </div>
+  </div>
+  <div class="nota">Cada tramo es una luz editable (min 1 m). Los tramos se identifican en X como <b>Tramo 1-2, 2-3…</b> y en Y como <b>Tramo A-B, B-C…</b>. El análisis sísmico (apartado 4) usa estas luces por vano; pulsa <b>Calcular</b> tras editar.</div>
+</section></section>
+
+<section>
+  <h2>3. Cargas y perfiles por nivel</h2>
+  <div id="tablaniveles"></div>
+  <div class="grid" style="margin-top:10px">
+    <div class="campo"><label>Viga de piso (perfil)</label><select id="vigap"></select></div>
+    <div class="campo"><label>Peso propio vigas/columnas adicional (kg/m²)</label><input type="number" id="ppest" step="5" value="60"></div>
+    <div class="campo"><label>Método de verificación de miembros</label>
+      <select id="metodoVerif">
+        <option value="curso" selected>Curso (ASD · Gadm = Fy · S=Mu/Fy · A=5P/Fy · f≤L/300)</option>
+        <option value="lrfd">AISC 360 LRFD (φPn, φMn=φZ·Fy, interacción H1-1)</option>
+        <option value="ambos">Ambos</option>
+      </select></div>
+  </div>
+  <div class="nota">La columna <b>hᵢ (m)</b> es la <b>altura del nivel medida desde el nivel de base</b> (como exige la distribución Fᵢ). La deriva usa el espesor del entrepiso (diferencia de alturas). Las columnas de la tabla se listan del techo a la base.</div>
+</section>
+
+<section>
+  <h2>4. Resultados</h2>
+  <button id="calcular">Calcular análisis sísmico</button>
+  <button class="sec" id="cargarEjemplo" style="margin-left:8px">Cargar ejemplo del manual (profesor)</button>
+  <div id="resumen" style="margin-top:12px"></div>
+</section>
+
+<section>
+  <h2>5. Soldaduras (filete)</h2>
+  <p style="font-size:.8rem;margin:0 0 8px;color:#556">Dos métodos: <b>Curso</b> (Ps = D·0.707·0.1·Fv, D = t<sub>menor</sub>−2 mm) y <b>AISC 14ª ed.</b> (φRn = 1.392·D·l kips LRFD / Rn/Ω = 0.928·D·l ASD para E70, con corrección por ángulo y chequeo del metal base).</p>
+  <div class="grid">
+    <div class="campo"><label>Método</label>
+      <select id="w_metodo"><option value="ambos" selected>Ambos (curso + AISC)</option><option value="curso">Curso</option><option value="aisc">AISC 14ª ed.</option></select></div>
+    <div class="campo"><label>Reacción en el apoyo, R (kg)</label><input type="number" id="w_R" step="100" value="12000"></div>
+    <div class="campo"><label>t menor de miembros concurrentes (mm)</label><input type="number" id="w_t" step="0.1" value="10.1"><div class="mini">ej. alma IPN 280 = 10.1 mm · ala = 15.2 mm</div></div>
+    <div class="campo"><label>t del miembro más grueso (mm) — para tamaño mín. AISC</label><input type="number" id="w_tg" step="0.1" value="15.2"><div class="mini">Tabla J2.4: fija el tamaño mínimo de filete</div></div>
+  </div>
+  <div class="grid" style="margin-top:8px">
+    <div class="campo"><label>Ángulo de carga θ (°) — 0 longitudinal, 90 transversal</label><input type="number" id="w_theta" step="5" value="0"></div>
+    <div class="campo"><label>Electrodo (AISC)</label>
+      <select id="w_elect"><option value="70" selected>E70XX (coef. 1.000)</option><option value="60">E60XX (0.857)</option><option value="80">E80XX (1.143)</option><option value="90">E90XX (1.286)</option><option value="100">E100XX (1.429)</option><option value="110">E110XX (1.571)</option></select></div>
+    <div class="campo"><label>Método de diseño (AISC)</label>
+      <select id="w_lrfd"><option value="lrfd" selected>LRFD (φ=0.75)</option><option value="asd">ASD (Ω=2.00)</option></select></div>
+    <div class="campo"><label>Fu del metal base (kg/cm²) — AISC</label><input type="number" id="w_Fu" step="10" value="4080"><div class="mini">A36 → 4080 · A572-50 → 4570</div></div>
+    <div class="campo"><label>Fv del electrodo (kg/cm²) — método del curso</label><input type="number" id="w_Fv" step="10" value="1460"><div class="mini">E60 → 1460 · E70 → 1700 (Fy del perfil si longitudinal)</div></div>
+  </div>
+  <div class="caja" id="w_resultado" style="margin-top:8px">—</div>
+</section>
+
+<section>
+  <h2>6. Modelo interactivo — estilo ai_studio_code</h2>
+  <p class="nota">Reproducción fiel del modelo de referencia: <b>sidebar de pestañas</b> (GRADING &amp; VIGAS / VERIFIC. VIGAS / CAPACIDAD COLUMNA) + <b>canvas interactivo</b>. Pulsa un <b>nodo</b> (intersección) → inspecciona la columna · pulsa un <b>tramo</b> (línea) → inspecciona la viga. El panel se actualiza dinámicamente con la selección. Los cálculos sísmicos usan el análisis COVENIN 1756-1:2019 + Muto (sección 4).</p>
+  <div style="display:flex;gap:14px;flex-wrap:wrap">
+    <!-- ============ SIDEBAR ============ -->
+    <div class="ai-side" style="flex:0 1 430px;min-width:320px">
+      <div class="ai-tabs">
+        <button class="aitab active" id="btn-tab-calculo" onclick="switchTabAI('calculo')">VERIFIC. VIGAS</button>
+        <button class="aitab" id="btn-tab-columnas" onclick="switchTabAI('columnas')">CAPACIDAD COLUMNA</button>
+      </div>
+      <div class="ai-scroll">
+        <!-- TAB 1: VERIFIC. VIGAS -->
+        <div id="tab-calculo">
+          <span class="ai-result" id="selected-label">TRAMO SELECCIONADO EN LIENZO</span>
+          <div class="ai-formula" id="formula-momento"></div>
+          <div class="ai-formula" id="formula-sx"></div>
+          <div class="ai-formula" id="formula-flecha"></div>
+          <div id="final-badge-viga" style="padding:14px;border-radius:10px;text-align:center;font-weight:800;font-size:1rem;background:#e2e8f0;color:#334155">---</div>
+        </div>
+        <!-- TAB 2: CAPACIDAD COLUMNA -->
+        <div id="tab-columnas" class="hidden">
+          <div class="aicard">
+            <div class="aicard-head"><h3>ANÁLISIS DE ÁREA DE INFLUENCIA <span id="col-nodo-info" class="col-info-badge">NODO (1,A)</span></h3></div>
+            <p style="font-size:.68rem;color:#64748b;margin:0 0 10px 0">Las luces varían al hacer clic sobre cualquier punto (NODO) del cuadrante en el lienzo.</p>
+            <div class="ai-grid2">
+              <div><label class="ai-lbl2">Posición Cte</label><input type="text" class="ai-input2" id="col-posicion" readonly style="background:#f1f5f9"></div>
+              <div></div>
+              <div><label class="ai-lbl2">L<sub>x1</sub> (m)</label><input type="number" class="ai-input2" id="col-lx1" value="0.0" readonly style="background:#f1f5f9"></div>
+              <div><label class="ai-lbl2">L<sub>x2</sub> (m)</label><input type="number" class="ai-input2" id="col-lx2" value="5.0" readonly style="background:#f1f5f9"></div>
+              <div><label class="ai-lbl2">L<sub>y1</sub> (m)</label><input type="number" class="ai-input2" id="col-ly1" value="0.0" readonly style="background:#f1f5f9"></div>
+              <div><label class="ai-lbl2">L<sub>y2</sub> (m)</label><input type="number" class="ai-input2" id="col-ly2" value="4.0" readonly style="background:#f1f5f9"></div>
+            </div>
+          </div>
+          <div class="aicard">
+            <div class="aicard-head"><h3>CONFIGURACIÓN GENERAL (P<sub>u</sub>)</h3></div>
+            <div class="ai-grid2">
+              <div><label class="ai-lbl2">N° Niveles Soportados</label><input type="number" class="ai-input2" id="col-nPisos" value="4" oninput="updateCalcCol()"></div>
+              <div><label class="ai-lbl2">Altura Columna L (m)</label><input type="number" class="ai-input2" id="col-L-col" value="3.0" step="0.1" oninput="updateCalcCol()"></div>
+              <div><label class="ai-lbl2">Permte Edif q<sub>D</sub> (kg/m²)</label><input type="number" class="ai-input2" id="col-qD" value="400" oninput="updateCalcCol()"></div>
+              <div><label class="ai-lbl2">Viva y S/C q<sub>L</sub> (kg/m²)</label><input type="number" class="ai-input2" id="col-qL" value="200" oninput="updateCalcCol()"></div>
+            </div>
+          </div>
+          <div class="aicard" style="border:2px solid #8b5cf6">
+            <div class="aicard-head"><h3 style="color:#8b5cf6;border-color:#8b5cf6">COMPORTAMIENTO ELÁSTICO &amp; DISEÑO</h3></div>
+            <div style="margin-bottom:12px"><label class="ai-lbl2">Filiación del Elemento Material</label>
+              <select class="ai-input2" id="col-material" onchange="toggleMaterialAI(); updateCalcCol();" style="border-color:#8b5cf6;font-weight:800;background:#f5f3ff">
+                <option value="acero">METALES · Acero Estructural AISC</option>
+                <option value="madera">NATURAL · Madera Maciza / NDS</option>
+              </select></div>
+            <div id="panel-acero-opts">
+              <div class="ai-grid2">
+                <div><label class="ai-lbl2">Límite Fluencia F<sub>y</sub> (kg/cm²)</label>
+                  <select class="ai-input2" id="col-fy-acero" onchange="updateCalcCol()">
+                    <option value="2530">Grado A36 - 2530</option>
+                    <option value="3515">Grado 50 - 3515</option>
+                  </select></div>
+                <div><label class="ai-lbl2">Mod. Cortante Nudos (K)</label><input type="number" class="ai-input2" id="col-kFactor-ac" value="1.0" step="0.1" oninput="document.getElementById('col-kFactor-md').value=this.value; updateCalcCol();"></div>
+              </div>
+            </div>
+            <div id="panel-madera-opts" class="hidden">
+              <div class="ai-grid2">
+                <div><label class="ai-lbl2">Dim. Menor b (cm)</label><input type="number" class="ai-input2" id="col-mad-b" value="20" oninput="updateCalcCol()"></div>
+                <div><label class="ai-lbl2">Dim. Mayor h (cm)</label><input type="number" class="ai-input2" id="col-mad-h" value="30" oninput="updateCalcCol()"></div>
+                <div><label class="ai-lbl2">Cap. Falla F<sub>c</sub> (kg/cm²)</label><input type="number" class="ai-input2" id="col-mad-fc" value="110" oninput="updateCalcCol()"></div>
+                <div><label class="ai-lbl2">E<sub>min</sub> (kg/cm²)</label><input type="number" class="ai-input2" id="col-mad-e" value="85000" oninput="updateCalcCol()"></div>
+                <div><label class="ai-lbl2">Factor Integración de Eje K</label><input type="number" class="ai-input2" id="col-kFactor-md" value="1.0" step="0.1" oninput="document.getElementById('col-kFactor-ac').value=this.value; updateCalcCol();"></div>
+              </div>
+            </div>
+          </div>
+          <div class="aicard">
+            <div class="aicard-head"><h3 style="color:#334155">REPORTE EVALUATIVO</h3></div>
+            <div class="ai-formula" id="col-form-areas"></div>
+            <table style="width:100%;border-collapse:collapse;font-size:.8rem;margin-bottom:10px">
+              <tr><td style="padding:7px 4px;border-bottom:1px solid #e2e8f0">Desplome de Piso y Muro P<sub>D</sub></td><td class="ai-val" id="col-res-pd" style="font-weight:800;text-align:right">---</td><td style="font-size:.7rem;color:#64748b;width:40px;padding-left:8px">tn</td></tr>
+              <tr><td style="padding:7px 4px;border-bottom:1px solid #e2e8f0">Factor de Servicio Humano P<sub>L</sub></td><td class="ai-val" id="col-res-pl" style="font-weight:800;text-align:right">---</td><td style="font-size:.7rem;color:#64748b">tn</td></tr>
+              <tr><td style="padding:7px 4px;font-weight:700">SOLICITACIÓN FINAL P<sub>u</sub></td><td class="ai-val" id="col-res-pu" style="font-weight:800;text-align:right;color:#ef4444">---</td><td style="font-weight:700">tn</td></tr>
+            </table>
+            <div class="ai-formula" id="col-form-resistencias"></div>
+            <table style="width:100%;border-collapse:collapse;font-size:.8rem;margin-bottom:10px">
+              <tr><td style="font-weight:800;padding:8px">LIMITADOR DE COMPRESIÓN φP<sub>n</sub></td><td id="col-res-pn" style="font-weight:800;text-align:right;font-size:1.2rem;color:#059669">---</td><td style="font-size:.7rem;color:#64748b">tn</td></tr>
+            </table>
+            <div id="col-estado"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- ============ VIEWPORT CANVAS ============ -->
+    <div style="flex:1 1 380px;min-width:300px">
+      <div style="margin-bottom:8px"><label class="ai-lbl2" style="display:inline-block;margin-right:8px">Nivel a inspeccionar:</label><select id="sel-nivel" class="ai-input2" style="width:120px;display:inline-block" onchange="onNivelChange()"></select></div>
+      <div class="viewp" id="canvas-wrapper"><canvas id="plantaCanvas"></canvas></div>
+      <div id="sel-badge2" style="margin-top:8px;font-size:.75rem;color:#7d6608;background:#fef9e7;border:1px solid #f7dc6f;border-radius:8px;padding:8px 10px;display:none"></div>
+    </div>
+  </div>
+</section>
+
+<details>
+  <summary>📋 Alcance, supuestos y limitaciones (léelo)</summary>
+  <div class="nota" style="margin-top:8px">
+    <b>Etapa 1 — alcance:</b> método de análisis estático elástico COVENIN 1756-1:2019 (estructuras regulares ≤ 10 pisos y ≤ 30 m). Incluye: parámetros del sitio (A0/A1/TL, clase de sitio con interpolación de Tablas 8–12), espectro de 5 ramas elástico e inelástico, μ, Cmin, V0, Ft, Fi, reparto a pórticos por rigideces, control de derivas (Tabla 25) con rigidez de entrepiso de <b>Muto</b>, verificación de miembros de acero en <b>dos métodos</b> (curso/ASD y AISC 360 LRFD) y módulo de <b>soldaduras</b> con dos métodos (curso y <b>AISC 14ª edición</b>: φRn = 1.392·D·l / 0.928·D·l, corrección por ángulo J2-5, coef. de electrodo, metal base y tamaño mínimo Tabla J2.4).
+    <br><br><b>Catálogo de perfiles:</b> IPE, HEA, HEB (EN), <b>IPN (Sidor/DIN 1025-1)</b> y <b>273 perfiles W-Shapes extraídos de la Parte 1 del AISC Steel Construction Manual 14ª edición</b> (dimensiones + propiedades I, S, Z, r, J, Cw en unidades métricas). ⚠️ Verifica tamaños críticos contra el manual impreso.
+    <br><br><b>Supuestos simplificados:</b> (1) T = Ta = 0.08·h<sub>n</sub>^0.75 (acero, Tabla 24); (2) rigidez de entrepiso por Muto con columnas idénticas por nivel y vigas uniformes; (3) el reparto a pórticos es proporcional a Σ(I/h) de columnas (igual por pórtico con perfiles uniformes); (4) momentos por sismo con puntos de inflexión (método del pórtico) y axial por volcamiento con el método de cantilever (P ∝ x/Σx²); (5) Mn = Z·Fy suponiendo arriostramiento lateral adecuado (Lb ≤ Lp); (6) la carga viva reducida para W sigue la Tabla 20; (7) se muestran las dos verificación de deriva: η_2019 = Cd·δe/h (Tabla 25, principal) y η_manual = 1.1·δ/h (fórmula del curso, conservadora para acero).
+    <br><br><b>No sustituye un análisis matricial (SAP2000/ETABS) ni el criterio de un ingeniero estructural.</b> Verifica los parámetros del sitio contra la norma y los estudios de suelos. Catálogo de perfiles: subconjunto estándar — verifica contra el catálogo del fabricante (p. ej. Conduven).
+  </div>
+</details>
+
+<footer>COVENIN 1756-1:2019 · Etapa 1 — prediseño y uso educativo</footer>
+
+<script id="logica">
+/* ================================================================
+   NÚCLEO DE CÁLCULO — COVENIN 1756-1:2019 (funciones puras)
+   ================================================================ */
+const CLASES = ['A','AB','B','BC','C','CD','D','DE','E'];
+const AXS = [0.01, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5];
+const TAB8 = {
+  'A':[0.80,0.80,0.80,0.80,0.80,0.80,0.80],'AB':[0.85,0.85,0.85,0.85,0.85,0.85,0.85],
+  'B':[0.90,0.90,0.90,0.90,0.90,0.90,0.90],'BC':[1.00,1.00,1.00,1.00,1.00,1.00,1.00],
+  'C':[1.30,1.30,1.25,1.25,1.20,1.20,1.15],'CD':[1.60,1.50,1.45,1.35,1.25,1.20,1.15],
+  'D':[1.90,1.75,1.60,1.40,1.25,1.15,1.00],'DE':[2.40,2.05,1.75,1.35,1.10,0.95,0.80],
+  'E':[2.70,2.20,1.85,1.35,1.00,0.85,0.70]};
+const TAB9 = {
+  'A':[0.80,0.80,0.80,0.80,0.80,0.80,0.80],'AB':[0.85,0.85,0.85,0.85,0.85,0.85,0.85],
+  'B':[0.90,0.90,0.90,0.90,0.90,0.90,0.90],'BC':[1.00,1.00,1.00,1.00,1.00,1.00,1.00],
+  'C':[1.40,1.40,1.40,1.40,1.40,1.40,1.40],'CD':[1.80,1.75,1.75,1.70,1.70,1.65,1.65],
+  'D':[2.30,2.20,2.10,2.00,1.95,1.90,1.85],'DE':[3.30,3.00,2.70,2.50,2.30,2.15,2.00],
+  'E':[4.00,3.30,3.00,2.70,2.45,2.30,2.15]};
+const TAB10 = {'A':0.85,'AB':0.90,'B':0.95,'BC':1.00,'C':1.20,'CD':1.40,'D':1.70,'DE':2.25,'E':2.65};
+const TAB11 = {leve:[1.00,1.00,1.00],mod:[1.20,1.10,1.05],sev:[1.40,1.20,1.10]};
+const TAB12H = [0,10,30,60,100,200,300,500,750,1000];
+const TAB12 = {
+  FAH:[1.00,1.00,1.00,1.00,1.01,1.02,1.03,1.05,1.07,1.10],
+  FVH:[0.98,1.00,1.00,1.02,1.05,1.08,1.10,1.20,1.30,1.40],
+  FDH:[0.93,0.96,1.00,1.05,1.10,1.20,1.30,1.60,2.10,2.80]};
+const TABQ = {A:1.5,AB:1.5,B:1.5,BC:1.7,C:1.7,CD:1.9,D:1.9,DE:2.0,E:2.0};
+const ALFA = {A1:2.0,A2:1.5,B1:1.2,B2:1.0,C:0.7};
+const R_ACERO = {ND3:6,ND2:3.5,ND1:2.5};
+const CD_ACERO = {ND3:4.25,ND2:3.25,ND1:2.25};
+const FRACC_CV = {vivienda:0.15,oficina:0.25,comercio:0.25,agrupacion:0.50,estacionamiento:0.50,almacen:0.80,recipientes:1.0,ascensor:1.0,techo0:0.0};
+
+function interp(aX, clase, TABLA){
+  const arr = TABLA[clase];
+  if (aX <= AXS[0]) return arr[0];
+  if (aX >= AXS[AXS.length-1]) return arr[AXS.length-1];
+  let i = 0;
+  while (i < AXS.length-2 && aX > AXS[i+1]) i++;
+  const t = (aX - AXS[i])/(AXS[i+1]-AXS[i]);
+  return arr[i] + t*(arr[i+1]-arr[i]);
+}
+function interpH(x, col){
+  const arr = TAB12[col];
+  if (x <= TAB12H[0]) return arr[0];
+  for (let i=0;i<TAB12H.length-1;i++){
+    if (x >= TAB12H[i] && x <= TAB12H[i+1]){
+      const t = (x-TAB12H[i])/(TAB12H[i+1]-TAB12H[i]);
+      return arr[i]+t*(arr[i+1]-arr[i]);
+    }
+  }
+  return arr[arr.length-1];
+}
+
+function calcularSismo(p){
+  /* p: {A0,A1,TL,grupo,nd,sitio,topo,H,rho,FI, N, hsAbs:[ascendente m], W:[por nivel],
+        perfCol:[por nivel], viga, Lx,Ly,nx,ny,areaTotal, orient, Fy, E, perfiles} */
+  const R = R_ACERO[p.nd], Cd = CD_ACERO[p.nd];
+  const alpha = ALFA[p.grupo];
+  const aA0 = alpha*p.A0, aA1 = alpha*p.A1;
+  const cl = p.sitio;
+  const FAC = interp(aA0, cl, TAB8), FVC = interp(aA1, cl, TAB9), FDC = TAB10[cl];
+  const [FAT,FVT,FDT] = TAB11[p.topo];
+  const FAH = interpH(p.H,'FAH'), FVH = interpH(p.H,'FVH'), FDH = interpH(p.H,'FDH');
+  const FA = FAC*FAH*FAT, FV = FVC*FVH*FVT, FD = FDC*FDH*FDT;
+  const AA = FA*alpha*p.A0, AV = FV*alpha*p.A1;
+  const beta = 2.4;
+  const betaS = Math.max(beta, AV/AA);
+  const TC = (1/beta)*(AV/AA);
+  const TB = 0.25*TC;
+  const TA = Math.min(0.05, Math.max(0.02, 0.2*TB));
+  const TD = p.TL*(FD/FV);
+  const q = TABQ[cl];
+  const hn = p.hsAbs[p.N-1];                       // altura de la edificación (último nivel)
+  const Ta = 0.08*Math.pow(hn,0.75);               // acero, Tabla 24
+  const T = Ta;
+  const sigma = AA<=0.10?1.7:(AA<=0.20?1.55:1.4);  // Tabla 23
+  const Tmax = sigma*Ta;
+  let Tp = R>=5 ? 0.4 : 0.1*(R-1);
+  Tp = Math.min(TC, Math.max(0.25*TC, Tp));        // 7.23
+  function Ad(T){
+    if (T <= TA) return p.rho*p.FI*AA/1.5;
+    if (T <= Tp) return p.rho*p.FI*(AA/1.5)*(1 + ((T-TA)/(Tp-TA))*((betaS/R)/(1/1.5)-1));
+    if (T <= TC) return p.rho*p.FI*(betaS*AA)/R;
+    if (T <= TD) return p.rho*p.FI*(betaS*AA/R)*(TC/T);
+    return p.rho*p.FI*(betaS*AA/R)*(TC/TD)*Math.pow(TD/T,q);
+  }
+  const AdT = Ad(T);
+  const mu1 = 1.4*(p.N+9)/(2*p.N+12);
+  const mu2 = 0.80 + (1/20)*(T/TC - 1);
+  const mu = Math.max(mu1, mu2);
+  const C = mu*AdT;
+  const Cmin = AA/R;
+  const Wtot = p.W.reduce((a,b)=>a+b,0);
+  const V0 = C*Wtot;
+  const escala = (C < Cmin) ? Cmin/C : 1;
+  const V0d = V0*escala;
+  const coefFt = Math.min(0.10, Math.max(0.04, 0.06*T/TC - 0.02));
+  const Ft = coefFt*V0d;
+  const Veff = V0d - Ft;
+  const Wh = p.W.map((w,i)=>w*p.hsAbs[i]);
+  const sumWh = Wh.reduce((a,b)=>a+b,0);
+  const Fis = Wh.map((wh,i)=> Veff*wh/sumWh);
+  const Vpisos = new Array(p.N).fill(0);           // cortante en entrepiso i (i=0 base)
+  for (let i=p.N-1;i>=0;i--){ Vpisos[i] = (i===p.N-1?0:Vpisos[i+1]) + Fis[i]; }
+  // espesores de entrepiso
+  const espesor = p.hsAbs.map((h,i)=> i===0 ? h : h - p.hsAbs[i-1]);
+  return {R,Cd,alpha,aA0,aA1,FAC,FVC,FDC,FAH,FVH,FDH,FAT,FVT,FDT,FA,FV,FD,
+    AA,AV,betaS,TA,TB,TC,TD,q,hn,Ta,T,Tmax,sigma,Tp,AdT,mu1,mu2,mu,C,Cmin,Wtot,V0,escala,V0d,
+    coefFt,Ft,Veff,Wh,sumWh,Fis,Vpisos,espesor};
+}
+
+const W_AISC14 = {
+  "W10×100":[189.03,28.194,1.727,26.162,2.845,25931.2,8616.0,1835.35,655.48,2130.32,999.61,11.684,6.731,453.7,1382960.0,148.8],
+  "W10×112":[212.26,28.956,1.918,26.416,3.175,29802.2,9823.1,2064.77,742.33,2408.9,1133.98,11.836,6.807,628.5,1616586.0,166.7],
+  "W10×12":[22.84,25.07,0.483,10.058,0.533,2239.3,90.7,178.62,18.03,206.48,28.51,9.906,1.994,2.3,13668.0,17.9],
+  "W10×15":[28.45,25.375,0.584,10.16,0.686,2867.8,120.3,226.14,23.76,262.19,37.69,10.033,2.057,4.3,18341.0,22.3],
+  "W10×17":[32.19,25.654,0.61,10.185,0.838,3408.9,148.2,265.47,29.17,306.44,45.88,10.287,2.146,6.5,22852.0,25.3],
+  "W10×19":[36.26,25.908,0.635,10.211,1.003,4008.3,178.6,308.08,35.07,353.96,54.9,10.516,2.22,9.7,27928.0,28.3],
+  "W10×22":[41.87,25.908,0.61,14.605,0.914,4911.5,474.5,380.18,65.06,426.06,99.96,10.846,3.378,9.9,73847.0,32.7],
+  "W10×26":[49.1,26.162,0.66,14.656,1.118,5993.7,586.9,457.2,80.13,512.92,122.9,11.049,3.454,16.7,92645.0,38.7],
+  "W10×30":[57.03,26.67,0.762,14.757,1.295,7075.9,695.1,530.94,94.23,599.77,144.86,11.125,3.48,25.9,111174.0,44.6],
+  "W10×33":[62.65,24.714,0.737,20.218,1.105,7117.6,1523.4,573.55,150.76,635.82,229.42,10.643,4.928,24.3,212412.0,49.1],
+  "W10×39":[74.19,25.197,0.8,20.295,1.346,8699.2,1873.0,689.9,185.17,766.91,281.86,10.846,5.029,40.6,266388.0,58.0],
+  "W10×45":[85.81,25.654,0.889,20.371,1.575,10322.5,2222.7,804.6,217.95,899.65,332.66,10.973,5.105,62.9,322243.0,67.0],
+  "W10×49":[92.9,25.4,0.864,25.4,1.422,11321.5,3887.6,894.73,306.44,989.78,463.75,11.049,6.452,57.9,555869.0,72.9],
+  "W10×54":[101.94,25.654,0.94,25.4,1.562,12611.8,4287.2,983.22,337.57,1091.38,512.92,11.1,6.502,75.8,623003.0,80.4],
+  "W10×60":[114.19,25.908,1.067,25.654,1.727,14193.5,4828.3,1093.02,376.9,1222.47,573.55,11.151,6.528,103.2,708935.0,89.3],
+  "W10×68":[128.39,26.416,1.194,25.654,1.956,16399.5,5577.5,1240.5,432.62,1397.82,657.12,11.278,6.579,148.2,832461.0,101.2],
+  "W10×77":[146.45,26.924,1.346,25.908,2.21,18938.5,6410.0,1407.65,493.25,1599.38,752.17,11.405,6.604,212.7,974785.0,114.6],
+  "W10×88":[167.74,27.432,1.537,26.162,2.515,22226.8,7450.5,1614.13,570.27,1851.74,870.15,11.532,6.68,313.4,1162760.0,131.0],
+  "W12×106":[201.29,32.766,1.549,30.988,2.515,38834.4,12528.6,2376.12,807.88,2687.48,1230.67,13.894,7.899,380.0,2873334.0,157.7],
+  "W12×120":[227.1,33.274,1.803,31.242,2.819,44536.8,14360.0,2671.09,917.68,3047.99,1399.46,13.995,7.95,536.9,3329845.0,178.6],
+  "W12×136":[257.42,34.036,2.007,31.496,3.175,51612.7,16566.0,3047.99,1052.05,3506.83,1605.93,14.173,8.026,770.0,3947477.0,202.4],
+  "W12×14":[26.84,30.226,0.508,10.084,0.572,3687.8,98.2,244.17,19.5,285.13,31.14,11.735,1.913,2.9,21590.0,20.8],
+  "W12×152":[288.39,34.798,2.21,31.75,3.556,59521.1,18896.9,3424.9,1192.98,3982.06,1818.96,14.376,8.103,1073.9,4618817.0,226.2],
+  "W12×16":[30.39,30.48,0.559,10.135,0.673,4287.2,117.4,280.22,23.11,329.38,37.03,11.862,1.963,4.3,26021.0,23.8],
+  "W12×170":[322.58,35.56,2.438,32.004,3.962,68678.2,21519.2,3850.96,1348.66,4506.44,2064.77,14.58,8.179,1481.8,5397571.0,253.0],
+  "W12×19":[35.94,30.988,0.597,10.185,0.889,5411.0,156.5,349.04,30.81,404.76,48.83,12.243,2.088,7.5,35178.0,28.3],
+  "W12×190":[361.29,36.576,2.692,32.258,4.42,78667.7,24516.0,4309.8,1524.0,5096.38,2343.35,14.783,8.255,2031.2,6337446.0,282.8],
+  "W12×210":[398.71,37.338,2.997,32.512,4.826,89073.5,27637.8,4785.02,1704.25,5702.7,2605.54,14.961,8.331,2693.0,7304176.0,312.5],
+  "W12×22":[41.81,31.242,0.66,10.236,1.079,6493.2,194.0,416.23,37.85,480.14,59.98,12.471,2.154,12.2,44040.0,32.7],
+  "W12×230":[436.77,38.354,3.277,32.766,5.258,100728.0,30884.4,5260.25,1884.51,6325.41,2900.51,15.164,8.407,3488.0,8378319.0,342.3],
+  "W12×252":[478.06,39.116,3.556,33.02,5.715,113214.9,34464.0,5784.63,2081.16,7013.66,3211.86,15.392,8.484,4495.3,9613584.0,375.0],
+  "W12×26":[49.35,30.988,0.584,16.485,0.965,8491.1,720.1,547.33,87.51,609.6,133.88,13.132,3.835,12.5,163001.0,38.7],
+  "W12×279":[528.39,40.386,3.886,33.274,6.274,129448.0,39000.9,6440.12,2343.35,7882.18,3605.15,15.646,8.585,5952.1,11278506.0,415.2],
+  "W12×30":[56.71,31.242,0.66,16.561,1.118,9906.3,844.9,632.54,102.26,706.28,156.66,13.233,3.861,19.0,193346.0,44.6],
+  "W12×305":[577.42,41.402,4.14,33.528,6.883,147762.2,43704.3,7128.37,2605.54,8799.85,3998.44,15.977,8.687,7700.3,13050843.0,453.9],
+  "W12×336":[638.06,42.672,4.521,34.036,7.518,168990.0,49531.5,7914.95,2900.51,9881.4,4490.06,16.281,8.814,10114.4,15306544.0,500.0],
+  "W12×35":[66.45,31.75,0.762,16.662,1.321,11862.6,1019.8,747.25,122.41,839.02,188.45,13.335,3.912,30.8,236043.0,52.1],
+  "W12×40":[75.48,30.226,0.749,20.345,1.308,12778.3,1835.6,843.93,180.26,934.06,275.3,13.03,4.928,37.7,386692.0,59.5],
+  "W12×45":[84.52,30.734,0.851,20.447,1.46,14484.9,2081.2,945.53,203.2,1052.05,311.35,13.081,4.953,52.4,443084.0,67.0],
+  "W12×50":[94.19,30.988,0.94,20.523,1.626,16274.6,2343.4,1052.05,227.78,1178.23,349.04,13.157,4.978,71.2,504847.0,74.4],
+  "W12×53":[100.64,30.734,0.876,25.4,1.46,17689.8,3987.5,1156.93,314.63,1276.55,476.86,13.284,6.299,65.8,848573.0,78.9],
+  "W12×58":[109.68,30.988,0.914,25.4,1.626,19771.0,4453.7,1278.19,350.68,1415.84,532.58,13.411,6.375,87.4,958673.0,86.3],
+  "W12×65":[123.23,30.734,0.991,30.48,1.537,22185.1,7242.4,1440.42,476.86,1586.27,722.67,13.411,7.671,90.7,1552137.0,96.7],
+  "W12×72":[136.13,31.242,1.092,30.48,1.702,24849.0,8116.5,1596.1,530.94,1769.8,806.24,13.487,7.722,122.0,1756225.0,107.1],
+  "W12×79":[149.68,31.496,1.194,30.734,1.867,27554.5,8990.6,1753.42,586.66,1950.06,889.82,13.564,7.747,159.8,1968368.0,117.6],
+  "W12×87":[165.16,31.75,1.308,30.734,2.057,30801.1,10031.2,1933.67,650.57,2163.09,989.78,13.665,7.798,212.3,2220792.0,129.5],
+  "W12×96":[181.94,32.258,1.397,30.988,2.286,34672.1,11238.2,2146.71,727.59,2408.9,1106.13,13.818,7.849,285.1,2526923.0,142.9],
+  "W14×109":[206.45,36.322,1.334,37.084,2.184,51612.7,18605.5,2834.96,1002.89,3146.32,1519.08,15.799,9.474,296.4,5424425.0,162.2],
+  "W14×120":[227.74,36.83,1.499,37.338,2.388,57439.9,20603.5,3113.54,1106.13,3474.06,1671.48,15.85,9.5,390.0,6095764.0,178.6],
+  "W14×132":[250.32,37.338,1.638,37.338,2.616,63683.4,22809.5,3424.9,1220.84,3834.57,1851.74,15.951,9.55,512.0,6847665.0,196.4],
+  "W14×145":[275.48,37.592,1.727,39.37,2.769,71175.6,28178.9,3801.8,1430.59,4260.64,2179.48,16.078,10.109,632.7,8512587.0,215.8],
+  "W14×159":[301.29,38.1,1.892,39.624,3.023,79084.0,31134.1,4162.31,1576.44,4703.09,2392.51,16.205,10.16,820.0,9559877.0,236.6],
+  "W14×176":[334.19,38.608,2.108,39.878,3.327,89073.5,34880.2,4604.76,1753.42,5243.86,2671.09,16.332,10.211,1103.0,10875703.0,261.9],
+  "W14×193":[366.45,39.37,2.261,39.878,3.658,99895.5,38751.1,5079.99,1950.06,5817.41,2949.67,16.51,10.287,1448.5,12325796.0,287.2],
+  "W14×211":[400.0,39.878,2.489,40.132,3.962,110717.6,42871.8,5538.83,2130.32,6390.95,3244.64,16.637,10.338,1856.4,13829597.0,314.0],
+  "W14×22":[41.87,34.798,0.584,12.7,0.851,8283.0,291.4,475.22,45.88,544.05,71.94,14.072,2.642,8.7,84320.0,32.7],
+  "W14×233":[441.93,40.64,2.718,40.386,4.369,125285.7,47866.6,6145.15,2376.12,7144.76,3621.54,16.84,10.414,2476.6,15843616.0,346.7],
+  "W14×257":[487.74,41.656,2.997,40.64,4.801,141518.7,53693.9,6800.63,2638.32,7980.5,4031.22,17.043,10.49,3292.4,18206732.0,382.5],
+  "W14×26":[49.61,35.306,0.648,12.776,1.067,10197.7,370.9,578.46,58.17,658.76,90.78,14.351,2.743,14.9,108757.0,38.7],
+  "W14×283":[537.42,42.418,3.277,40.894,5.258,159832.9,59937.3,7521.66,2933.28,8881.79,4490.06,17.247,10.592,4328.8,20865237.0,421.2],
+  "W14×30":[57.1,35.052,0.686,17.094,0.978,12112.3,815.8,688.26,95.37,775.11,147.32,14.554,3.785,15.8,238191.0,44.6],
+  "W14×311":[589.68,43.434,3.581,41.148,5.74,180228.2,67013.3,8291.85,3261.03,9881.4,4981.67,17.475,10.668,5660.7,23926546.0,462.8],
+  "W14×34":[64.52,35.56,0.724,17.145,1.156,14151.9,969.8,796.41,113.23,894.73,173.7,14.808,3.886,23.7,287333.0,50.6],
+  "W14×342":[651.61,44.45,3.912,41.656,6.274,203953.4,75337.9,9143.98,3621.54,11012.11,5538.83,17.729,10.77,7408.9,27659194.0,509.0],
+  "W14×370":[703.22,45.466,4.216,41.91,6.756,226429.9,82830.1,9946.95,3949.28,12060.88,6063.21,17.958,10.846,9240.3,31150161.0,550.6],
+  "W14×38":[72.26,35.814,0.787,17.196,1.308,16024.9,1111.3,894.73,129.13,1007.8,198.28,14.91,3.937,33.2,330299.0,56.6],
+  "W14×398":[754.84,46.482,4.496,42.164,7.239,249738.9,90322.2,10749.91,4293.41,13126.04,6587.6,18.186,10.947,11363.1,34641127.0,592.3],
+  "W14×426":[806.45,47.498,4.775,42.418,7.722,274712.7,98230.6,11569.27,4637.54,14240.36,7111.99,18.44,11.024,13777.3,38669165.0,634.0],
+  "W14×43":[81.29,34.798,0.775,20.32,1.346,17814.7,1881.4,1025.83,185.17,1140.54,283.5,14.783,4.801,43.7,523645.0,64.0],
+  "W14×455":[864.51,48.26,5.131,42.672,8.153,299270.4,106555.2,12388.62,4981.67,15338.29,7669.15,18.618,11.125,16441.1,42965739.0,677.1],
+  "W14×48":[90.97,35.052,0.864,20.396,1.511,20145.6,2139.4,1150.37,209.75,1284.75,321.19,14.859,4.851,60.4,601520.0,71.4],
+  "W14×500":[948.39,49.784,5.563,43.18,8.89,341726.0,119874.7,13732.36,5555.21,17206.42,8554.05,18.999,11.252,21394.3,50216207.0,744.1],
+  "W14×53":[100.64,35.306,0.94,20.472,1.676,22518.1,2401.7,1274.91,234.34,1427.31,360.52,14.961,4.877,80.7,682081.0,78.9],
+  "W14×550":[1045.16,51.308,6.045,43.688,9.703,392506.2,135275.2,15256.36,6194.31,19336.74,9553.66,19.38,11.405,27845.9,58809355.0,818.5],
+  "W14×605":[1148.38,53.086,6.604,44.196,10.566,449529.9,153173.2,17042.55,6931.73,21630.92,10684.37,19.812,11.557,36170.5,69282254.0,900.3],
+  "W14×61":[115.48,35.306,0.953,25.4,1.638,26638.8,4453.7,1509.25,352.32,1671.48,537.5,15.189,6.223,91.2,1264804.0,90.8],
+  "W14×665":[1264.51,54.864,7.188,44.958,11.481,516127.0,173568.5,18845.12,7734.69,24252.85,11962.56,20.269,11.735,46617.9,81903439.0,989.6],
+  "W14×68":[129.03,35.56,1.054,25.4,1.829,30051.9,5036.4,1687.87,396.57,1884.51,604.68,15.265,6.248,125.3,1444723.0,101.2],
+  "W14×730":[1387.09,56.896,7.798,45.466,12.471,595210.9,196461.2,20975.44,8635.98,27202.53,13371.84,20.752,11.913,60353.6,97209984.0,1086.4],
+  "W14×74":[140.64,36.068,1.143,25.654,1.994,33090.4,5577.5,1835.35,435.9,2064.77,663.68,15.342,6.299,161.1,1608530.0,110.1],
+  "W14×82":[154.84,36.322,1.295,25.654,2.172,36670.0,6160.2,2015.61,480.14,2277.8,734.14,15.367,6.299,211.0,1801876.0,122.0],
+  "W14×90":[170.97,35.56,1.118,36.83,1.803,41581.5,15067.6,2343.35,817.71,2572.77,1238.86,15.596,9.398,169.0,4296574.0,133.9],
+  "W14×99":[187.74,36.068,1.232,37.084,1.981,46201.7,16732.5,2572.77,904.57,2834.96,1369.96,15.672,9.423,223.5,4833646.0,147.3],
+  "W16×100":[189.68,43.18,1.486,26.416,2.502,62018.5,7741.9,2867.74,585.02,3244.64,899.65,18.034,6.375,321.7,3195577.0,148.8],
+  "W16×26":[49.55,39.878,0.635,13.97,0.876,12528.6,399.2,629.26,57.19,724.31,89.8,15.9,2.845,10.9,151723.0,38.7],
+  "W16×31":[58.9,40.386,0.699,14.046,1.118,15608.7,516.1,773.47,73.58,884.9,115.2,16.281,2.972,19.2,198448.0,46.1],
+  "W16×36":[68.39,40.386,0.749,17.755,1.092,18647.2,1019.8,925.87,114.71,1048.77,176.98,16.535,3.861,22.7,392062.0,53.6],
+  "W16×40":[76.13,40.64,0.775,17.78,1.283,21560.8,1202.9,1060.24,135.19,1196.26,208.12,16.84,3.988,33.0,464567.0,59.5],
+  "W16×45":[85.81,40.894,0.876,17.882,1.435,24391.2,1365.2,1191.34,153.06,1348.66,237.61,16.891,3.988,46.2,534386.0,67.0],
+  "W16×50":[94.84,41.402,0.965,17.958,1.6,27429.7,1548.4,1327.35,172.06,1507.61,267.11,16.967,4.039,63.3,609576.0,74.4],
+  "W16×57":[108.39,41.656,1.092,18.085,1.816,31550.3,1794.0,1510.89,198.28,1720.64,309.72,17.069,4.064,92.4,714305.0,84.8],
+  "W16×67":[126.45,41.402,1.003,25.908,1.689,39708.5,4953.2,1917.29,380.18,2130.32,581.74,17.678,6.248,99.5,1960312.0,99.7],
+  "W16×77":[145.81,41.91,1.156,26.162,1.93,46201.7,5744.0,2195.87,440.81,2458.06,673.51,17.78,6.274,148.6,2306723.0,114.6],
+  "W16×89":[169.03,42.672,1.334,26.416,2.223,54110.1,6784.6,2539.99,514.55,2867.74,788.22,17.907,6.325,226.8,2739066.0,132.4],
+  "W18×106":[200.64,47.498,1.499,28.448,2.388,79500.2,9157.1,3342.96,645.65,3769.02,991.42,19.914,6.756,311.3,4672524.0,157.7],
+  "W18×119":[226.45,48.26,1.664,28.702,2.692,91154.7,10530.7,3785.41,735.78,4293.41,1132.35,20.066,6.833,441.2,5451278.0,177.1],
+  "W18×130":[247.1,49.022,1.702,28.448,3.048,102392.9,11571.2,4195.09,817.71,4752.25,1256.89,20.396,6.858,603.5,6095764.0,193.5],
+  "W18×143":[270.97,49.53,1.854,28.448,3.353,114463.6,12944.8,4621.15,909.48,5276.63,1399.46,20.549,6.909,799.2,6901372.0,212.8],
+  "W18×158":[298.71,50.038,2.057,28.702,3.658,127366.8,14443.2,5079.99,1006.17,5833.79,1553.49,20.625,6.96,1048.9,7787540.0,235.1],
+  "W18×175":[331.61,50.8,2.261,28.956,4.039,143599.8,16274.6,5637.15,1127.43,6522.05,1737.03,20.828,7.01,1406.9,8942244.0,260.4],
+  "W18×192":[362.58,51.816,2.438,29.21,4.445,161081.6,18314.2,6227.08,1258.53,7243.08,1950.06,21.031,7.087,1860.6,10204363.0,285.7],
+  "W18×211":[401.93,52.578,2.692,29.464,4.851,180228.2,20520.2,6866.18,1397.82,8029.66,2163.09,21.209,7.163,2439.1,11654457.0,314.0],
+  "W18×234":[442.58,53.594,2.946,29.718,5.359,203953.4,23225.7,7636.37,1569.88,8996.5,2441.67,21.438,7.239,3275.7,13453647.0,348.2],
+  "W18×258":[490.32,54.61,3.251,29.972,5.842,229343.5,26139.3,8422.95,1753.42,10012.5,2720.25,21.666,7.315,4287.2,15467666.0,383.9],
+  "W18×283":[537.42,55.626,3.556,30.226,6.35,256814.8,29302.7,9258.69,1933.67,11077.66,3031.61,21.869,7.391,5577.5,17696514.0,421.2],
+  "W18×311":[590.97,56.642,3.861,30.48,6.96,290113.3,33090.4,10225.53,2163.09,12355.85,3392.12,22.149,7.493,7325.7,20462433.0,462.8],
+  "W18×35":[66.45,44.958,0.762,15.24,1.079,21227.8,636.8,943.89,83.9,1089.74,132.08,17.882,3.099,21.1,306131.0,52.1],
+  "W18×40":[76.13,45.466,0.8,15.291,1.334,25473.4,795.0,1120.88,104.06,1284.75,163.87,18.313,3.226,33.7,386692.0,59.5],
+  "W18×46":[87.1,45.974,0.914,15.392,1.537,29635.7,936.5,1291.3,121.76,1486.31,191.73,18.415,3.277,50.8,461882.0,68.5],
+  "W18×50":[94.84,45.72,0.902,19.05,1.448,33298.5,1669.1,1456.81,175.34,1655.09,272.03,18.745,4.191,51.6,816349.0,74.4],
+  "W18×55":[104.52,45.974,0.991,19.126,1.6,37044.6,1868.9,1610.85,195.01,1835.35,303.16,18.821,4.242,69.1,921078.0,81.8],
+  "W18×60":[113.55,46.228,1.054,19.202,1.765,40957.2,2085.3,1769.8,217.95,2015.61,337.57,18.974,4.267,90.3,1033863.0,89.3],
+  "W18×65":[123.23,46.736,1.143,19.279,1.905,44536.8,2280.9,1917.29,235.97,2179.48,368.71,19.025,4.293,113.6,1138592.0,96.7],
+  "W18×71":[134.84,46.99,1.257,19.406,2.057,48699.1,2509.9,2081.16,258.92,2392.51,404.76,19.05,4.318,145.3,1262119.0,105.7],
+  "W18×76":[143.87,46.228,1.079,27.94,1.727,55358.8,6326.7,2392.51,452.28,2671.09,691.53,19.634,6.629,117.8,3141870.0,113.1],
+  "W18×86":[163.23,46.736,1.219,28.194,1.956,63683.4,7284.0,2720.25,517.83,3047.99,793.13,19.736,6.68,170.7,3652088.0,128.0],
+  "W18×97":[183.87,47.244,1.359,28.194,2.21,72840.5,8366.3,3080.77,591.57,3457.67,906.2,19.863,6.731,243.9,4242867.0,144.4],
+  "W21×101":[192.26,54.356,1.27,31.242,2.032,100728.0,10322.5,3719.86,660.4,4145.93,1011.08,22.911,7.341,216.9,7035640.0,150.3],
+  "W21×111":[210.32,54.61,1.397,31.242,2.223,111133.8,11404.7,4080.38,729.22,4571.99,1117.6,22.987,7.366,284.3,7841247.0,165.2],
+  "W21×122":[231.61,55.118,1.524,31.496,2.438,123204.5,12695.1,4473.67,806.24,5030.83,1238.86,23.089,7.417,373.8,8781123.0,181.6],
+  "W21×132":[250.32,55.372,1.651,31.496,2.642,134026.5,13860.5,4834.18,876.71,5456.89,1348.66,23.165,7.442,470.3,9667291.0,196.4],
+  "W21×147":[278.71,56.134,1.829,31.75,2.921,151092.0,15650.3,5391.34,984.86,6112.37,1517.44,23.292,7.493,641.0,11036824.0,218.8],
+  "W21×166":[314.84,57.15,1.905,31.496,3.454,178147.1,18106.1,6227.08,1147.09,7079.21,1769.8,23.774,7.595,982.3,13023990.0,247.0],
+  "W21×182":[345.81,57.658,2.108,31.75,3.759,196877.5,20104.0,6833.41,1265.08,7800.24,1950.06,23.876,7.62,1277.8,14608351.0,270.8],
+  "W21×201":[382.58,58.42,2.311,32.004,4.14,221018.9,22559.7,7554.44,1410.93,8685.14,2179.48,24.054,7.671,1702.4,16649224.0,299.1],
+  "W21×44":[83.87,52.578,0.889,16.51,1.143,35088.3,861.6,1337.18,104.39,1563.33,167.15,20.472,3.2,32.0,566611.0,65.5],
+  "W21×48":[90.97,52.324,0.889,20.676,1.092,39916.6,1610.8,1524.0,156.0,1753.42,244.17,20.93,4.216,33.4,1060717.0,71.4],
+  "W21×50":[94.84,52.832,0.965,16.586,1.359,40957.2,1036.4,1548.58,125.2,1802.58,199.92,20.777,3.302,47.5,690137.0,74.4],
+  "W21×55":[104.52,52.832,0.953,20.879,1.326,47450.4,2014.6,1802.58,193.37,2064.77,301.52,21.336,4.394,51.6,1337309.0,81.8],
+  "W21×57":[107.74,53.594,1.029,16.662,1.651,48699.1,1273.7,1818.96,153.22,2113.93,242.53,21.234,3.429,73.7,856629.0,84.8],
+  "W21×62":[118.06,53.34,1.016,20.93,1.562,55358.8,2393.3,2081.16,229.42,2359.74,355.6,21.692,4.496,76.2,1600474.0,92.3],
+  "W21×68":[129.03,53.594,1.092,21.006,1.74,61602.3,2693.0,2294.19,257.28,2621.93,399.84,21.844,4.572,102.0,1815302.0,101.2],
+  "W21×73":[138.71,53.848,1.156,21.082,1.88,66597.0,2938.6,2474.45,278.58,2818.58,435.9,21.946,4.597,125.7,1989851.0,108.6],
+  "W21×83":[157.42,54.356,1.308,21.234,2.121,76170.4,3388.1,2802.19,319.55,3211.86,499.81,22.022,4.648,180.6,2317465.0,123.5],
+  "W21×93":[176.13,54.864,1.473,21.387,2.362,86159.9,3866.8,3146.32,362.15,3621.54,568.63,22.098,4.674,251.0,2669247.0,138.4],
+  "W24×103":[195.48,62.23,1.397,22.86,2.489,124869.4,4953.2,4014.83,434.26,4588.38,680.06,25.4,5.055,294.3,4457695.0,153.3],
+  "W24×104":[198.06,61.214,1.27,32.512,1.905,129031.7,10780.4,4227.86,666.95,4735.86,1022.55,25.654,7.391,196.5,9452463.0,154.8],
+  "W24×117":[221.94,61.722,1.397,32.512,2.159,147345.9,12362.1,4768.64,762.0,5358.57,1170.04,25.654,7.468,279.7,10956263.0,174.1],
+  "W24×131":[249.03,62.23,1.537,32.766,2.438,167325.0,14151.9,5391.34,868.51,6063.21,1335.55,25.908,7.544,395.4,12648039.0,194.9],
+  "W24×146":[277.42,62.738,1.651,32.766,2.769,190634.0,16274.6,6079.6,991.42,6849.79,1527.27,26.162,7.645,557.8,14662058.0,217.3],
+  "W24×162":[308.39,63.5,1.791,33.02,3.099,215191.6,18439.1,6784.24,1120.88,7669.15,1720.64,26.416,7.747,770.0,16810345.0,241.1],
+  "W24×176":[333.55,64.008,1.905,32.766,3.404,236419.4,19937.5,7374.18,1217.56,8373.79,1884.51,26.67,7.722,994.8,18367853.0,261.9],
+  "W24×192":[364.52,64.77,2.057,33.02,3.708,260560.9,22060.3,8046.05,1340.46,9160.37,2064.77,26.67,7.798,1282.0,20489287.0,285.7],
+  "W24×207":[391.61,65.278,2.21,33.02,3.988,283869.8,24058.2,8701.53,1455.17,9930.56,2245.03,26.924,7.823,1594.2,22583866.0,308.0],
+  "W24×229":[433.55,66.04,2.438,33.274,4.394,318417.0,27096.7,9635.59,1628.87,11061.27,2523.61,27.178,7.899,2135.3,25806297.0,340.8],
+  "W24×250":[474.19,66.802,2.642,33.528,4.801,353380.5,30135.2,10553.27,1802.58,12191.98,2802.19,27.178,7.976,2772.1,29001874.0,372.0],
+  "W24×279":[528.39,67.818,2.946,33.782,5.309,399582.2,34255.8,11765.91,2032.0,13683.2,3162.7,27.432,8.052,3766.9,33566983.0,415.2],
+  "W24×306":[578.71,68.834,3.2,34.036,5.791,445367.6,38251.7,12929.39,2245.03,15108.87,3506.83,27.686,8.128,4869.9,38132093.0,455.4],
+  "W24×335":[634.19,69.85,3.505,34.29,6.299,495315.4,42871.8,14158.42,2490.83,16714.81,3900.12,27.94,8.204,6326.7,43234275.0,498.5],
+  "W24×370":[703.22,71.12,3.861,34.798,6.909,557750.1,48282.8,15682.42,2785.8,18517.38,4375.35,28.194,8.306,8366.3,49947671.0,550.6],
+  "W24×55":[104.52,59.944,1.003,17.805,1.283,56191.2,1211.2,1868.13,136.01,2195.87,217.95,23.139,3.404,49.1,1039234.0,81.8],
+  "W24×62":[117.42,60.198,1.092,17.882,1.499,64515.9,1436.0,2146.71,160.59,2507.22,257.28,23.444,3.505,71.2,1240636.0,92.3],
+  "W24×68":[129.68,60.198,1.054,22.784,1.486,76170.4,2930.3,2523.61,257.28,2900.51,401.48,24.257,4.75,77.8,2532293.0,101.2],
+  "W24×76":[144.52,60.706,1.118,22.835,1.727,87408.6,3433.9,2884.12,301.52,3277.41,468.67,24.613,4.877,111.6,2980748.0,113.1],
+  "W24×84":[159.35,61.214,1.194,22.911,1.956,98646.8,3929.2,3211.86,342.49,3670.7,534.22,24.867,4.953,154.0,3437259.0,125.0],
+  "W24×94":[178.71,61.722,1.308,23.038,2.223,112382.5,4536.9,3637.93,393.29,4162.31,614.51,25.07,5.029,218.9,4028038.0,139.9],
+  "W27×102":[193.55,68.834,1.308,25.4,2.108,150675.8,5785.6,4375.35,455.56,4998.05,711.2,27.94,5.461,219.8,6444861.0,151.8],
+  "W27×114":[216.77,69.342,1.448,25.654,2.362,169822.4,6618.1,4899.73,516.19,5620.76,807.88,27.94,5.537,305.1,7411590.0,169.7],
+  "W27×129":[243.87,70.104,1.549,25.4,2.794,198126.2,7658.7,5653.54,603.04,6472.89,943.89,28.448,5.613,462.0,8727416.0,192.0],
+  "W27×146":[278.71,69.596,1.537,35.56,2.477,235587.0,18439.1,6784.24,1040.58,7603.6,1601.02,29.21,8.128,470.3,20730969.0,217.3],
+  "W27×161":[307.1,70.104,1.676,35.56,2.743,262642.0,20686.7,7505.28,1161.84,8439.34,1786.19,29.21,8.204,628.5,23443181.0,239.6],
+  "W27×178":[338.71,70.612,1.841,35.814,3.023,292194.5,23100.8,8275.47,1291.3,9340.63,1999.22,29.464,8.255,836.6,26423929.0,264.9],
+  "W27×194":[368.39,71.374,1.905,35.56,3.404,327157.9,25764.7,9160.37,1443.7,10340.24,2228.64,29.718,8.357,1128.0,29807481.0,288.7],
+  "W27×217":[412.26,72.136,2.108,35.814,3.81,370862.2,29302.7,10274.69,1638.71,11651.2,2523.61,29.972,8.433,1565.0,34372591.0,322.9],
+  "W27×235":[447.74,72.898,2.311,36.068,4.089,403744.5,32008.2,11094.04,1769.8,12650.81,2753.03,29.972,8.458,1956.3,37863557.0,349.7],
+  "W27×258":[490.97,73.66,2.489,36.322,4.496,449529.9,35754.3,12208.36,1966.45,13961.78,3064.38,30.226,8.534,2564.0,42697203.0,383.9],
+  "W27×281":[536.13,74.422,2.692,36.576,4.902,495315.4,39666.9,13339.07,2179.48,15338.29,3375.74,30.48,8.611,3309.0,47799384.0,418.2],
+  "W27×307":[581.93,75.184,2.946,36.576,5.309,545263.2,43704.3,14535.33,2392.51,16878.68,3719.86,30.48,8.661,4203.9,53438637.0,456.9],
+  "W27×336":[640.0,76.2,3.2,37.084,5.791,607697.9,49115.3,15928.23,2654.7,18517.38,4129.54,30.734,8.763,5452.6,60689106.0,500.0],
+  "W27×368":[703.22,77.216,3.505,37.338,6.299,674294.9,54526.3,17370.29,2933.28,20319.96,4571.99,30.988,8.839,7075.9,68476646.0,547.6],
+  "W27×539":[1025.8,82.55,5.004,38.862,8.992,1065552.4,87824.8,25727.69,4539.22,30971.55,7161.15,32.258,9.271,20645.1,118961389.0,802.1],
+  "W27×84":[159.35,67.818,1.168,25.4,1.626,118626.0,4412.1,3490.44,347.41,3998.44,544.05,27.178,5.258,117.0,4806792.0,125.0],
+  "W27×94":[178.06,68.326,1.245,25.4,1.892,136107.7,5161.3,3982.06,406.4,4555.6,635.82,27.686,5.385,167.7,5719814.0,139.9],
+  "W30×108":[204.52,75.692,1.384,26.67,1.93,186055.4,6077.0,4899.73,457.2,5669.92,719.39,30.226,5.461,207.7,8297758.0,160.7],
+  "W30×116":[220.64,76.2,1.435,26.67,2.159,205202.1,6826.2,5391.34,512.92,6194.31,806.24,30.48,5.563,267.6,9371902.0,172.6],
+  "W30×124":[235.48,76.708,1.486,26.67,2.362,223100.0,7533.8,5817.41,563.72,6685.92,884.9,30.734,5.664,332.6,10365484.0,184.5],
+  "W30×132":[250.32,76.962,1.562,26.67,2.54,240165.5,8158.1,6227.08,609.6,7161.15,957.0,30.988,5.715,404.6,11305360.0,196.4],
+  "W30×148":[281.29,77.978,1.651,26.67,2.997,278042.6,9448.5,7144.76,709.56,8193.53,1114.32,31.496,5.791,603.5,13265672.0,220.2],
+  "W30×173":[328.39,77.216,1.664,38.1,2.718,342558.5,24890.6,8865.4,1307.69,9946.95,2015.61,32.258,8.687,649.3,34641127.0,257.5],
+  "W30×191":[361.93,77.978,1.803,38.1,3.023,382932.9,28012.4,9832.24,1466.64,11061.27,2261.41,32.512,8.788,874.1,39206237.0,284.2],
+  "W30×211":[401.93,78.486,1.969,38.354,3.353,428718.4,31508.7,10897.4,1638.71,12306.69,2539.99,32.766,8.865,1182.1,44576954.0,314.0],
+  "W30×235":[447.1,79.502,2.108,38.354,3.81,486990.8,35587.8,12257.52,1868.13,13879.84,2867.74,33.02,8.915,1677.4,51021815.0,349.7],
+  "W30×261":[496.77,80.264,2.362,38.608,4.191,545263.2,39916.6,13584.88,2081.16,15453.0,3211.86,33.274,8.966,2251.8,57735211.0,388.4],
+  "W30×292":[554.84,81.28,2.591,38.862,4.699,620184.8,45785.5,15239.97,2359.74,17370.29,3654.32,33.528,9.093,3130.1,67133967.0,434.5],
+  "W30×326":[618.71,82.296,2.896,39.116,5.207,699268.8,51612.7,17042.55,2654.7,19500.61,4129.54,33.528,9.144,4287.2,77069794.0,485.1],
+  "W30×357":[677.42,83.312,3.15,39.37,5.69,778352.8,57856.2,18681.25,2933.28,21630.92,4571.99,33.782,9.246,5577.5,87005621.0,531.3],
+  "W30×391":[741.93,84.328,3.454,39.624,6.198,861599.1,64515.9,20483.83,3244.64,23761.24,5079.99,34.036,9.322,7200.8,98284127.0,581.9],
+  "W30×90":[169.68,74.93,1.194,26.416,1.549,150259.5,4786.7,4014.83,362.15,4637.54,568.63,29.718,5.309,118.2,6444861.0,133.9],
+  "W30×99":[187.1,75.438,1.321,26.67,1.702,166076.3,5327.8,4408.12,401.48,5112.76,632.54,29.718,5.334,156.9,7196761.0,147.3],
+  "W33×118":[223.87,83.566,1.397,29.21,1.88,245576.5,7783.5,5882.96,534.22,6800.63,840.66,33.02,5.893,220.6,12970282.0,175.6],
+  "W33×130":[247.1,84.074,1.473,29.21,2.172,279291.3,9073.8,6653.15,621.07,7652.76,975.03,33.528,6.071,306.8,15199130.0,193.5],
+  "W33×141":[267.74,84.582,1.537,29.21,2.438,310092.4,10239.3,7341.4,699.73,8422.95,1096.29,34.036,6.172,403.7,17293710.0,209.8],
+  "W33×152":[289.68,85.09,1.613,29.464,2.692,339644.8,11363.1,7980.5,773.47,9160.37,1211.0,34.29,6.274,516.1,19254022.0,226.2],
+  "W33×169":[319.35,85.852,1.702,29.21,3.099,386679.0,12903.2,8996.5,883.26,10307.46,1383.07,34.798,6.35,736.7,22127355.0,251.5],
+  "W33×201":[381.29,85.598,1.816,39.878,2.921,482828.5,31175.7,11241.53,1560.05,12667.2,2408.9,35.56,9.042,865.8,53170102.0,299.1],
+  "W33×221":[421.29,86.106,1.969,40.132,3.251,536938.5,34963.4,12437.78,1737.03,14043.71,2687.48,35.814,9.119,1157.1,60152034.0,328.9],
+  "W33×241":[458.71,86.868,2.108,40.386,3.556,591048.6,38834.4,13617.65,1933.67,15403.84,2982.45,35.814,9.195,1506.8,67402503.0,358.6],
+  "W33×263":[499.35,87.63,2.21,40.132,3.988,661808.0,43288.1,15059.71,2146.71,17042.55,3310.19,36.322,9.296,2027.0,75458578.0,391.4],
+  "W33×291":[552.26,88.392,2.438,40.386,4.394,736729.6,48282.8,16714.81,2392.51,19008.99,3703.48,36.576,9.347,2709.7,85662941.0,433.1],
+  "W33×318":[604.51,89.408,2.642,40.64,4.801,811651.3,53693.9,18189.64,2638.32,20811.57,4096.77,36.83,9.423,3513.0,95867304.0,473.2],
+  "W33×354":[670.97,90.424,2.946,40.894,5.309,915709.1,60769.8,20319.96,2966.06,23269.63,4621.15,36.83,9.5,4786.7,109562634.0,526.8],
+  "W33×387":[735.48,91.44,3.2,41.148,5.791,1011442.4,67429.5,22122.54,3277.41,25563.82,5112.76,37.084,9.576,6160.2,123257963.0,575.9],
+  "W36×135":[257.42,90.424,1.524,30.48,2.007,324660.5,9365.2,7193.92,617.79,8341.02,978.31,35.56,6.045,291.4,18287293.0,200.9],
+  "W36×150":[285.81,91.186,1.587,30.48,2.388,376273.2,11238.2,8259.08,739.06,9520.88,1161.84,36.322,6.274,420.4,22073648.0,223.2],
+  "W36×160":[303.23,91.44,1.651,30.48,2.591,406241.9,12278.8,8881.79,804.6,10225.53,1266.72,36.576,6.35,516.1,24221935.0,238.1],
+  "W36×170":[322.58,91.948,1.727,30.48,2.794,437043.0,13319.4,9520.88,871.79,10946.56,1373.24,36.83,6.426,628.5,26450783.0,253.0],
+  "W36×182":[345.81,92.202,1.841,30.734,2.997,470341.5,14443.2,10209.14,943.89,11765.91,1486.31,36.83,6.477,770.0,28733338.0,270.8],
+  "W36×194":[367.74,92.71,1.943,30.734,3.2,503640.0,15608.7,10881.01,1014.36,12568.88,1601.02,37.084,6.502,924.0,31150161.0,288.7],
+  "W36×210":[399.35,93.218,2.108,30.988,3.454,549425.5,17107.1,11782.3,1106.13,13650.42,1753.42,37.084,6.553,1165.4,34372591.0,312.5],
+  "W36×231":[440.0,92.71,1.93,41.91,3.2,649321.0,39125.8,13994.55,1868.13,15780.74,2884.12,38.354,9.423,1194.6,78412473.0,343.8],
+  "W36×232":[438.71,94.234,2.21,30.734,3.988,624347.1,19479.6,13257.13,1265.08,15338.29,1999.22,37.592,6.655,1648.3,39743308.0,345.3],
+  "W36×247":[467.74,93.218,2.032,41.91,3.429,695106.5,42039.4,14961.39,2015.61,16878.68,3113.54,38.608,9.5,1444.3,84857334.0,367.6],
+  "W36×256":[485.81,94.996,2.438,30.988,4.394,699268.8,21977.0,14666.42,1417.48,17042.55,2245.03,37.846,6.731,2201.9,45114026.0,381.0],
+  "W36×262":[498.06,93.726,2.134,42.164,3.658,745054.3,45369.2,15928.23,2163.09,18025.77,3342.96,38.862,9.55,1731.5,91839266.0,389.9],
+  "W36×282":[534.84,94.234,2.248,42.164,3.988,815813.6,49947.8,17206.42,2359.74,19500.61,3654.32,39.116,9.652,2193.5,101506558.0,419.7],
+  "W36×302":[574.19,94.742,2.4,42.418,4.267,878248.3,54110.1,18517.38,2556.38,20975.44,3949.28,39.116,9.703,2676.4,110636777.0,449.4],
+  "W36×330":[625.16,95.758,2.591,42.164,4.699,969819.2,59104.9,20319.96,2802.19,23105.76,4342.57,39.37,9.728,3508.8,122452355.0,491.1],
+  "W36×361":[683.87,96.52,2.845,42.418,5.105,1069714.8,65348.3,22122.54,3080.77,25399.95,4801.41,39.624,9.779,4536.9,136684756.0,537.2],
+  "W36×395":[748.39,97.536,3.099,42.672,5.588,1186259.6,72840.5,24416.73,3408.51,28021.88,5325.8,39.878,9.855,5910.5,154408123.0,587.8],
+  "W36×441":[838.71,98.806,3.454,43.18,6.198,1336102.9,82830.1,27038.66,3850.96,31299.29,6030.44,39.878,9.957,8074.9,177502208.0,656.3],
+  "W36×487":[922.58,99.822,3.81,43.434,6.807,1498433.1,93652.1,29988.33,4309.8,34904.45,6751.47,40.132,10.058,10738.8,202476043.0,724.7],
+  "W36×529":[1006.45,101.092,4.089,43.688,7.391,1648276.4,103641.6,32610.26,4735.86,38181.86,7439.73,40.64,10.16,13610.8,227181343.0,787.2],
+  "W36×652":[1238.71,104.394,5.004,44.704,8.992,2106131.0,134442.8,40312.18,6014.05,47686.36,9520.88,41.148,10.414,24682.5,303445529.0,970.3],
+  "W40×149":[282.58,97.028,1.6,29.972,2.108,407906.8,9531.7,8406.56,635.82,9799.46,1019.28,38.1,5.817,389.6,21482869.0,221.7],
+  "W40×167":[318.06,98.044,1.651,29.972,2.616,482828.5,11779.3,9832.24,784.94,11356.24,1245.42,38.862,6.096,582.7,26773026.0,248.5],
+  "W40×183":[343.87,99.06,1.651,29.972,3.048,549425.5,13777.3,11061.27,917.68,12683.59,1446.98,39.878,6.325,803.3,31687232.0,272.3],
+  "W40×199":[379.35,98.298,1.651,40.132,2.718,620184.8,28928.1,12618.04,1445.34,14240.36,2245.03,40.64,8.763,761.7,66059823.0,296.1],
+  "W40×211":[400.64,100.076,1.905,29.972,3.607,645158.7,16233.0,12880.23,1083.18,14846.68,1720.64,40.132,6.375,1265.3,37863557.0,314.0],
+  "W40×215":[409.68,99.06,1.651,40.132,3.099,695106.5,33423.4,14076.49,1655.09,15797.13,2556.38,41.148,8.992,1032.3,76264186.0,320.0],
+  "W40×235":[445.81,100.838,2.108,30.226,4.013,724242.7,18480.7,14338.68,1222.47,16550.93,1933.67,40.386,6.452,1719.0,43234275.0,349.7],
+  "W40×249":[474.19,100.076,1.905,40.132,3.607,815813.6,38543.0,16272.35,1933.67,18353.51,2982.45,41.402,9.017,1585.8,89690979.0,370.6],
+  "W40×264":[499.35,101.6,2.438,30.226,4.394,807489.0,20520.2,15911.84,1353.57,18517.38,2163.09,40.132,6.401,2335.1,48604992.0,392.9],
+  "W40×277":[525.81,100.838,2.108,40.132,4.013,911546.8,43288.1,18025.77,2163.09,20483.83,3342.96,41.656,9.093,2143.6,101775093.0,412.2],
+  "W40×278":[530.97,102.108,2.616,30.48,4.597,853274.4,21685.7,16714.81,1427.31,19500.61,2294.19,40.132,6.401,2705.5,51558886.0,413.7],
+  "W40×294":[556.13,102.616,2.692,30.48,4.902,911546.8,23392.2,17698.03,1532.19,20811.57,2458.06,40.386,6.477,3188.3,55855460.0,437.5],
+  "W40×297":[563.22,101.092,2.362,40.132,4.191,965656.9,45369.2,19172.86,2261.41,21794.8,3523.22,41.402,8.992,2547.3,107145811.0,442.0],
+  "W40×324":[614.84,102.108,2.54,40.386,4.597,1065552.4,50780.2,20975.44,2507.22,23925.11,3916.51,41.656,9.093,3304.9,120304068.0,482.2],
+  "W40×327":[618.71,103.632,2.997,30.734,5.41,1019767.0,26638.8,19664.48,1720.64,23105.76,2785.8,40.64,6.553,4287.2,64180072.0,486.6],
+  "W40×331":[630.32,103.632,3.099,30.988,5.41,1028091.6,26805.3,19828.35,1737.03,23433.5,2818.58,40.386,6.528,4370.4,64717144.0,492.6],
+  "W40×362":[683.87,103.124,2.845,40.64,5.105,1202908.8,57439.9,23269.63,2834.96,26874.78,4424.51,41.91,9.144,4536.9,137758900.0,538.7],
+  "W40×372":[709.68,103.124,2.946,40.894,5.207,1232045.0,59104.9,23925.11,2900.51,27530.27,4539.22,41.91,9.144,4828.3,141786938.0,553.6],
+  "W40×392":[748.39,105.664,3.607,31.496,6.401,1244532.0,33423.4,23597.37,2130.32,28021.88,3474.06,40.894,6.706,7159.2,82171975.0,583.4],
+  "W40×397":[754.84,104.14,3.099,40.894,5.588,1331940.6,64099.6,25563.82,3129.93,29496.72,4916.12,42.164,9.246,5910.5,155482267.0,590.8],
+  "W40×431":[819.35,104.902,3.404,41.148,5.994,1448485.4,70343.1,27694.14,3408.51,32118.65,5374.96,42.164,9.271,7367.3,171325883.0,641.4],
+  "W40×503":[954.84,106.934,3.912,41.656,7.01,1731522.7,84911.2,32446.39,4080.38,38017.99,6456.5,42.672,9.449,11529.6,211874799.0,748.5],
+  "W40×593":[1122.58,109.22,4.547,42.418,8.204,2097806.4,104890.3,38345.73,4948.89,45228.3,7882.18,43.18,9.652,18522.3,267730259.0,882.5],
+  "W44×230":[437.42,108.966,1.803,40.132,3.099,865761.4,33132.0,15911.84,1655.09,18025.77,2572.77,44.45,8.712,1036.4,92913410.0,342.3],
+  "W44×262":[498.06,109.982,1.994,40.132,3.607,1003117.7,38418.2,18189.64,1917.29,20811.57,2982.45,44.958,8.814,1552.5,108757026.0,389.9],
+  "W44×290":[550.97,110.744,2.197,40.132,4.013,1123824.8,43288.1,20319.96,2163.09,23105.76,3359.35,45.212,8.865,2118.6,123795034.0,431.6],
+  "W44×335":[635.48,111.76,2.616,40.386,4.496,1294479.7,49947.8,23105.76,2458.06,26547.04,3867.35,45.212,8.865,3109.2,143666689.0,498.5],
+  "W4×13":[24.71,10.566,0.711,10.312,0.876,470.3,160.7,89.47,31.14,102.91,47.85,4.369,2.54,6.3,3760.0,19.3],
+  "W5×16":[30.39,12.725,0.61,12.7,0.914,890.7,312.6,140.11,49.16,157.81,75.05,5.41,3.2,8.0,10903.0,23.8],
+  "W5×19":[35.87,13.081,0.686,12.776,1.092,1094.7,380.0,167.15,59.49,190.09,90.62,5.512,3.251,13.2,13668.0,28.3],
+  "W6×12":[22.9,15.316,0.584,10.16,0.711,919.9,124.5,119.79,24.58,136.01,38.02,6.325,2.332,3.8,6633.0,17.9],
+  "W6×15":[28.58,15.215,0.584,15.215,0.66,1211.2,387.9,159.28,50.96,176.98,77.84,6.502,3.683,4.2,20543.0,22.3],
+  "W6×16":[30.58,15.951,0.66,10.236,1.029,1336.1,184.4,167.15,36.05,191.73,55.55,6.604,2.456,9.3,10258.0,23.8],
+  "W6×20":[37.87,15.748,0.66,15.291,0.927,1723.2,553.6,219.59,72.27,244.17,110.12,6.756,3.81,10.0,30345.0,29.8],
+  "W6×25":[47.35,16.205,0.813,15.443,1.156,2222.7,711.8,273.66,91.93,309.72,140.27,6.858,3.861,19.2,40280.0,37.2],
+  "W6×8.5":[16.26,14.808,0.432,10.008,0.495,620.2,82.8,83.57,16.55,93.9,25.56,6.172,2.261,1.4,4243.0,12.6],
+  "W6×9":[17.29,14.986,0.432,10.008,0.546,682.6,91.6,91.11,18.19,102.09,28.19,6.274,2.299,1.7,4753.0,13.4],
+  "W8×10":[19.1,20.041,0.432,10.008,0.521,1282.0,87.0,127.98,17.37,145.35,27.2,8.179,2.136,1.8,8298.0,14.9],
+  "W8×13":[24.77,20.295,0.584,10.16,0.648,1648.3,113.6,162.4,22.45,186.81,35.23,8.153,2.141,3.6,10956.0,19.3],
+  "W8×15":[28.65,20.599,0.622,10.211,0.8,1997.9,141.9,193.37,27.86,222.86,43.75,8.357,2.225,5.7,13910.0,22.3],
+  "W8×18":[33.94,20.676,0.584,13.335,0.838,2576.5,331.7,249.08,49.82,278.58,76.36,8.712,3.124,7.2,32761.0,26.8],
+  "W8×21":[39.74,21.031,0.635,13.386,1.016,3134.2,406.7,298.24,60.8,334.3,93.24,8.865,3.2,11.7,40817.0,31.3],
+  "W8×24":[45.68,20.142,0.622,16.51,1.016,3442.2,761.7,342.49,92.26,378.54,140.44,8.687,4.089,14.4,69551.0,35.7],
+  "W8×28":[53.23,20.472,0.724,16.612,1.181,4079.1,903.2,398.21,108.65,445.73,165.51,8.763,4.115,22.4,83783.0,41.7],
+  "W8×31":[58.9,20.32,0.724,20.32,1.105,4578.5,1544.2,450.64,151.91,498.17,231.06,8.814,5.131,22.3,142324.0,46.1],
+  "W8×35":[66.45,20.625,0.787,20.371,1.257,5286.1,1773.1,511.28,173.7,568.63,263.83,8.915,5.156,32.0,166224.0,52.1],
+  "W8×40":[75.48,20.955,0.914,20.498,1.422,6077.0,2043.7,581.74,199.92,652.21,303.16,8.966,5.182,46.6,194957.0,59.5],
+  "W8×48":[90.97,21.59,1.016,20.599,1.74,7658.7,2534.8,707.92,245.81,802.97,375.26,9.169,5.283,81.6,250007.0,71.4],
+  "W8×58":[110.32,22.225,1.295,20.879,2.057,9490.1,3125.9,852.13,299.88,979.95,457.2,9.271,5.334,138.6,316872.0,86.3],
+  "W8×67":[127.1,22.86,1.448,21.031,2.375,11321.5,3687.8,989.78,350.68,1148.73,535.86,9.449,5.385,210.2,386692.0,99.7]
+};
+
+
+/* Catálogo de perfiles de acero (subconjunto EN 10365; verificar contra el fabricante) */
+const PERFILES = {
+  'IPE 240':{tipo:'IPE',h:24.0,b:12.0,A:39.1,Iy:3892,Iz:284,Sy:324,Sz:47.3,Zy:367,Zz:73.0,ry:9.97,rz:2.69,kg:30.7},
+  'IPE 270':{tipo:'IPE',h:27.0,b:13.5,A:45.9,Iy:5790,Iz:420,Sy:429,Sz:62.2,Zy:484,Zz:96.0,ry:11.2,rz:3.02,kg:36.1},
+  'IPE 300':{tipo:'IPE',h:30.0,b:15.0,A:53.8,Iy:8356,Iz:604,Sy:557,Sz:80.5,Zy:628,Zz:125,ry:12.5,rz:3.35,kg:42.2},
+  'IPE 330':{tipo:'IPE',h:33.0,b:16.0,A:62.6,Iy:11770,Iz:788,Sy:713,Sz:98.5,Zy:804,Zz:153,ry:13.7,rz:3.55,kg:49.1},
+  'IPE 360':{tipo:'IPE',h:36.0,b:17.0,A:72.7,Iy:16270,Iz:1043,Sy:904,Sz:123,Zy:1019,Zz:191,ry:15.0,rz:3.79,kg:57.1},
+  'IPE 400':{tipo:'IPE',h:40.0,b:18.0,A:84.5,Iy:23130,Iz:1318,Sy:1156,Sz:146,Zy:1307,Zz:229,ry:16.5,rz:3.95,kg:66.3},
+  'HEA 200':{tipo:'HEA',h:19.0,b:20.0,A:53.8,Iy:3692,Iz:1336,Sy:389,Sz:134,Zy:438,Zz:207,ry:8.28,rz:4.98,kg:42.3},
+  'HEA 240':{tipo:'HEA',h:23.0,b:24.0,A:76.8,Iy:7763,Iz:2769,Sy:675,Sz:231,Zy:745,Zz:355,ry:10.1,rz:6.01,kg:60.3},
+  'HEA 300':{tipo:'HEA',h:29.0,b:30.0,A:112.5,Iy:18260,Iz:6310,Sy:1260,Sz:421,Zy:1384,Zz:645,ry:12.7,rz:7.49,kg:88.3},
+  'HEA 320':{tipo:'HEA',h:31.0,b:30.0,A:124.4,Iy:22930,Iz:6990,Sy:1490,Sz:466,Zy:1642,Zz:714,ry:13.6,rz:7.50,kg:97.6},
+  'HEA 360':{tipo:'HEA',h:35.0,b:30.0,A:142.8,Iy:33090,Iz:7887,Sy:1890,Sz:526,Zy:2088,Zz:807,ry:15.2,rz:7.43,kg:112.0},
+  'HEA 400':{tipo:'HEA',h:39.0,b:30.0,A:159.0,Iy:45070,Iz:8564,Sy:2310,Sz:571,Zy:2562,Zz:875,ry:16.8,rz:7.34,kg:125.0},
+  'HEB 200':{tipo:'HEB',h:20.0,b:20.0,A:78.1,Iy:5696,Iz:2003,Sy:570,Sz:200,Zy:642,Zz:309,ry:8.54,rz:5.07,kg:61.3},
+  'HEB 300':{tipo:'HEB',h:30.0,b:30.0,A:149.1,Iy:25170,Iz:8563,Sy:1678,Sz:571,Zy:1869,Zz:880,ry:13.0,rz:7.58,kg:117.0},
+  'HEB 400':{tipo:'HEB',h:40.0,b:30.0,A:197.8,Iy:57680,Iz:10830,Sy:2884,Sz:722,Zy:3239,Zz:1122,ry:17.1,rz:7.40,kg:155.0},
+  /* IPN — Sidor / DIN 1025-1 (ala inclinada). Valores estándar: verificar contra el catálogo Sidor/Conduven.
+     tf/tw en cm (para el módulo de soldaduras). Zy ≈ 1.12·Sy (aprox.). */
+  'IPN 160':{tipo:'IPN',h:16.0,b:7.4,A:22.8,Iy:935,Iz:54.7,Sy:117,Sz:14.8,Zy:131,Zz:16.6,ry:6.40,rz:1.55,kg:17.9,tf:0.95,tw:0.63},
+  'IPN 180':{tipo:'IPN',h:18.0,b:8.2,A:27.9,Iy:1450,Iz:81.3,Sy:161,Sz:19.8,Zy:180,Zz:22.2,ry:7.21,rz:1.71,kg:21.9,tf:1.04,tw:0.69},
+  'IPN 200':{tipo:'IPN',h:20.0,b:9.0,A:33.5,Iy:2140,Iz:117,Sy:214,Sz:26.0,Zy:240,Zz:29.1,ry:7.99,rz:1.87,kg:26.3,tf:1.13,tw:0.75},
+  'IPN 220':{tipo:'IPN',h:22.0,b:9.8,A:39.5,Iy:3060,Iz:162,Sy:278,Sz:33.1,Zy:311,Zz:37.1,ry:8.80,rz:2.03,kg:31.0,tf:1.22,tw:0.81},
+  'IPN 240':{tipo:'IPN',h:24.0,b:10.6,A:46.1,Iy:4250,Iz:221,Sy:354,Sz:41.7,Zy:396,Zz:46.7,ry:9.60,rz:2.19,kg:36.2,tf:1.31,tw:0.87},
+  'IPN 260':{tipo:'IPN',h:26.0,b:11.3,A:53.4,Iy:5740,Iz:288,Sy:442,Sz:51.0,Zy:495,Zz:57.1,ry:10.4,rz:2.32,kg:41.9,tf:1.41,tw:0.94},
+  'IPN 280':{tipo:'IPN',h:28.0,b:11.9,A:61.3,Iy:7590,Iz:364,Sy:542,Sz:61.2,Zy:607,Zz:68.5,ry:11.1,rz:2.44,kg:48.1,tf:1.52,tw:1.01},
+  'IPN 300':{tipo:'IPN',h:30.0,b:12.5,A:69.0,Iy:9800,Iz:451,Sy:653,Sz:72.2,Zy:731,Zz:80.9,ry:11.9,rz:2.56,kg:54.2,tf:1.62,tw:1.08},
+  'IPN 320':{tipo:'IPN',h:32.0,b:13.1,A:77.6,Iy:12510,Iz:555,Sy:781,Sz:84.7,Zy:875,Zz:94.9,ry:12.7,rz:2.67,kg:60.9,tf:1.73,tw:1.15},
+  'IPN 340':{tipo:'IPN',h:34.0,b:13.7,A:86.7,Iy:15700,Iz:674,Sy:923,Sz:98.4,Zy:1034,Zz:110,ry:13.5,rz:2.79,kg:68.1,tf:1.83,tw:1.22},
+  'IPN 360':{tipo:'IPN',h:36.0,b:14.3,A:97.0,Iy:19610,Iz:818,Sy:1090,Sz:114,Zy:1221,Zz:128,ry:14.2,rz:2.90,kg:76.1,tf:1.95,tw:1.30},
+  'IPN 380':{tipo:'IPN',h:38.0,b:14.9,A:108,Iy:24010,Iz:970,Sy:1264,Sz:130,Zy:1416,Zz:146,ry:14.9,rz:3.00,kg:84.5,tf:2.05,tw:1.37},
+  'IPN 400':{tipo:'IPN',h:40.0,b:15.5,A:120,Iy:29210,Iz:1160,Sy:1460,Sz:150,Zy:1635,Zz:168,ry:15.6,rz:3.11,kg:93.8,tf:2.16,tw:1.44}
+};
+/* ---- Fusión: catálogo base + W-Shapes AISC 14ª edición (273 perfiles) ---- */
+function fusionarCatalogos(){
+  const KEYS = ['A','d','tw','bf','tf','Iy','Iz','Sy','Sz','Zy','Zz','ry','rz','J','Cw','kg'];
+  for (const k in W_AISC14){
+    const v = W_AISC14[k];
+    PERFILES[k] = {tipo:'W'};
+    for (let i=0;i<KEYS.length;i++) PERFILES[k][KEYS[i]] = v[i];
+  }
+}
+fusionarCatalogos();
+
+
+/* Rigideces de entrepiso por Muto (en la dirección solicitada) */
+/* ====================================================================
+   MUTO COMPLETO POR PÓRTICO (Etapa 2)
+   - D-value por columna: α según posición del nivel y de la columna (borde/interior)
+   - Reparto de V del piso entre columnas del pórtico proporcional a D
+   - Momentos en columnas con punto de inflexión y (Muto simplificado)
+   - Momentos en vigas por equilibrio de nudos (reparto por rigidez K=I/L)
+   - Axiales por sismo (equilibrio de cortantes de vigas, acumulado desde el tope)
+   - Torsión adicional 6 % (9.4.5.2): e = 0.06·L_perp, Q_j = M_t·d_j/Σd²
+   ==================================================================== */
+function mutoPorFrame(p, s, dir){
+  /* Muto generalizado con luces individuales por vano.
+     - Kb de cada viga = I/L_j (L_j real del tramo j)
+     - α por columna según las Kb de los nudos sup/inf (borde/interior reales)
+     - D por columna; reparto V del pórtico ∝ D
+     - Momentos en vigas: desbalance de nudo repartido ∝ Kb (izq/der reales)
+     - Axiales: equilibrio de cortantes de viga (V=(ML+MR)/L_j) acumulado del tope
+     - Torsión 6 %: posiciones reales de los pórticos perpendiculares (Σ luces) */
+  const E = p.E, N = p.N;
+  const luces = (dir==='X'? p.lucesX : p.lucesY).map(L=>Math.max(1,L)*100); // cm
+  const nspan = luces.length;
+  const lperp = (dir==='X'? p.lucesY : p.lucesX).map(L=>Math.max(1,L));    // m
+  const NF = lperp.length + 1;                       // nº de pórticos en la dirección
+  const posPerp = [0];
+  for (let j=0;j<lperp.length;j++) posPerp.push(posPerp[j]+lperp[j]);
+  const LperpTot = posPerp[posPerp.length-1];
+  // posiciones de pórticos relativas al centro (cm) → torsión
+  const dArr = posPerp.map(x=>(x - LperpTot/2)*100);
+  let sumd2=0, dmax=0; dArr.forEach(d=>{ sumd2+=d*d; dmax=Math.max(dmax,Math.abs(d)); });
+  const porStory = [];
+  for (let i=0;i<N;i++){
+    const col = p.perfiles[p.perfCol[i]];
+    const Icol = dir==='X' ? (p.orient? col.Iy : col.Iz) : (p.orient? col.Iz : col.Iy);
+    const h = s.espesor[i]*100;
+    const Kc = Icol/h;
+    // rigidez de cada viga del nivel i (abajo, si i>=1) y del nivel i+1 (arriba, siempre:
+    // el nivel N = azotea también tiene vigas de techo)
+    const Kb_bot = (i>=1)? luces.map(L=> p.perfiles[p.viga].Iy/L) : null;  // vigas del nivel i
+    const Kb_top = luces.map(L=> p.perfiles[p.viga].Iy/L);                 // vigas del nivel i+1
+    // D de cada columna del pórtico (posición j = 0..nspan)
+    const cols = [];
+    let sumD_frame = 0;
+    for (let j=0;j<=nspan;j++){
+      const kbI_bot = (Kb_bot && j>0) ? Kb_bot[j-1] : 0;   // viga izq del nivel i (abajo)
+      const kbD_bot = (Kb_bot && j<nspan) ? Kb_bot[j] : 0; // viga der del nivel i (abajo)
+      const kbI_top = j>0 ? Kb_top[j-1] : 0;               // viga izq del nivel i+1 (arriba)
+      const kbD_top = j<nspan ? Kb_top[j] : 0;             // viga der del nivel i+1 (arriba)
+      const sumBot = kbI_bot + kbD_bot, sumTop = kbI_top + kbD_top;
+      let kbar, alfa;
+      if (i===0)        { kbar = sumTop/Kc;            alfa = (0.5+kbar)/(2+kbar); }  // base empotrada
+      else              { kbar = (sumTop+sumBot)/(2*Kc); alfa = kbar/(2+kbar); }
+      const D = alfa*12*E*Icol/(h*h*h);
+      cols.push({j, pos:(j===0||j===nspan)?'edge':'int', Kc, kbar, alfa, D});
+      sumD_frame += D;
+    }
+    const sumD_build = NF*sumD_frame;
+    const V_story = s.Vpisos[i], V_frame = V_story/NF;
+    const y = i===0 ? 0.60 : (i===N-1 ? 0.40 : 0.50);
+    for (const c of cols){
+      c.V = V_frame*c.D/sumD_frame;
+      c.M_top = c.V*(1-y)*h; c.M_bot = c.V*y*h;
+    }
+    const V_edge = cols[0].V;
+    const V_int = Math.max(...cols.filter(c=>c.pos==='int').map(c=>c.V), 0);
+    const eC = cols[0], iC = cols.find(c=>c.pos==='int') || cols[Math.floor(nspan/2)];
+    const M_edge_top=cols[0].M_top, M_edge_bot=cols[0].M_bot;
+    const M_int_top=iC.M_top, M_int_bot=iC.M_bot;
+    porStory.push({i, h, Kc, kbarE:eC.kbar, aE:eC.alfa, kbarI:iC.kbar, aI:iC.alfa,
+      Dedge:cols[0].D, Dint:iC.D, sumD_frame, sumD_build, V_story, V_frame, V_edge, V_int, y,
+      M_edge_top, M_edge_bot, M_int_top, M_int_bot, cols});
+  }
+  // Momentos en vigas por nivel (k=1..N) y axiales por sismo (por posición)
+  const beams = [];
+  const P_sismo = Array.from({length:N},()=> new Array(nspan+1).fill(0));
+  for (let k=1;k<=N;k++){
+    const si = k-1;
+    const cAb = porStory[si];
+    const cAr = (k<N)? porStory[si+1] : null;
+    // desbalance por nudo (j): M sup col (entrepiso k) + M inf col (entrepiso k-1)
+    const dbl = new Array(nspan+1).fill(0);
+    for (let j=0;j<=nspan;j++){
+      dbl[j] = (k<N ? cAr.cols[j].M_top : 0) + cAb.cols[j].M_bot;
+    }
+    const vanos = [];
+    for (let j=0;j<nspan;j++){
+      const KbL = p.perfiles[p.viga].Iy/luces[j];
+      // nudo izq (j): repartir dbl[j] entre viga j (der) y viga j-1 (izq)
+      const kbI_j = j>0 ? p.perfiles[p.viga].Iy/luces[j-1] : 0;
+      const frDer_j = KbL/(kbI_j + KbL);
+      // nudo der (j+1): repartir dbl[j+1] entre viga j (izq) y viga j+1 (der)
+      const kbD_jp = (j<nspan-1)? p.perfiles[p.viga].Iy/luces[j+1] : 0;
+      const frIzq_jp = KbL/(KbL + kbD_jp);
+      const ML = dbl[j]*frDer_j;
+      const MR = dbl[j+1]*frIzq_jp;
+      vanos.push({j, ML, MR, V:(ML+MR)/luces[j]});
+    }
+    beams.push({k, dbl, vanos});
+    for (let j=0;j<=nspan;j++){
+      const V_izq = j>0 ? vanos[j-1].V : 0;
+      const V_der = j<nspan ? vanos[j].V : 0;
+      const dP = V_izq - V_der;
+      for (let i=0;i<=si;i++) P_sismo[i][j] += dP;
+    }
+  }
+  // Torsión adicional 6 % (9.4.5.2) con posiciones reales
+  const e_cm = 0.06*LperpTot*100;
+  const torsionByStory = porStory.map(st=>{
+    const Mt = st.V_story*e_cm;
+    const Vframes = dArr.map(d=> st.V_frame + (Mt*d)/sumd2);
+    const Vmax = Math.max(...Vframes.map(v=>Math.abs(v)));
+    return {e_cm, Mt, Vmax, Vframes, factorT: Vmax/(st.V_frame||1)};
+  });
+  return {dir, NF, nspan, luces, Lcm:null, porStory, beams, P_sismo, torsionByStory, dArr};
+}
+function derivas(p, s, muto, dir){
+  const out = [];
+  for (let i=0;i<p.N;i++){
+    const hcm = s.espesor[i]*100, V = s.Vpisos[i];
+    const de = V/muto.porStory[i].sumD_build;            // desplazamiento elástico cm
+    const eta2019 = s.Cd*de/hcm;                         // deriva Tabla 25
+    // fórmula del curso (referencia) con luces reales por vano
+    const E = p.E, R = s.R;
+    const luces = (dir==='X'? p.lucesX : p.lucesY).map(L=>Math.max(1,L)*100);
+    const NF = (dir==='X'? p.lucesY : p.lucesX).length + 1;
+    const sumKv = NF*luces.reduce((a,L)=> a + p.perfiles[p.viga].Iy/L, 0);
+    const col = p.perfiles[p.perfCol[i]];
+    const Icol = dir==='X'?(p.orient?col.Iy:col.Iz):(p.orient?col.Iz:col.Iy);
+    const sumKc = (p.nx+1)*(p.ny+1)*Icol/hcm;
+    const dm = (V*R*hcm*hcm/(12*E))*(1/sumKv + 1/sumKc);
+    const etaManual = 1.1*dm/hcm;
+    out.push({V, de, eta2019, etaManual});
+  }
+  return out;
+}
+function repartoPorPortico(p, s, mutoX, mutoY){
+  const pX = [], pY = [];
+  for (let i=0;i<p.N;i++){
+    pX.push(mutoX.torsionByStory[i].Vframes);
+    pY.push(mutoY.torsionByStory[i].Vframes);
+  }
+  return {pX, pY, npx:p.nx+1, npy:p.ny+1};
+}
+
+/* Verificación de miembros (AISC 360 LRFD simplificado) */
+function verificarColumna(perfil, Pu, Mux, Muy, L, E, Fy, fuerteX){
+  const Ag = perfil.A;
+  const r_ctl = fuerteX ? perfil.ry : perfil.rz;   // controlante aprox. (KL/r mayor)
+  const sl = L/r_ctl;
+  const Fe = Math.PI*Math.PI*E/(sl*sl);
+  const Fcr = Fe >= 0.44*Fy ? Math.pow(0.658, Fy/Fe)*Fy : 0.877*Fe;
+  const phiPn = 0.90*Fcr*Ag;
+  const Zx = fuerteX ? perfil.Zy : perfil.Zz;
+  const Zy2 = fuerteX ? perfil.Zz : perfil.Zy;
+  const phiMnx = 0.90*Zx*Fy, phiMny = 0.90*Zy2*Fy;
+  const Pu2 = Math.abs(Pu);
+  let DC;
+  if (Pu2/phiPn >= 0.2) DC = Pu2/phiPn + (8/9)*(Math.abs(Mux)/phiMnx + Math.abs(Muy)/phiMny);
+  else DC = Pu2/(2*phiPn) + (Math.abs(Mux)/phiMnx + Math.abs(Muy)/phiMny);
+  return {sl, Fcr, phiPn, phiMnx, phiMny, DC, Pu:Pu2};
+}
+function verificarViga(perfil, Mu, Vu, Fy){
+  const phiMn = 0.90*perfil.Zy*Fy;
+  const phiVn = 0.90*0.6*Fy*(perfil.A/2);
+  return {phiMn, phiVn, DC_M:Math.abs(Mu)/phiMn, DC_V:Math.abs(Vu)/phiVn};
+}
+
+/* ---- Método del curso (ASD, esfuerzos admisibles Gadm = Fy) ----
+   Viga: S = Mu/Gadm → perfil con Sy ≥ S; flecha f = 5qL⁴/384EI ≤ L/300 (exigente L/360)
+   Columna: A = 5·P/Gadm → perfil con A ≥ A_nec
+   Soldadura: Ps = D·0.707·0.1·Fv (kg/cm); D = t_menor − 2 mm                          */
+function verificarVigaASD(perfil, Mu, qLinealKgcm, Lcm, E, Fy){
+  const S_nec = Math.abs(Mu)/Fy;                     // cm³
+  const f = (5*qLinealKgcm*Math.pow(Lcm,4))/(384*E*perfil.Iy);
+  const lim300 = Lcm/300, lim360 = Lcm/360;
+  return {S_nec, Sy:perfil.Sy, DC_S: S_nec/perfil.Sy, f, lim300, lim360,
+          okS: S_nec<=perfil.Sy, okF300: f<=lim300, okF360: f<=lim360};
+}
+function verificarColumnaASD(perfil, Pu, Fy){
+  const A_nec = 5*Math.abs(Pu)/Fy;                   // cm²
+  return {A_nec, A:perfil.A, DC: A_nec/perfil.A, ok: A_nec<=perfil.A};
+}
+function verificarSoldadura(t_menor_mm, Fv, R){
+  const D = Math.max(0, t_menor_mm - 2);             // mm
+  const Ps = D*0.707*0.1*Fv;                         // kg/cm
+  const L = Ps>0 ? R/Ps : Infinity;
+  return {D, Ps, L};
+}
+/* ---- AISC 14ª edición (Part 8 / Spec J2.4) ----
+   Filete cargado longitudinalmente (l ≤ 100·D):
+     LRFD: φRn = 1.392·D·l kips (E70) · ASD: Rn/Ω = 0.928·D·l kips (E70)
+   D en dieciseisavos de pulgada, l en pulgadas.
+   Factor por ángulo: (1.0 + 0.5·sin^1.5 θ) — J2-5
+   Coeficiente de electrodo (Tabla 8-3): E60=0.857, E70=1.000, E80=1.143, E90=1.286, E100=1.429, E110=1.571
+   Metal base (J2-4): φRn = φ·0.60·Fu·t·l
+   Unidades: 1 kip = 453.592 kg · 1 in = 2.54 cm · 1/16 in = 1.5875 mm */
+const ELECTRODOS = {60:0.857, 70:1.000, 80:1.143, 90:1.286, 100:1.429, 110:1.571};
+const KIP_KG = 453.592, IN_CM = 2.54, SIXTEENTH_MM = 25.4/16;
+function verificarSoldaduraAISC(t_menor_mm, t_grueso_mm, R, theta_deg, electrodo, lrfd, Fu_base, Fy_base){
+  // tamaño del filete D (en 1/16 in): asumir pierna = t_menor (filete de garganta completa, práctica común)
+  // Alternativa estándar: elegir D como el mayor entero de 1/16 ≤ t_menor (máx. filete J2.2b)
+  const D16 = Math.max(1, Math.floor(t_menor_mm / SIXTEENTH_MM));   // pierna en 1/16 in (≤ espesor)
+  const l_cm = 1;                                                   // por cm de longitud
+  const coef = ELECTRODOS[electrodo] ?? 1.0;
+  const factorAngulo = 1.0 + 0.5*Math.pow(Math.sin(theta_deg*Math.PI/180), 1.5);
+  // resistencia por cm de longitud (kg/cm)
+  const kipsPerIn = coef * (lrfd ? 1.392 : 0.928) * D16 * factorAngulo;
+  const kgPorCm = kipsPerIn * KIP_KG / IN_CM;
+  // metal base (kg/cm): φ·0.60·Fu·t
+  const phi = lrfd ? 0.75 : 1/2.0;
+  const baseKgCm = phi * 0.60 * Fu_base * (t_menor_mm/10);
+  // tamaño mínimo de filete (Tabla J2.4) basado en t_grueso
+  let minD16;
+  const tg_in = t_grueso_mm/25.4;
+  if (tg_in <= 0.25) minD16 = 2;        // 1/8"
+  else if (tg_in <= 0.5) minD16 = 3;    // 3/16"
+  else if (tg_in <= 0.75) minD16 = 4;   // 1/4"
+  else if (tg_in <= 1.5) minD16 = 5;    // 5/16"
+  else minD16 = 6;                       // 3/8"
+  const L = R>0 && kgPorCm>0 ? R/kgPorCm : Infinity;
+  const L_base = R>0 && baseKgCm>0 ? R/baseKgCm : Infinity;
+  return {D16, Dmm: D16*SIXTEENTH_MM, coef, factorAngulo, kgPorCm, baseKgCm, minD16, L, L_base,
+          okMin: D16>=minD16, okBase: baseKgCm>=kgPorCm};
+}
+</script>
+
+<script id="ui">
+
+/* ================================================================
+   INTERFAZ — inputs dinámicos por nivel + resultados
+   ================================================================ */
+const $ = id => document.getElementById(id);
+/* Estado global para la vista en planta interactiva (estilo canvas del usuario) */
+let RES = null;                 // {p, s, mutoX, mutoY, derX, derY} — último cálculo
+let SEL = null;                 // {tipo:'nodo', i, j, nivel} | {tipo:'viga', dir, idx, i, j, nivel}
+let __planta = null;            // geometría del canvas para el handler de clics
+const fmt = (x,d=2)=> (isNaN(x)?'—':Number(x).toLocaleString('es-VE',{minimumFractionDigits:d,maximumFractionDigits:d}));
+const fmt0 = x => fmt(x,0);
+
+function llenarSelectVigas(){
+  const sel = $('vigap');
+  sel.innerHTML = '';
+  Object.keys(PERFILES).forEach(k=>{ const o=document.createElement('option'); o.value=k; o.textContent=k; sel.appendChild(o); });
+  sel.value = 'IPE 360';
+}
+function cargarPerfilesPorNivel(N){
+  for (let n=N;n>=1;n--){
+    const sel = $('col_'+n);
+    if(!sel) continue;
+    sel.innerHTML='';
+    Object.keys(PERFILES).forEach(k=>{ const o=document.createElement('option'); o.value=k; o.textContent=k; sel.appendChild(o); });
+    sel.value = (n<=2) ? 'HEA 300' : 'HEA 240';
+  }
+}
+function areaPorDefecto(){
+  const lx = (AI.lx&&AI.lx.length)? AI.lx : [5];
+  const ly = (AI.ly&&AI.ly.length)? AI.ly : [4];
+  return Math.max(1, Math.round(lx.reduce((a,b)=>a+b,0) * ly.reduce((a,b)=>a+b,0)));
+}
+function generarTablaNiveles(){
+  const N = Math.max(1, Math.min(10, Number($('N').value)||4));
+  const hp = Number($('hpiso').value)||3;
+  const At = areaPorDefecto();
+  let html = '<div class="tabwrap"><table><thead><tr><th>Nivel</th><th>hᵢ desde base (m)</th><th>Uso → fracción CV (Tabla 20)</th><th>CP (kg/m²)</th><th>CV (kg/m²)</th><th>Área (m²)</th><th>Perfil columna</th></tr></thead><tbody>';
+  const usos = [['vivienda','Vivienda (15%)'],['oficina','Oficina/comercio (25%)'],['agrupacion','Concentración &gt;200 pers. (50%)'],['estacionamiento','Estacionamiento (50%)'],['almacen','Almacén (80%)'],['techo0','Techo no accesible (0%)'],['recipientes','Recipientes (100%)']];
+  for (let i=N;i>=1;i--){
+    const nombre = i===N ? 'Techo (Nivel '+N+')' : 'Nivel '+i;
+    const defCP = i===N ? 330 : 480;
+    const defCV = i===N ? 175 : (i===1 ? 250 : 175);
+    const uso = (i===1||i===N) ? 'oficina' : 'vivienda';
+    html += `<tr class="nivel-row">
+      <td>${nombre}</td>
+      <td><input type="number" id="h_${i}" step="0.05" value="${(i*hp)}" style="width:80px"></td>
+      <td><select id="uso_${i}">${usos.map(u=>`<option value="${u[0]}" ${u[0]===uso?'selected':''}>${u[1]}</option>`).join('')}</select></td>
+      <td><input type="number" id="cp_${i}" step="10" value="${defCP}" style="width:80px"></td>
+      <td><input type="number" id="cv_${i}" step="10" value="${defCV}" style="width:80px"></td>
+      <td><input type="number" id="area_${i}" step="1" value="${At}" style="width:90px"></td>
+      <td><select id="col_${i}" style="min-width:110px"></select></td>
+    </tr>`;
+  }
+  html += '</tbody></table></div>';
+  $('tablaniveles').innerHTML = html;
+  cargarPerfilesPorNivel(N);
+  llenarSelNivel(N);
+}
+function leerEntrada(){
+  const N = Math.min(10, Math.max(1, Number($('N').value)||4));
+  // sincronizar luces desde los EJES (sección 2) en vivo (si los inputs existen)
+  try{
+    if (document.querySelectorAll && document.querySelectorAll('#listX input').length) leerTramosSeccion2();
+  }catch(e){}
+  // luces por vano provienen de los EJES (sección 2)
+  const lucesX = (AI.lx&&AI.lx.length)? AI.lx.map(v=>Math.max(1, Number(v)||4)) : [5.0];
+  const lucesY = (AI.ly&&AI.ly.length)? AI.ly.map(v=>Math.max(1, Number(v)||4)) : [4.0];
+  const nx = lucesX.length, ny = lucesY.length;
+  const Lx = lucesX.reduce((a,b)=>a+b,0)/nx, Ly = lucesY.reduce((a,b)=>a+b,0)/ny;
+  // alturas absolutas ascendentes: índice 0 = nivel 1 (base)
+  const hsAbs=[], W=[], cp=[], cv=[], frac=[], perfCol=[];
+  for (let i=1;i<=N;i++){
+    const h = Number($('h_'+i).value)||(i*3);
+    hsAbs.push(h);
+    cp.push(Number($('cp_'+i).value)||400);
+    cv.push(Number($('cv_'+i).value)||200);
+    frac.push(FRACC_CV[$('uso_'+i).value]);
+    perfCol.push($('col_'+i).value);
+    const area = Number($('area_'+i).value)||(Lx*nx*Ly*ny);
+    W.push(area*(cp[cp.length-1] + frac[frac.length-1]*cv[cv.length-1]) + Number($('ppest').value)*area);
+  }
+  // ordenar por altura ascendente (por si el usuario desordenó)
+  const idx = hsAbs.map((h,i)=>i).sort((a,b)=>hsAbs[a]-hsAbs[b]);
+  const ord = arr => idx.map(k=>arr[k]);
+  return {
+    A0:Number($('A0').value), A1:Number($('A1').value), TL:Number($('TL').value),
+    grupo:$('grupo').value, nd:$('nd').value, sitio:$('sitio').value, topo:$('topo').value,
+    H:Number($('H').value), rho:Number($('rho').value), FI:Number($('FI').value),
+    N, hsAbs:ord(hsAbs), W:ord(W), cp:ord(cp), cv:ord(cv), frac:ord(frac), perfCol:ord(perfCol),
+    viga:$('vigap').value, nx, ny, Lx, Ly, lucesX, lucesY, areaTotal:lucesX.reduce((a,b)=>a+b,0)*lucesY.reduce((a,b)=>a+b,0),
+    tablaique:Number($('tabique').value), orient:$('orient').value==='1',
+    Fy:Number($('Fy').value), E:Number($('Eac').value), perfiles:PERFILES
+  };
+}
+
+function calcular(){
+  const p = leerEntrada();
+  const s = calcularSismo(p);
+  const mutoX = mutoPorFrame(p, s, 'X');
+  const mutoY = mutoPorFrame(p, s, 'Y');
+  const derX = derivas(p, s, mutoX, 'X');
+  const derY = derivas(p, s, mutoY, 'Y');
+  const rep = repartoPorPortico(p, s, mutoX, mutoY);
+  const lim = p.tablaique;
+  const fallas = derX.filter((d,i)=>d.eta2019>lim).length;
+
+  let html = `<div class="kpis">
+    <div class="kpi"><div class="v">${fmt(s.AA,3)}</div><div class="l">AA = FA·α·A0</div></div>
+    <div class="kpi"><div class="v">${fmt(s.AV,3)}</div><div class="l">AV = FV·α·A1</div></div>
+    <div class="kpi"><div class="v">${fmt(s.T,3)} s</div><div class="l">T = Ta (0.08·h^0.75)</div></div>
+    <div class="kpi"><div class="v">${fmt(s.TC,3)} s</div><div class="l">TC (meseta)</div></div>
+    <div class="kpi"><div class="v">${fmt(s.AdT,4)}</div><div class="l">Ad(T)</div></div>
+    <div class="kpi"><div class="v">${fmt(s.mu,3)}</div><div class="l">μ (1.4·(N+9)/(2N+12))</div></div>
+    <div class="kpi"><div class="v">${fmt(s.C,4)}</div><div class="l">C = μ·Ad</div></div>
+    <div class="kpi"><div class="v">${fmt0(s.V0d)}</div><div class="l">V0 (kg)</div></div>
+  </div>`;
+
+  html += `<div class="caja"><b>Verificaciones normativas:</b>
+    C = ${fmt(s.C,4)} ≥ Cmin = ${fmt(s.Cmin,4)} → ${s.C>=s.Cmin?'<span class="ok">CUMPLE</span>':'<span class="mal">NO CUMPLE (escalar ×'+fmt(s.escala,3)+')</span>'} ·
+    T = ${fmt(s.T,3)} s ≤ σ·Ta = ${fmt(s.Tmax,3)} s → ${s.T<=s.Tmax?'<span class="ok">CUMPLE</span>':'<span class="mal">NO CUMPLE</span>'} ·
+    F<sub>t</sub> = ${fmt0(s.Ft)} kg (${fmt(100*s.coefFt,1)} % de V0 ∈ [4;10] %) ·
+    W = ${fmt0(s.Wtot)} kg · hn = ${fmt(s.hn,2)} m</div>`;
+  if (fallas>0) html += `<div class="alerta">⚠️ ${fallas} entrepiso(s) en dirección X NO cumplen la deriva límite ${fmt(lim,3)} — aumentar vigas/columnas.</div>`;
+  else html += `<div class="caja" style="border-left:4px solid var(--ok)">✔ Todos los entrepisos en X cumplen la deriva límite ${fmt(lim,3)}.</div>`;
+
+  html += `<h3>Espectro y parámetros</h3><div class="tabwrap"><table>
+    <tr><th>Factor sitio</th><td>FA = ${fmt(s.FA,3)} (FAC ${fmt(s.FAC,3)}·FAH ${fmt(s.FAH,3)}·FAT ${fmt(s.FAT,2)})</td><td>FV = ${fmt(s.FV,3)} (FVC ${fmt(s.FVC,3)})</td><td>FD = ${fmt(s.FD,3)} (FDC ${fmt(s.FDC,2)})</td></tr>
+    <tr><th>Ramas (s)</th><td>TA = ${fmt(s.TA,3)}</td><td>TB = ${fmt(s.TB,3)}</td><td>TC = ${fmt(s.TC,3)}</td></tr>
+    <tr><th>TD / q / T+</th><td>TD = ${fmt(s.TD,2)}</td><td>q = ${fmt(s.q,1)}</td><td>T+ = ${fmt(s.Tp,2)}</td></tr>
+    <tr><th>R / Cd / ρ / FI / σ</th><td>R = ${s.R}</td><td>Cd = ${fmt(s.Cd,2)}</td><td>ρ = ${p.rho} · FI = ${p.FI} · σ = ${fmt(s.sigma,2)}</td></tr>
+  </table></div>`;
+
+  html += `<h3>Fuerzas por nivel (V0 = ${fmt0(s.V0d)} kg · Ft = ${fmt0(s.Ft)} kg)</h3><div class="tabwrap"><table>
+    <thead><tr><th>Nivel (base→tope)</th><th>hᵢ (m)</th><th>Wᵢ (kg)</th><th>Wᵢ·hᵢ</th><th>Fᵢ (kg)</th><th>V entrepiso (kg)</th>
+    <th>η<sub>2019</sub> (X)</th><th>η<sub>2019</sub> (Y)</th><th>η<sub>manual</sub> (X)</th><th>Límite</th></tr></thead><tbody>`;
+  for (let i=0;i<p.N;i++){
+    const okX = derX[i].eta2019 < lim, okY = derY[i].eta2019 < lim;
+    html += `<tr><td>${i+1}${i===p.N-1?' (tope)':''}</td><td>${fmt(p.hsAbs[i],2)}</td><td>${fmt0(p.W[i])}</td><td>${fmt0(s.Wh[i])}</td>
+      <td>${fmt0(s.Fis[i])}</td><td>${fmt0(s.Vpisos[i])}</td>
+      <td class="${okX?'ok':'mal'}">${fmt(derX[i].eta2019,4)}</td>
+      <td class="${okY?'ok':'mal'}">${fmt(derY[i].eta2019,4)}</td>
+      <td>${fmt(derX[i].etaManual,4)}</td>
+      <td class="${okX?'ok':'mal'}">${fmt(lim,3)}</td></tr>`;
+  }
+  html += '</tbody></table></div>';
+  html += `<div class="nota">η<sub>2019</sub> = C<sub>d</sub>·δ<sub>e</sub>/h con δ<sub>e</sub> = V/ΣD<sub>Muto</sub> (Tabla 25). η<sub>manual</sub> = fórmula del curso (referencia).</div>`;
+
+  html += `<h3>Reparto a pórticos con torsión adicional 6 % — dirección X (kg)</h3><div class="tabwrap"><table>
+    <thead><tr><th>Entrepiso</th>${rep.pX[0].map((_,j)=>`<th>Pórtico ${j+1}</th>`).join('')}</tr></thead><tbody>`;
+  for (let i=p.N-1;i>=0;i--){
+    const t = mutoX.torsionByStory[i];
+    html += `<tr><td>${i+1} <span style="color:#778;font-size:.7rem">(×${fmt(t.factorT,2)})</span></td>${rep.pX[i].map(f=>`<td>${fmt0(f)}</td>`).join('')}</tr>`;
+  }
+  html += '</tbody></table></div>';
+
+  // ===== Análisis por pórtico — Muto (X) =====
+  html += `<h3>Análisis por pórtico — MUTO (dirección X)</h3><div class="tabwrap"><table>
+    <thead><tr><th>Entrepiso</th><th>V piso (kg)</th><th>ΣD (kg/cm)</th><th>V<sub>borde</sub> (kg)</th><th>V<sub>int</sub> (kg)</th>
+    <th>M<sub>borde</sub> sup/inf (t·m)</th><th>M<sub>int</sub> sup/inf (t·m)</th><th>y</th><th>α borde/int</th></tr></thead><tbody>`;
+  for (let i=0;i<p.N;i++){
+    const st = mutoX.porStory[i];
+    html += `<tr><td>${i+1}</td><td>${fmt0(st.V_story)}</td><td>${fmt0(st.sumD_build)}</td>
+      <td>${fmt0(st.V_edge)}</td><td>${fmt0(st.V_int)}</td>
+      <td>${fmt(st.M_edge_top/1e5,2)} / ${fmt(st.M_edge_bot/1e5,2)}</td>
+      <td>${fmt(st.M_int_top/1e5,2)} / ${fmt(st.M_int_bot/1e5,2)}</td>
+      <td>${fmt(st.y,2)}</td><td>${fmt(st.aE,2)} / ${fmt(st.aI,2)}</td></tr>`;
+  }
+  html += '</tbody></table></div>';
+
+  html += `<h3>Momentos en vigas por sismo — dirección X (M izq/der en t·m · V en t)</h3><div class="tabwrap"><table>
+    <thead><tr><th>Nivel</th><th>Vano 1 (borde)</th><th>Vano interior</th><th>Último vano (borde)</th></tr></thead><tbody>`;
+  for (const b of mutoX.beams){
+    const v1 = b.vanos[0], vin = b.vanos[Math.floor(b.vanos.length/2)], vl = b.vanos[b.vanos.length-1];
+    html += `<tr><td>${b.k}</td>
+      <td>${fmt(v1.ML/1e5,2)}/${fmt(v1.MR/1e5,2)} · V ${fmt(v1.V/1000,2)}</td>
+      <td>${fmt(vin.ML/1e5,2)}/${fmt(vin.MR/1e5,2)} · V ${fmt(vin.V/1000,2)}</td>
+      <td>${fmt(vl.ML/1e5,2)}/${fmt(vl.MR/1e5,2)} · V ${fmt(vl.V/1000,2)}</td></tr>`;
+  }
+  html += '</tbody></table></div>';
+
+  html += `<h3>Axial sísmico y torsión 6 % — dirección X</h3><div class="tabwrap"><table>
+    <thead><tr><th>Entrepiso</th><th>P<sub>sismo</sub> borde (t)</th><th>P<sub>sismo</sub> int (t)</th>
+    <th>e = 0.06·L<sub>perp</sub> (cm)</th><th>M<sub>t</sub> (t·m)</th><th>Factor pórtico extremo</th></tr></thead><tbody>`;
+  for (let i=0;i<p.N;i++){
+    const t = mutoX.torsionByStory[i];
+    html += `<tr><td>${i+1}</td><td>${fmt(Math.abs(mutoX.P_sismo[i].edge)/1000,2)}</td><td>${fmt(Math.abs(mutoX.P_sismo[i].int)/1000,2)}</td>
+      <td>${fmt(t.e_cm,1)}</td><td>${fmt(t.Mt/1e5,2)}</td><td>${fmt(t.factorT,3)}</td></tr>`;
+  }
+  html += '</tbody></table></div>';
+  html += `<div class="nota">Dirección Y análoga. La torsión adicional (9.4.5.2) amplifica los pórticos extremos (factor = 1/NF + e·d<sub>máx</sub>/Σd²); los chequeos de miembros usan el pórtico extremo (peor caso).</div>`;
+
+  html += verificarMiembros(p, s, mutoX, mutoY);
+
+  html += graficoSVG(s, p, derX, derY, lim);
+  $('resumen').innerHTML = html;
+
+  RES = {p, s, mutoX, mutoY, derX, derY};
+  llenarSelNivel(p.N);
+  const b2 = $('sel-badge2'); if (b2){ b2.style.display='none'; b2.textContent=''; }
+  syncAIModel();
+}
+
+function verificarMiembros(p, s, mutoX, mutoY){
+  const metodo = $('metodoVerif').value;
+  const mNombre = metodo==='curso' ? 'método del curso (ASD · Gadm = Fy)' : metodo==='lrfd' ? 'AISC 360 LRFD' : 'ASD del curso + AISC LRFD';
+  let html = `<h3>Verificación de miembros — ${mNombre} (pórtico extremo con torsión 6 % · luces reales por vano)</h3>`;
+  const E = p.E, Fy = p.Fy;
+  const filasCol = [], filasViga = [];
+  let peor = {D:0, tipo:''};
+  for (const [dir, muto] of [['X', mutoX], ['Y', mutoY]]){
+    const luces = dir==='X'? p.lucesX : p.lucesY;
+    const Lperp = dir==='X'? p.lucesY : p.lucesX;
+    for (let i=0;i<p.N;i++){
+      const st = muto.porStory[i];
+      const col = p.perfiles[p.perfCol[i]];
+      const Lc = s.espesor[i]*100;
+      const ampl = muto.torsionByStory[i].factorT;
+      const qsvc = p.cp[i] + p.cv[i];
+      const qfact = 1.2*p.cp[i] + 1.6*p.cv[i];
+      // para cada columna real del pórtico (posición j)
+      for (const c of st.cols){
+        const j = c.j;
+        // área tributaria con luces reales de la posición
+        const lx1 = dir==='X' ? (j>0? luces[j-1] : 0) : (0);
+        const lx2 = dir==='X' ? (j<luces.length? luces[j] : 0) : (0);
+        // ancho perpendicular: mitad de los tramos perpendiculares adyacentes
+        const perpAt = dir==='X' ? p.areaTotal/ (luces.reduce((a,b)=>a+b,0)) : p.areaTotal/(luces.reduce((a,b)=>a+b,0));
+        const At = dir==='X'
+          ? ((lx1+lx2)/2) * perpAt
+          : (( (j>0? Lperp[j-1] : 0) + (j<Lperp.length? Lperp[j] : 0) )/2) * perpAt;
+        const Pg_svc = qsvc*At, Pg_fact = qfact*At;
+        const Ps = Math.abs(muto.P_sismo[i][j])*ampl;
+        const Vc = c.V*ampl;
+        const Mc = Math.max(c.M_top, c.M_bot)*ampl;
+        const vcL = verificarColumna(col, Pg_fact + Ps, Mc, 0.3*Mc, Lc, E, Fy, (dir==='X')===p.orient);
+        const vcA = verificarColumnaASD(col, Pg_svc + Ps, Fy);
+        const Dpeor = Math.max(vcL.DC, vcA.DC);
+        const tipo = `col ${dir} ${c.pos} j${j} nv${i+1} (${p.perfCol[i]})`;
+        if (Dpeor > peor.D) peor = {D:Dpeor, tipo};
+        filasCol.push({dir, i, j, pos:c.pos, perfil:p.perfCol[i], PuL:Pg_fact+Ps, PuA:Pg_svc+Ps, Mux:Mc, vcL, vcA, At});
+      }
+    }
+    // viga crítica de la dirección (con su luz real)
+    let Mmax = 0, Vmax = 0, kmax = 1, jmax = 0;
+    for (const b of muto.beams){ for (const v of b.vanos){
+      if (Math.abs(v.ML)>Mmax){ Mmax = Math.abs(v.ML); kmax = b.k; jmax = v.j; }
+      if (Math.abs(v.MR)>Mmax){ Mmax = Math.abs(v.MR); kmax = b.k; jmax = v.j; }
+      if (Math.abs(v.V)>Vmax) Vmax = Math.abs(v.V);
+    } }
+    const ampl = muto.torsionByStory[kmax-1] ? muto.torsionByStory[kmax-1].factorT : 1;
+    const Lm = luces[jmax] || luces[0];                  // luz real del vano crítico
+    const wsvc = (p.cp[kmax-1]+p.cv[kmax-1])*Lm;
+    const wfact = (1.2*p.cp[kmax-1]+1.6*p.cv[kmax-1])*Lm;
+    const MuL = wfact*Lm*Lm/10 + Mmax*ampl;
+    const MuA = wsvc*Lm*Lm/10 + Mmax*ampl;
+    const Vu = wsvc*Lm/2 + Vmax*ampl;
+    const qcm = wsvc/100, Lcm = Lm*100;
+    const vvL = verificarViga(p.perfiles[p.viga], MuL, Vu, Fy);
+    const vvA = verificarVigaASD(p.perfiles[p.viga], MuA, qcm, Lcm, E, Fy);
+    filasViga.push({dir, perfil:p.viga, tramo:jmax, Lm, MuL, MuA, Vu, vvL, vvA});
+  }
+  // tabla columnas
+  html += `<div class="tabwrap"><table><thead><tr><th>Dir</th><th>Nivel</th><th>Col</th><th>Pos.</th><th>At (m²)</th><th>Perfil</th><th>Pu LRFD (t)</th><th>Mux (t·m)</th><th>KL/r</th><th>φPn (t)</th><th>D/C LRFD</th><th>D/C ASD</th><th>Estado</th></tr></thead><tbody>`;
+  for (const f of filasCol){
+    const ok = Math.max(f.vcL.DC, f.vcA.DC) <= 1;
+    html += `<tr><td>${f.dir}</td><td>${f.i+1}</td><td>${f.j+1}</td><td>${f.pos==='edge'?'borde':'interior'}</td>
+      <td>${fmt(f.At,1)}</td><td>${f.perfil}</td>
+      <td>${fmt(f.PuL/1000,1)}</td><td>${fmt(f.Mux/1e5,2)}</td><td>${fmt(f.vcL.sl,1)}</td><td>${fmt(f.vcL.phiPn/1000,0)}</td>
+      <td>${fmt(f.vcL.DC,3)}</td><td>${fmt(f.vcA.DC,2)}</td>
+      <td class="${ok?'ok':'mal'}">${ok?'✔':'✗'}</td></tr>`;
+  }
+  html += '</tbody></table></div>';
+  // tabla vigas
+  html += `<div class="tabwrap"><table><thead><tr><th>Dir</th><th>Vano crítico</th><th>L (m)</th><th>Perfil</th><th>Mu LRFD (t·m)</th><th>φMn (t·m)</th><th>D/C<sub>M</sub></th><th>D/C<sub>V</sub></th><th>M ASD (t·m)</th><th>S<sub>nec</sub> (cm³)</th><th>f (cm) vs L/300</th><th>Estado</th></tr></thead><tbody>`;
+  for (const f of filasViga){
+    const ok = Math.max(f.vvL.DC_M, f.vvL.DC_V, f.vvA.DC_S, f.vvA.okF300?0:1) <= 1;
+    html += `<tr><td>${f.dir}</td><td>${nombreTramo(f.dir, f.tramo)}</td><td>${fmt(f.Lm,2)}</td><td>${f.perfil}</td>
+      <td>${fmt(f.MuL/1e5,2)}</td><td>${fmt(f.vvL.phiMn/1e5,2)}</td>
+      <td>${fmt(f.vvL.DC_M,3)}</td><td>${fmt(f.vvL.DC_V,3)}</td>
+      <td>${fmt(f.MuA/1e5,2)}</td><td>${fmt(f.vvA.S_nec,0)}</td>
+      <td>${fmt(f.vvA.f,2)} vs ${fmt(f.vvA.lim300,2)} ${f.vvA.okF300?'✔':'✗'}</td>
+      <td class="${ok?'ok':'mal'}">${ok?'✔':'✗'}</td></tr>`;
+  }
+  html += '</tbody></table></div>';
+  html += `<div class="nota">Columnas: Pu = gravedad (1.2CP+1.6CV → LRFD; CP+CV → ASD) + axial sísmico Muto por posición real (×torsión). Mux = momento sísmico Muto (punto de inflexión). Vigas: Mu = wL²/10 (gravedad, con la luz real del vano) + momento sísmico máximo ×torsión; flecha con carga de servicio (L/300). Regla del curso A = 5P/Fy es muy conservadora (~4× LRFD). Peor elemento: <b>${peor.tipo} → D/C = ${fmt(peor.D,3)}</b> ${peor.D<=1?'<span class="ok">✔ cumple</span>':'<span class="mal">✗ no cumple</span>'}. Valores de prediseño — refinar con análisis matricial.</div>`;
+  return html;
+}
+function graficoSVG(s, p, derX, derY, lim){
+  const W=640, H=300, M=40;
+  const maxV = Math.max(...s.Vpisos,1);
+  const maxD = Math.max(lim*1.3, ...derX.map(d=>d.eta2019), ...derY.map(d=>d.eta2019), 0.001);
+  let bars='', line='', lineY='';
+  const n=p.N;
+  for (let i=0;i<n;i++){
+    const v=s.Vpisos[i];
+    const x=M+i*(W-2*M)/n;
+    const bh=v/maxV*(H-2*M);
+    bars+=`<rect x="${x+4}" y="${H-M-bh}" width="${(W-2*M)/n-8}" height="${bh}" fill="${i===n-1?'#0b3d6b':'#1a5c99'}"><title>${fmt0(v)} kg</title></rect>`;
+    const y=H-M-(derX[i].eta2019/maxD)*(H-2*M);
+    line+=`<circle cx="${x+(W-2*M)/(2*n)}" cy="${y}" r="4" fill="#c0392b"><title>ηX=${fmt(derX[i].eta2019,4)}</title></circle>`;
+    const y2=H-M-(derY[i].eta2019/maxD)*(H-2*M);
+    lineY+=`<circle cx="${x+(W-2*M)/(2*n)}" cy="${y2}" r="3.5" fill="#e67e22"><title>ηY=${fmt(derY[i].eta2019,4)}</title></circle>`;
+  }
+  const ylim=H-M-(lim/maxD)*(H-2*M);
+  return `<h3>Gráfico: cortante de entrepiso (barras) y deriva η vs límite ${fmt(lim,3)} (rojo = X, naranja = Y)</h3>
+  <svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:760px;background:#fbfcfd;border:1px solid #dde3ea;border-radius:8px">
+    <line x1="${M}" y1="${ylim}" x2="${W-M}" y2="${ylim}" stroke="#c0392b" stroke-dasharray="6 4" stroke-width="1.5"/>
+    <text x="${W-M-6}" y="${ylim-5}" font-size="11" fill="#c0392b" text-anchor="end">límite ${fmt(lim,3)}</text>
+    ${bars}${line}${lineY}
+    <line x1="${M}" y1="${H-M}" x2="${W-M}" y2="${H-M}" stroke="#334" stroke-width="1"/>
+  </svg>`;
+}
+
+
+
+/* ====================================================================
+   VISTA EN PLANTA INTERACTIVA (canvas) — estilo del archivo del usuario
+   ==================================================================== */
+
+/* ====================================================================
+   MODELO INTERACTIVO — reproducción fiel de ai_studio_code.html
+   Sidebar con 3 pestañas + canvas: selección de tramos y nodos por clic
+   ==================================================================== */
+const AI = { selectedType:'X', selectedIndex:0, lx:[5.0,5.0,5.0,5.0], ly:[5.0,5.0,5.0,5.0], hitBoxes:[], selectedNode:{i:0,j:0}, currentTab:'calculo', _geom:null, userEdited:false, areasManuales:false };
+function llenarSelNivel(N){
+  const sel = $('sel-nivel'); if(!sel) return;
+  const prev = Number(sel.value)||1;
+  sel.innerHTML = '';
+  for (let k=1;k<=N;k++){ const o=document.createElement('option'); o.value=String(k); o.textContent='Nivel '+k; sel.appendChild(o); }
+  if (prev>=1 && prev<=N) sel.value = String(prev);
+}
+function nombreTramo(type, idx){
+  if (type==='X') return 'Tramo '+(idx+1)+'-'+(idx+2);
+  return 'Tramo '+String.fromCharCode(65+idx)+'-'+String.fromCharCode(66+idx);
+}
+function leerTramosSeccion2(){
+  // la fuente de verdad son los EJES de la sección 2 (listX/listY)
+  const inX = document.querySelectorAll('#listX input');
+  const inY = document.querySelectorAll('#listY input');
+  AI.lx = Array.from(inX).map(i=>Math.max(1, parseFloat(i.value)||4));
+  AI.ly = Array.from(inY).map(i=>Math.max(1, parseFloat(i.value)||4));
+  if (AI.lx.length===0) AI.lx=[5.0];
+  if (AI.ly.length===0) AI.ly=[5.0];
+  return {lx:AI.lx, ly:AI.ly};
+}
+function buildTramoList(listId, arr){
+  const el = $('list'+listId); if(!el) return;
+  el.innerHTML = '';
+  arr.forEach((v,i)=>{
+    const dv = document.createElement('div');
+    dv.className = 'ai-row';
+    const nm = nombreTramo(listId, i);
+    dv.innerHTML = `<span class="ai-lbl" style="min-width:70px">${nm}</span>
+      <input type="number" step="0.1" min="1" value="${Number(v).toFixed(2)}" class="ai-input" title="Luz del ${nm} (m)" oninput="onTramoEdit('${listId}')">
+      <button class="btn-del-ai" onclick="delTramo('${listId}')">×</button>`;
+    el.appendChild(dv);
+  });
+}
+function addTramo(listId){
+  const arr = listId==='X'? AI.lx : AI.ly;
+  arr.push(4.0);
+  AI.userEdited = true;
+  buildTramoList(listId, arr);
+  onTramoEdit(listId);
+}
+function delTramo(listId){
+  const arr = listId==='X'? AI.lx : AI.ly;
+  if (arr.length<=1) return;
+  arr.pop();
+  AI.userEdited = true;
+  buildTramoList(listId, arr);
+  onTramoEdit(listId);
+}
+function onTramoEdit(listId){
+  // solo actualiza geometría + canvas; el sismo se recalcula al pulsar Calcular (manual)
+  leerTramosSeccion2();
+  AI.userEdited = true;
+  // actualizar áreas por defecto de la tabla de cargas si no fueron editadas a mano
+  if (!AI.areasManuales){
+    const At = areaPorDefecto();
+    for (let i=1;i<= (Number($('N').value)||4); i++){ const a=$('area_'+i); if(a) a.value=At; }
+  }
+  renderModel();
+  if (RES) marcarDesactualizado();
+}
+function marcarDesactualizado(){
+  const b = $('sel-badge2');
+  if (b){ b.style.display='block'; b.textContent = '⚠️ Geometría modificada — pulsa Calcular (apartado 4) para actualizar el análisis'; }
+}
+function switchTabAI(tabId){
+  ['calculo','columnas'].forEach(id=>{
+    const t = $('tab-'+id); if(t) t.classList.toggle('hidden', id!==tabId);
+    const b = $('btn-tab-'+id); if(b){ b.classList.toggle('active', id===tabId); b.style.background = id===tabId?'#2563eb':'transparent'; b.style.color = id===tabId?'#fff':'#64748b'; }
+  });
+  AI.currentTab = tabId;
+  if (tabId==='columnas'){ if(!AI.selectedNode) AI.selectedNode={i:0,j:0}; updateColumnasFromNodeTrigger(); }
+  else updateCalcViga();
+  renderModel();
+}
+function onNivelChange(){
+  updateCalcViga();
+  updateColumnasFromNodeTrigger();
+  renderModel();
+}
+/* ---------- CANVAS (usa las luces reales de la sección 2) ---------- */
+function renderModel(){
+  const cv = $('plantaCanvas'); if(!cv) return;
+  const ctx = cv.getContext('2d');
+  const wrap = $('canvas-wrapper');
+  const lx = AI.lx.length? AI.lx : [5], ly = AI.ly.length? AI.ly : [4];
+  const totX = lx.reduce((a,b)=>a+b,0), totY = ly.reduce((a,b)=>a+b,0);
+  const rw = wrap.getBoundingClientRect();
+  const pad = 58;
+  const scale = Math.min((rw.width-2*pad)/totX, (Math.min(rw.height||460,470)-2*pad)/totY, 95);
+  cv.width = Math.max(totX*scale+2*pad, rw.width-16);
+  cv.height = Math.max(totY*scale+2*pad, 300);
+  const arX=[pad]; lx.forEach(v=>arX.push(arX[arX.length-1]+v*scale));
+  const arY=[pad]; ly.forEach(v=>arY.push(arY[arY.length-1]+v*scale));
+  ctx.clearRect(0,0,cv.width,cv.height);
+  ctx.fillStyle='#fbfcfd'; ctx.fillRect(0,0,cv.width,cv.height);
+  AI.hitBoxes=[];
+  // área tributaria del nodo seleccionado (modo columnas)
+  if (AI.currentTab==='columnas' && AI.selectedNode){
+    const i=AI.selectedNode.i, j=AI.selectedNode.j;
+    if (i>=0 && i<arY.length && j>=0 && j<arX.length){
+      const xc=arX[j], yc=arY[i];
+      const wL=j>0? lx[j-1]*scale/2:0, wR=j<lx.length? lx[j]*scale/2:0;
+      const wT=i>0? ly[i-1]*scale/2:0, wB=i<ly.length? ly[i]*scale/2:0;
+      ctx.save(); ctx.globalAlpha=0.22; ctx.fillStyle='#10b981';
+      ctx.fillRect(xc-wL, yc-wT, wL+wR, wT+wB);
+      ctx.globalAlpha=0.9; ctx.setLineDash([5,3]); ctx.strokeStyle='#059669'; ctx.lineWidth=1.4;
+      ctx.strokeRect(xc-wL, yc-wT, wL+wR, wT+wB); ctx.restore();
+    }
+  }
+  // resaltar tramo seleccionado (modo calculo)
+  if (AI.currentTab==='calculo'){
+    ctx.save(); ctx.strokeStyle='#3b82f6'; ctx.lineWidth=7; ctx.globalAlpha=0.35; ctx.setLineDash([]);
+    if (AI.selectedType==='X'){ const y=arY[0]; ctx.beginPath(); ctx.moveTo(arX[AI.selectedIndex],y); ctx.lineTo(arX[AI.selectedIndex+1],y); ctx.stroke(); }
+    else { const x=arX[0]; ctx.beginPath(); ctx.moveTo(x,arY[AI.selectedIndex]); ctx.lineTo(x,arY[AI.selectedIndex+1]); ctx.stroke(); }
+    ctx.restore();
+    const nm = nombreTramo(AI.selectedType, AI.selectedIndex);
+    const luz = AI.selectedType==='X'? (lx[AI.selectedIndex]||0) : (ly[AI.selectedIndex]||0);
+    const cx = AI.selectedType==='X' ? (arX[AI.selectedIndex]+arX[AI.selectedIndex+1])/2 : arX[0]+16;
+    const cy = AI.selectedType==='X' ? arY[0]-8 : (arY[AI.selectedIndex]+arY[AI.selectedIndex+1])/2;
+    ctx.save(); ctx.font='bold 12px Inter, Arial, sans-serif'; ctx.fillStyle='#1d4ed8';
+    ctx.textAlign = AI.selectedType==='X' ? 'center' : 'left';
+    ctx.fillText(nm+' · '+luz.toFixed(2)+' m', cx, cy);
+    ctx.restore();
+  }
+  // ejes de referencia
+  ctx.setLineDash([5,4]); ctx.strokeStyle='#cbd5e1'; ctx.lineWidth=1;
+  arY.forEach(y=>{ctx.beginPath();ctx.moveTo(arX[0]-18,y);ctx.lineTo(arX[arX.length-1]+18,y);ctx.stroke();});
+  arX.forEach(x=>{ctx.beginPath();ctx.moveTo(x,arY[0]-18);ctx.lineTo(x,arY[arY.length-1]+18);ctx.stroke();});
+  // vigas
+  ctx.setLineDash([]); ctx.lineWidth=3; ctx.strokeStyle='#64748b';
+  for (let i=0;i<arY.length;i++){ ctx.beginPath(); ctx.moveTo(arX[0],arY[i]); ctx.lineTo(arX[arX.length-1],arY[i]); ctx.stroke(); }
+  for (let j=0;j<arX.length;j++){ ctx.beginPath(); ctx.moveTo(arX[j],arY[0]); ctx.lineTo(arX[j],arY[arY.length-1]); ctx.stroke(); }
+  // hitboxes de tramos
+  for (let i=0;i<ly.length;i++) for (let j=0;j<lx.length;j++){
+    AI.hitBoxes.push({t:'X', i:j, x1:arX[j], y1:arY[i]-12, x2:arX[j+1], y2:arY[i]+12});
+    AI.hitBoxes.push({t:'Y', i:i, x1:arX[j]-12, y1:arY[i], x2:arX[j]+12, y2:arY[i+1]});
+  }
+  // nodos (columnas)
+  const rN = Math.max(5.5, scale/9);
+  for (let i=0;i<arY.length;i++) for (let j=0;j<arX.length;j++){
+    const active = AI.currentTab==='columnas' && AI.selectedNode && AI.selectedNode.i===i && AI.selectedNode.j===j;
+    ctx.fillStyle = active ? '#8b5cf6' : '#f8fafc';
+    ctx.beginPath(); ctx.arc(arX[j], arY[i], active? rN+2:rN, 0, 2*Math.PI); ctx.fill();
+    ctx.strokeStyle = active ? '#fff' : '#475569'; ctx.lineWidth=2.5; ctx.stroke();
+    AI.hitBoxes.push({t:'NODE', i, j, x1:arX[j]-rN-9, y1:arY[i]-rN-9, x2:arX[j]+rN+9, y2:arY[i]+rN+9});
+  }
+  // etiquetas alfanuméricas (ejes) + luces reales por tramo
+  ctx.font='bold 13px Inter, Arial, sans-serif'; ctx.fillStyle='#64748b'; ctx.textAlign='center';
+  arX.forEach((x,j)=>ctx.fillText(j+1, x, arY[0]-26));
+  ctx.textAlign='right';
+  arY.forEach((y,i)=>ctx.fillText(String.fromCharCode(65+i), arX[0]-30, y+5));
+  ctx.font='9.5px Inter, Arial, sans-serif'; ctx.fillStyle='#94a3b8';
+  for (let j=0;j<lx.length;j++){ ctx.textAlign='center'; ctx.fillText(lx[j].toFixed(1)+' m', (arX[j]+arX[j+1])/2, arY[arY.length-1]+18); }
+  for (let i=0;i<ly.length;i++){ ctx.save(); ctx.translate(arX[0]-38, (arY[i]+arY[i+1])/2); ctx.rotate(-Math.PI/2); ctx.textAlign='center'; ctx.fillText(ly[i].toFixed(1)+' m', 0, 0); ctx.restore(); }
+  ctx.textAlign='left'; ctx.font='10.5px Inter, Arial, sans-serif'; ctx.fillStyle='#94a3b8';
+  ctx.fillText('Pulsa nodo (columna) o línea (viga) para inspeccionar', pad, cv.height-6);
+  AI._geom = {arX, arY, lx, ly, scale};
+}
+function handleModelTap(e){
+  e.preventDefault();
+  const cv=$('plantaCanvas'); if(!cv || !AI._geom) return;
+  const g=AI._geom, r=cv.getBoundingClientRect();
+  const sx=cv.width/r.width, sy=cv.height/r.height;
+  const X=((e.touches&&e.touches[0])? e.touches[0].clientX : e.clientX) - r.left;
+  const Y=((e.touches&&e.touches[0])? e.touches[0].clientY : e.clientY) - r.top;
+  const px=X*sx, py=Y*sy;
+  for (let k=AI.hitBoxes.length-1;k>=0;k--){
+    const hb=AI.hitBoxes[k];
+    if (px>=hb.x1 && px<=hb.x2 && py>=hb.y1 && py<=hb.y2){
+      if (hb.t==='NODE'){ AI.selectedNode={i:hb.i, j:hb.j}; switchTabAI('columnas'); return; }
+      if (hb.t==='X'||hb.t==='Y'){ AI.selectedType=hb.t; AI.selectedIndex=hb.i; switchTabAI('calculo'); return; }
+    }
+  }
+}
+/* ---------- VERIFIC. VIGAS ---------- */
+function updateCalcViga(){
+  const luzTramo = AI.selectedType==='X' ? (AI.lx[AI.selectedIndex]||4) : (AI.ly[AI.selectedIndex]||4);
+  const L = luzTramo;
+  // cargas y materiales provienen del modelo real (RES.p) o de valores por defecto
+  let cp=350, cv=200, sigma=2530, E=2100000, fDenom=300;
+  if (RES){
+    const nivel = Number($('sel-nivel').value)||1, k=Math.min(nivel-1, RES.p.N-1);
+    cp = RES.p.cp[k]||350;
+    cv = RES.p.cv[k]||200;
+    sigma = RES.p.Fy||3515;
+    E = RES.p.E||2100000;
+  }
+  const ly=AI.ly.length?AI.ly:[4], lx=AI.lx.length?AI.lx:[5];
+  const ancho = AI.selectedType==='X' ? ((ly[0]||4)/2 + (ly[ly.length-1]||4)/2)/2 : ((lx[0]||4)/2 + (lx[lx.length-1]||4)/2)/2;
+  const q = (cp + cv)*ancho;
+  const Mg = q*L*L/8;
+  const perfil = RES ? RES.p.viga : 'IPN 240';
+  const pf = PERFILES[perfil];
+  const Ix = pf ? pf.Iy : 2000;
+  let Ms=0;
+  if (RES){
+    const nivel = Number($('sel-nivel').value)||1, k=nivel-1;
+    const muto = AI.selectedType==='X' ? RES.mutoX : RES.mutoY;
+    const b = muto.beams[k];
+    if (b && b.vanos[AI.selectedIndex]) Ms = Math.max(Math.abs(b.vanos[AI.selectedIndex].ML), Math.abs(b.vanos[AI.selectedIndex].MR)) * (muto.torsionByStory[k]?muto.torsionByStory[k].factorT:1);
+  }
+  const Mtotal = Mg + Ms;
+  const sxReq = Mtotal*100/sigma;
+  const f = 5*(q/100)*Math.pow(L*100,4)/(384*E*Ix);
+  const fAdm = L*100/fDenom;
+  const cumple = f<=fAdm;
+  $('selected-label').innerHTML = `${nombreTramo(AI.selectedType, AI.selectedIndex)} · L = ${L.toFixed(2)} m · nivel ${$('sel-nivel').value}`;
+  $('formula-momento').innerHTML = `q<sub>lin</sub> = ${Math.round(q)} kg/m · L = ${L.toFixed(2)} m<br>M<sub>grav</sub> = qL²/8 = <b>${Math.round(Mg)} kg·m</b> · M<sub>sismo</sub> = <b>${(Ms/1e5).toFixed(2)} t·m</b><br><b>M<sub>total</sub> = ${(Mtotal/1e5).toFixed(2)} t·m</b>`;
+  $('formula-sx').innerHTML = `S<sub>x,nec</sub> = M·100/σ = <b>${sxReq.toFixed(1)}</b> cm³ · perfil <b>${perfil}</b> (Sx = ${pf?pf.Sy:0} cm³)`;
+  $('formula-flecha').innerHTML = `f<sub>real</sub> = 5qL⁴/384EI = <b>${f.toFixed(2)} cm</b> · f<sub>adm</sub> = L/${fDenom} = ${fAdm.toFixed(2)} cm → ${cumple?'<span style="color:#166534;font-weight:800">✔ CUMPLE</span>':'<span style="color:#991b1b;font-weight:800">✗ FALLA</span>'}`;
+  const b = $('final-badge-viga');
+  b.textContent = cumple ? `✔ APLICA ${perfil}` : `✗ RIGIDEZ SOBREPASADA (${perfil})`;
+  b.style.background = cumple ? '#dcfce7' : '#fee2e2';
+  b.style.color = cumple ? '#166534' : '#991b1b';
+  renderModel();
+}
+function toggleMaterialAI(){
+  const md = $('col-material').value==='madera';
+  $('panel-acero-opts').classList.toggle('hidden', md);
+  $('panel-madera-opts').classList.toggle('hidden', !md);
+}
+function updateColumnasFromNodeTrigger(){
+  const {i,j} = AI.selectedNode || {i:0,j:0};
+  const cCol = AI.lx.length, cFil = AI.ly.length;
+  const nSup=(i===0), nInf=(i===cFil), nIzq=(j===0), nDer=(j===cCol);
+  let loc = 'Nodo central interno';
+  if ((nSup||nInf) && (nIzq||nDer)) loc = 'Esquina perimetral';
+  else if (nSup||nInf||nIzq||nDer) loc = 'Borde perimetral';
+  $('col-posicion').value = loc;
+  $('col-nodo-info').textContent = `NODO (${j+1}, ${String.fromCharCode(65+i)})`;
+  $('col-lx1').value = (j>0 ? AI.lx[j-1] : 0).toFixed(2);
+  $('col-lx2').value = (j<cCol ? AI.lx[j] : 0).toFixed(2);
+  $('col-ly1').value = (i>0 ? AI.ly[i-1] : 0).toFixed(2);
+  $('col-ly2').value = (i<cFil ? AI.ly[i] : 0).toFixed(2);
+  updateCalcCol();
+}
+function updateCalcCol(){
+  const Lx1=parseFloat($('col-lx1').value)||0, Lx2=parseFloat($('col-lx2').value)||0;
+  const Ly1=parseFloat($('col-ly1').value)||0, Ly2=parseFloat($('col-ly2').value)||0;
+  const At = (Lx1/2 + Lx2/2) * (Ly1/2 + Ly2/2);
+  const pisos = parseFloat($('col-nPisos').value)||1;
+  const qD = parseFloat($('col-qD').value)||400, qL = parseFloat($('col-qL').value)||200;
+  const PD = (qD*At)/1000*pisos, PL = (qL*At)/1000*pisos;
+  let Ps=0;
+  if (RES){
+    const nivel = Number($('sel-nivel').value)||1, k=nivel-1;
+    const {i,j} = AI.selectedNode || {i:0,j:0};
+    const mX=RES.mutoX, mY=RES.mutoY;
+    const aX=mX.torsionByStory[k].factorT, aY=mY.torsionByStory[k].factorT;
+    const PvX = Math.abs(mX.P_sismo[k][j])*aX;      // posición real j en X
+    const PvY = Math.abs(mY.P_sismo[k][i])*aY;      // posición real i en Y
+    const LmX = (AI.lx.reduce((a,b)=>a+b,0)/Math.max(1,AI.lx.length))||1;
+    const LmY = (AI.ly.reduce((a,b)=>a+b,0)/Math.max(1,AI.ly.length))||1;
+    const dX = Math.abs((j - AI.lx.length/2)*LmX), dXmax=Math.max((AI.lx.length/2)*LmX,1);
+    const dY = Math.abs((i - AI.ly.length/2)*LmY), dYmax=Math.max((AI.ly.length/2)*LmY,1);
+    const PvolX = Math.abs(mX.P_sismo[k][mX.nspan])*aX*(dX/dXmax); // borde extremo como ref
+    const PvolY = Math.abs(mY.P_sismo[k][mY.nspan])*aY*(dY/dYmax);
+    Ps = Math.max(PvX+PvolX, PvY+PvolY);
+  }
+  const Pu_tn = 1.2*PD + 1.6*PL + Ps/1000;
+  const Pu_kg = Pu_tn*1000;
+  const material = $('col-material').value;
+  const K = material==='acero' ? (parseFloat($('col-kFactor-ac').value)||1) : (parseFloat($('col-kFactor-md').value)||1);
+  const Alt = parseFloat($('col-L-col').value)||3.0;
+  const Lc = K*Alt*100;
+  let phiPn=0, resumen='';
+  if (material==='acero'){
+    const nivel = Number($('sel-nivel').value)||1;
+    const perfil = RES ? RES.p.perfCol[nivel-1] : 'IPN 240';
+    const pf = PERFILES[perfil];
+    const Fy = parseFloat($('col-fy-acero').value)||2530;
+    const vc = pf ? verificarColumna(pf, Pu_kg, 0, 0, Lc, 2100000, Fy, true) : null;
+    phiPn = vc ? vc.phiPn/1000 : 0;
+    resumen = `Perfil <b>${perfil}</b> · KL/r = ${vc?vc.sl.toFixed(1):'—'} · <b>φP<sub>n</sub> = ${phiPn.toFixed(0)} t</b> · D/C = ${vc?vc.DC.toFixed(3):'—'}`;
+  } else {
+    const b = parseFloat($('col-mad-b').value)||20, h = parseFloat($('col-mad-h').value)||30;
+    const Fc = parseFloat($('col-mad-fc').value)||110, Emin = parseFloat($('col-mad-e').value)||85000;
+    const rmin = Math.min(b,h)/Math.sqrt(12);
+    const lam = Lc/rmin;
+    const Fe = Math.PI*Math.PI*Emin/(lam*lam);
+    const u = Fe/Fc, c=0.8;
+    const Cp = (1+u)/(2*c) - Math.sqrt(Math.pow((1+u)/(2*c),2) - u/c);
+    phiPn = 0.70*Cp*Fc*(b*h)/1000;
+    resumen = `b×h = ${b}×${h} cm · r<sub>min</sub> = ${rmin.toFixed(2)} cm · λ = ${lam.toFixed(1)} · C<sub>p</sub> = ${Cp.toFixed(3)}<br><b>φP<sub>n</sub> = ${phiPn.toFixed(0)} t</b>`;
+  }
+  $('col-res-pd').textContent = PD.toFixed(2);
+  $('col-res-pl').textContent = PL.toFixed(2);
+  $('col-res-pu').textContent = Pu_tn.toFixed(2);
+  $('col-res-pn').textContent = phiPn.toFixed(2);
+  $('col-form-resistencias').innerHTML = resumen;
+  $('col-form-areas').innerHTML = `A<sub>tributaria</sub> = (${Lx1.toFixed(1)}/2 + ${Lx2.toFixed(1)}/2) × (${Ly1.toFixed(1)}/2 + ${Ly2.toFixed(1)}/2) = <b>${At.toFixed(2)} m²</b><br>P<sub>u</sub> = 1.2P<sub>D</sub> + 1.6P<sub>L</sub> + P<sub>sismo</sub> = 1.2(${PD.toFixed(2)}) + 1.6(${PL.toFixed(2)}) + ${(Ps/1000).toFixed(2)} = <b>${Pu_tn.toFixed(2)} t</b>`;
+  const ok = Pu_tn <= phiPn;
+  $('col-estado').innerHTML = ok
+    ? `<div style="background:#059669;color:#fff;font-weight:800;font-size:1rem;padding:14px;border-radius:10px;text-align:center">✅ DISEÑO SATISFACTORIO · P<sub>u</sub> (${Pu_tn.toFixed(1)} t) ≤ φP<sub>n</sub> (${phiPn.toFixed(1)} t)</div>`
+    : `<div style="background:#ef4444;color:#fff;font-weight:800;font-size:1rem;padding:14px;border-radius:10px;text-align:center">❌ FALLA POR CAPACIDAD · P<sub>u</sub> (${Pu_tn.toFixed(1)} t) &gt; φP<sub>n</sub> (${phiPn.toFixed(1)} t)</div>`;
+  renderModel();
+}
+function syncAIModel(){
+  buildTramoList('X', AI.lx);
+  buildTramoList('Y', AI.ly);
+  if ($('sel-nivel')) llenarSelNivel(RES?RES.p.N:(leerEntrada().N||4));
+  updateCalcViga();
+  updateColumnasFromNodeTrigger();
+  renderModel();
+}
+function initAreasManuales(){
+  // marcar áreas manuales si el usuario las edita
+  for (let i=1;i<=10;i++){
+    const a = $('area_'+i);
+    if (a) a.addEventListener('input', ()=>{ AI.areasManuales = true; });
+  }
+}
+/* ---- Atajos y módulo de soldaduras (restaurados) ---- */
+function setFy(v){ $('Fy').value = v; }
+function calcularSoldadura(){
+  const R = Number($('w_R').value)||0;
+  const t = Number($('w_t').value)||0;
+  const tg = Number($('w_tg').value)||0;
+  const theta = Number($('w_theta').value)||0;
+  const elec = Number($('w_elect').value)||70;
+  const lrfd = $('w_lrfd').value==='lrfd';
+  const Fu = Number($('w_Fu').value)||4080;
+  const Fv = Number($('w_Fv').value)||1460;
+  const metodo = $('w_metodo').value;
+  const resC = verificarSoldadura(t, Fv, R);
+  const resA = verificarSoldaduraAISC(t, tg, R, theta, elec, lrfd, Fu, 0);
+  const D = Math.max(0, t-2);
+  let html = '';
+  if (metodo!=='aisc'){
+    html += `<div class="caja" style="border-left:4px solid var(--az2)"><b>Método del curso</b><br>
+      D = t−2 = ${fmt(D,1)} mm · Ps = ${fmt(resC.D,1)}×0.707×0.1×${fmt0(Fv)} = <b>${fmt(resC.Ps,1)} kg/cm</b>`;
+    if (R>0 && resC.Ps>0){
+      const L = R/resC.Ps;
+      html += `<br>R = ${fmt0(R)} kg → <b>L total = ${fmt(L,1)} cm</b>`;
+      if (theta>=85) html += ` (frontal) — a ambos lados del alma: ≈ ${fmt(L/2,1)} cm por lado`;
+    }
+    html += `</div>`;
+  }
+  if (metodo!=='curso'){
+    html += `<div class="caja" style="border-left:4px solid var(--ok)"><b>AISC 14ª ed. (${lrfd?'LRFD φ=0.75':'ASD Ω=2.00'}, E${elec}XX)</b><br>
+      Pierna D = ${resA.D16}/16 in (${fmt(resA.Dmm,2)} mm)${resA.okMin?` <span class="ok">✔ ≥ mín. ${resA.minD16}/16 in</span>`:` <span class="mal">✗ &lt; mín. ${resA.minD16}/16 in (Tabla J2.4)</span>`} ·
+      coef. electrodo ${fmt(resA.coef,3)} · factor ángulo (1+0.5·sen^1.5 ${theta}°) = ${fmt(resA.factorAngulo,3)}<br>
+      <b>φRn = ${fmt(resA.kgPorCm,1)} kg/cm</b> · metal base φ·0.60·Fu·t = <b>${fmt(resA.baseKgCm,1)} kg/cm</b> → ${resA.okBase?'<span class="ok">manda el filete</span>':'<span class="mal">manda el METAL BASE</span>'}`;
+    if (R>0){
+      html += `<br>R = ${fmt0(R)} kg → <b>L = ${fmt(resA.L,1)} cm</b>${resA.okBase?' (filete)':''} · por metal base L = ${fmt(resA.L_base,1)} cm · por lado (2) ≈ ${fmt(Math.max(resA.L,resA.L_base)/2,1)} cm`;
+    }
+    html += `<br><span style="color:#556;font-size:.75rem">φRn = 1.392·D·l kips (LRFD) / 0.928·D·l (ASD) para E70; D en 1/16 in; corrección por ángulo J2-5; l ≤ 100·D.</span></div>`;
+  }
+  $('w_resultado').innerHTML = html;
+}
+
+/* ---- Ejemplo del manual (restaurado) ---- */
+function cargarEjemplo(){
+  $('A0').value=0.27; $('A1').value=0.24; $('TL').value=3.9;
+  $('grupo').value='B2'; $('nd').value='ND3'; $('sitio').value='DE'; $('topo').value='leve'; $('H').value=30;
+  $('rho').value='1'; $('FI').value=1; $('N').value=6; $('tabique').value='0.018';
+  AI.lx = [6.0,6.0,6.0]; AI.ly = [6.0,6.0,6.0];
+  AI.userEdited = true;
+  buildTramoList('X', AI.lx); buildTramoList('Y', AI.ly);
+  generarTablaNiveles();
+  const hs=[4,8,10.5,11.25,12,16], Wp=[154474.21,90125.60,22218.75,22311.82,84927.81,49888.99];
+  const cp = Wp.map(w=>Math.round(w/324));
+  for (let i=1;i<=6;i++){
+    $('h_'+i).value=hs[i-1];
+    $('cp_'+i).value=cp[i-1];
+    $('cv_'+i).value=0;
+    $('uso_'+i).value = (i===3||i===4)?'recipientes':'techo0';
+    $('area_'+i).value=324;
+    $('col_'+i).value = (i<=3)?'HEA 300':'HEA 240';
+  }
+  $('vigap').value='IPE 360'; $('ppest').value=0;
+  calcular();
+}
+
+document.addEventListener('DOMContentLoaded', ()=>{
+  llenarSelectVigas();
+  generarTablaNiveles();
+  // solo inputs que existen: N y hpiso (los tramos están en la sección 2 y ya no hay nx/ny/Lx/Ly)
+  ['N','hpiso'].forEach(id=>{ const el=$(id); if (el) el.addEventListener('change', generarTablaNiveles); });
+  const bCalc = $('calcular'); if (bCalc) bCalc.addEventListener('click', ()=>{ calcular(); });
+  const bEj = $('cargarEjemplo'); if (bEj) bEj.addEventListener('click', cargarEjemplo);
+  ['w_R','w_t','w_tg','w_theta','w_elect','w_lrfd','w_Fu','w_Fv','w_metodo'].forEach(id=>{ const el=$(id); if (el) el.addEventListener('input', calcularSoldadura); });
+  calcularSoldadura();
+  initAreasManuales();
+  // modelo interactivo (canvas + panel)
+  const cv = $('plantaCanvas');
+  if (cv){
+    cv.addEventListener('mousedown', handleModelTap);
+    cv.addEventListener('touchstart', handleModelTap, {passive:false});
+  }
+  syncAIModel();
+});
+
+</script>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a266c0ee2b18b25a',t:'MTc4NTk0Mjg4OA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

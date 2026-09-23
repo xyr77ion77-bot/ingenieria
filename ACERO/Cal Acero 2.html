@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Calculadora Estructural Integrada · Vigas + Columnas</title>
+    
+    <!-- MathJax 3 -->
+    <script>
+        MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true,
+                tags: 'none'
+            },
+            svg: { fontCache: 'global' },
+            options: { ignoreHtmlClass: 'no-mathjax', processHtmlClass: 'mathjax-process' }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" id="MathJax-script" async></script>
+    
+    <style>
+        /* Estilos previos sin cambios */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+        :root {
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --primary: #0f172a;
+            --accent: #2563eb;
+            --accent-light: #dbeafe;
+            --border: #e2e8f0;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --danger: #ef4444;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --viga-x: #f97316;
+            --viga-y: #0f172a;
+            --columna-selected: #8b5cf6;
+            --area-tributaria: rgba(139, 92, 246, 0.15);
+        }
+
+        * { box-sizing: border-box; margin: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            width: 100%;
+        }
+
+        .sidebar {
+            background: var(--bg);
+            border-bottom: 1px solid var(--border);
+            z-index: 10;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tabs {
+            display: flex;
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border);
+            padding: 0 8px;
+            gap: 4px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+        .tabs::-webkit-scrollbar { display: none; }
+
+        .tab-btn {
+            padding: 14px 10px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+            white-space: nowrap;
+            flex-shrink: 0;
+            letter-spacing: 0.3px;
+        }
+        .tab-btn.active {
+            color: var(--accent);
+            border-bottom: 3px solid var(--accent);
+            background: var(--accent-light);
+        }
+
+        .scroll-container {
+            overflow-y: auto;
+            padding: 16px;
+            -webkit-overflow-scrolling: touch;
+            max-height: 38vh;
+            flex: 1;
+        }
+
+        @media (min-width: 768px) {
+            .app-container { flex-direction: row; }
+            .sidebar {
+                width: 480px;
+                border-right: 1px solid var(--border);
+                border-bottom: none;
+                height: 100vh;
+            }
+            .scroll-container { max-height: none; padding: 20px; }
+            .tabs { padding: 0 16px; }
+            .tab-btn { font-size: 0.8rem; padding: 16px 12px; }
+        }
+
+        .hidden { display: none !important; }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 18px;
+            margin-bottom: 18px;
+            box-shadow: 0 4px 6px -2px rgba(0,0,0,0.03);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .card-title {
+            font-size: 0.85rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: var(--primary);
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-add {
+            background: var(--accent);
+            color: white;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            font-size: 1.3rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 2px 4px rgba(37,99,235,0.2);
+        }
+
+        .tramo-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 10px 14px;
+            margin-bottom: 10px;
+            background: #fafafa;
+        }
+        .tramo-label { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); min-width: 70px; }
+        .tramo-input {
+            border: 1px solid var(--border);
+            background: white;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--primary);
+            text-align: center;
+            width: 80px;
+            padding: 6px;
+            border-radius: 8px;
+            outline: none;
+        }
+        .btn-del {
+            background: none;
+            border: none;
+            color: var(--danger);
+            font-size: 1.4rem;
+            font-weight: bold;
+            cursor: pointer;
+            padding: 0 6px;
+            opacity: 0.7;
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin-bottom: 14px;
+        }
+        .input-group label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+        }
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--primary);
+            outline: none;
+            background: white;
+        }
+
+        .formula-box {
+            background: #f1f5f9;
+            border-radius: 12px;
+            padding: 14px;
+            font-size: 0.9rem;
+            line-height: 1.7;
+            overflow-x: auto;
+        }
+
+        .status-pill {
+            padding: 8px 14px;
+            border-radius: 40px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            display: inline-block;
+            width: 100%;
+            text-align: center;
+        }
+        .status-ok { background: #d1fae5; color: #065f46; }
+        .status-error { background: #fee2e2; color: #991b1b; }
+
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+            font-size: 0.8rem;
+        }
+        .results-table td { padding: 8px 4px; border-bottom: 1px solid var(--border); }
+        .results-table .val { font-weight: 700; text-align: right; color: var(--primary); }
+        .results-table .unit { color: var(--text-muted); padding-left: 8px; }
+
+        .viewport {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            background: var(--bg);
+        }
+
+        #canvas-wrapper {
+            background: var(--card-bg);
+            border-radius: 20px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+            padding: 12px;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+        }
+
+        canvas { display: block; touch-action: none; }
+
+        .col-info-badge {
+            background: var(--columna-selected);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 30px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        .resumen-proyecto {
+            background: var(--primary);
+            color: white;
+            border-radius: 14px;
+            padding: 14px;
+            margin-bottom: 18px;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+<div class="app-container">
+    <div class="sidebar">
+        <div class="tabs">
+            <button class="tab-btn active" id="btn-tab-grilla" onclick="switchTab('grilla')">📐 GRILLA</button>
+            <button class="tab-btn" id="btn-tab-calculo" onclick="switchTab('calculo')">📊 VIGAS</button>
+            <button class="tab-btn" id="btn-tab-perfil" onclick="switchTab('perfil')">🔍 PERFIL</button>
+            <button class="tab-btn" id="btn-tab-columnas" onclick="switchTab('columnas')">🏛️ COLUMNAS</button>
+        </div>
+
+        <div class="scroll-container">
+            <!-- PESTAÑA CONFIGURACIÓN (GRILLA + DISEÑO) -->
+            <div id="tab-grilla">
+                <div class="resumen-proyecto" id="resumen-proyecto">
+                    <div style="display:flex; justify-content:space-between;">
+                        <span>📏 Luz total X: <span id="resumen-lx">5.0</span> m</span>
+                        <span>📐 Luz total Y: <span id="resumen-ly">4.0</span> m</span>
+                    </div>
+                    <div style="margin-top:8px;">🏋️ Carga total diseño: <span id="resumen-carga">--</span> kg/m²</div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title"><i>⬌</i> VIGAS HORIZONTALES (X)</h2>
+                        <button class="btn-add" onclick="addRow('listX')">+</button>
+                    </div>
+                    <div id="listX">
+                        <div class="tramo-row">
+                            <span class="tramo-label">Tramo 1-2</span>
+                            <input type="number" step="0.1" value="5.0" class="tramo-input" oninput="globalUpdate()">
+                            <button class="btn-del" onclick="deleteRow(this)">×</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title"><i>⬍</i> VIGAS VERTICALES (Y)</h2>
+                        <button class="btn-add" onclick="addRow('listY')">+</button>
+                    </div>
+                    <div id="listY">
+                        <div class="tramo-row">
+                            <span class="tramo-label">Tramo A-B</span>
+                            <input type="number" step="0.1" value="4.0" class="tramo-input" oninput="globalUpdate()">
+                            <button class="btn-del" onclick="deleteRow(this)">×</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header"><h2 class="card-title">⚙️ DISEÑO GENERAL</h2></div>
+                    <div class="input-grid">
+                        <div class="input-group"><label>Losa (kg/m²)</label><input type="number" id="q-losa" value="300" oninput="globalUpdate()"></div>
+                        <div class="input-group"><label>Acabados (kg/m²)</label><input type="number" id="q-acabados" value="100" oninput="globalUpdate()"></div>
+                        <div class="input-group"><label>S/C Uso (kg/m²)</label><input type="number" id="q-uso" value="200" oninput="globalUpdate()"></div>
+                        <div class="input-group"><label>N° Pisos</label><input type="number" id="n-pisos" value="4" oninput="globalUpdate()"></div>
+                    </div>
+                    <div class="input-grid">
+                        <div class="input-group"><label>Acero Fy (kg/cm²)</label><input type="number" id="fy-acero" value="2530" oninput="globalUpdate()"></div>
+                        <div class="input-group"><label>Concreto f'c (kg/cm²)</label><input type="number" id="fc-concreto" value="210" oninput="globalUpdate()"></div>
+                        <div class="input-group"><label>E Acero (kg/cm²)</label><input type="number" id="E-acero" value="2100000" oninput="globalUpdate()"></div>
+                        <div class="input-group"><label>Flecha Límite L/</label><input type="number" id="f-lim" value="300" oninput="globalUpdate()"></div>
+                    </div>
+                    <div class="input-grid">
+                        <div class="input-group"><label>Ancho influencia viga (m)</label><input type="number" id="ancho-t" value="4.0" step="0.1" oninput="globalUpdate()"></div>
+                        <div class="input-group"><label>Factor K columna</label><input type="number" id="col-kfactor" value="1.0" step="0.1" oninput="globalUpdate()"></div>
+                        <div class="input-group"><label>Altura libre Lc (m)</label><input type="number" id="col-hlibre" value="3.0" step="0.1" oninput="globalUpdate()"></div>
+                    </div>
+                </div>
+                <p style="font-size:0.7rem; color:var(--text-muted); text-align:center;">Haga clic en una viga o nodo para analizar</p>
+            </div>
+
+            <!-- PESTAÑA VERIFICACIÓN VIGAS -->
+            <div id="tab-calculo" class="hidden">
+                <div style="margin-bottom: 20px; text-align: center;">
+                    <span id="selected-label" style="background: var(--primary); color: white; padding: 6px 18px; border-radius: 30px; font-size: 0.8rem; font-weight: 700;">VIGA SELECCIONADA</span>
+                </div>
+                <div class="formula-box" id="formula-momento"></div>
+                <div class="formula-box" id="formula-sx" style="margin-top:10px;"></div>
+                <div class="formula-box" id="profile-res" style="margin-top:10px; background: #e0f2fe;"></div>
+                <div class="formula-box" id="formula-flecha" style="margin-top:10px;"></div>
+                <div id="deflection-status" style="margin-top:12px; font-weight:700;"></div>
+                <div id="final-badge" class="status-pill status-ok" style="margin-top:16px;">---</div>
+            </div>
+
+            <!-- PESTAÑA DETALLE PERFIL -->
+            <div id="tab-perfil" class="hidden">
+                <div class="card">
+                    <div class="card-header"><h2 class="card-title">PROPIEDADES IPN</h2></div>
+                    <div id="perfil-detalle-contenido">Seleccione una viga primero.</div>
+                </div>
+            </div>
+
+            <!-- PESTAÑA COLUMNAS -->
+            <div id="tab-columnas" class="hidden">
+                <div class="card">
+                    <div class="card-header"><h2 class="card-title">COLUMNA <span id="col-nodo-info" class="col-info-badge">Nodo (1,A)</span></h2></div>
+                    <div class="input-grid">
+                        <div class="input-group"><label>Posición</label><select id="col-posicion" onchange="updateColumnas()"><option value="central">Central</option><option value="perimetral">Perimetral</option><option value="esquina">Esquina</option></select></div>
+                        <div class="input-group"><label>Vano X1 (m)</label><input type="number" id="col-lx1" step="0.1" oninput="updateColumnas()"></div>
+                        <div class="input-group"><label>Vano X2 (m)</label><input type="number" id="col-lx2" step="0.1" oninput="updateColumnas()"></div>
+                        <div class="input-group"><label>Vano Y1 (m)</label><input type="number" id="col-ly1" step="0.1" oninput="updateColumnas()"></div>
+                        <div class="input-group"><label>Vano Y2 (m)</label><input type="number" id="col-ly2" step="0.1" oninput="updateColumnas()"></div>
+                    </div>
+                </div>
+                <div class="card">
+                    <h2 style="font-size:0.9rem;">ACERO (PANDEO AISC)</h2>
+                    <div class="formula-box" id="col-form-acero"></div>
+                    <table class="results-table">
+                        <tr><td>Área req. inicial</td><td class="val" id="col-area-req">--</td><td class="unit">cm²</td></tr>
+                        <tr><td>Perfil adoptado</td><td class="val" id="col-perfil-nombre">--</td><td class="unit"></td></tr>
+                        <tr><td>φPn (capacidad)</td><td class="val" id="col-phipn">--</td><td class="unit">ton</td></tr>
+                        <tr><td>Pu (demanda)</td><td class="val" id="col-pu-val">--</td><td class="unit">ton</td></tr>
+                        <tr><td>Ratio D/C</td><td class="val" id="col-ratio">--</td><td class="unit"></td></tr>
+                    </table>
+                    <div id="col-pandeo-badge" class="status-pill status-ok" style="margin-top:10px;">---</div>
+                </div>
+                <div class="card">
+                    <h2 style="font-size:0.9rem;">CONCRETO (REF)</h2>
+                    <div class="input-grid">
+                        <div class="input-group"><label>b (cm)</label><input type="number" id="col-dimB" value="35" oninput="updateColumnas()"></div>
+                        <div class="input-group"><label>h (cm)</label><input type="number" id="col-dimH" value="35" oninput="updateColumnas()"></div>
+                    </div>
+                    <div id="col-cumple-area" class="status-pill">---</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="viewport">
+        <div id="canvas-wrapper">
+            <canvas id="viewCanvas"></canvas>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function(){
+        // PERFILES IPN SIDOR (completos)
+        const perfilesIPN = [
+            { nombre: "IPN 80", h:80,b:42,t_alma:4.6,t_ala:5.4,R:3.9,R1:2.3,area:8.03,peso:6.3,Ix:78.1,Sx:19.4,Rx:3.12,Iy:7.7,Sy:3.61,Ry:0.98 },
+            { nombre: "IPN 100", h:100,b:50,t_alma:4.5,t_ala:6.8,R:4.5,R1:2.7,area:10.6,peso:8.32,Ix:171,Sx:34.2,Rx:4.01,Iy:12.2,Sy:4.88,Ry:1.07 },
+            { nombre: "IPN 120", h:120,b:58,t_alma:5.1,t_ala:7.7,R:5.1,R1:3.1,area:14.2,peso:11.2,Ix:328,Sx:54.7,Rx:4.81,Iy:21.5,Sy:7.41,Ry:1.23 },
+            { nombre: "IPN 140", h:140,b:66,t_alma:5.7,t_ala:8.6,R:5.7,R1:3.4,area:18.3,peso:14.4,Ix:573,Sx:81.9,Rx:5.61,Iy:35.2,Sy:10.7,Ry:1.40 },
+            { nombre: "IPN 160", h:160,b:74,t_alma:6.3,t_ala:9.5,R:6.3,R1:3.8,area:22.8,peso:17.9,Ix:935,Sx:117,Rx:6.4,Iy:54.7,Sy:14.8,Ry:1.55 },
+            { nombre: "IPN 180", h:180,b:82,t_alma:6.9,t_ala:10.4,R:6.9,R1:4.1,area:27.9,peso:21.9,Ix:1450,Sx:161,Rx:7.2,Iy:81.3,Sy:19.8,Ry:1.71 },
+            { nombre: "IPN 200", h:200,b:90,t_alma:7.5,t_ala:11.3,R:7.5,R1:4.5,area:33.5,peso:26.3,Ix:2140,Sx:214,Rx:8.0,Iy:117,Sy:26,Ry:1.87 },
+            { nombre: "IPN 240", h:240,b:106,t_alma:8.7,t_ala:13.1,R:8.7,R1:5.2,area:46.1,peso:36.2,Ix:4250,Sx:354,Rx:9.59,Iy:221,Sy:41.7,Ry:2.20 },
+            { nombre: "IPN 300", h:300,b:125,t_alma:10.8,t_ala:16.2,R:10.8,R1:6.5,area:69.1,peso:54.2,Ix:9800,Sx:653,Rx:11.9,Iy:451,Sy:72.2,Ry:2.56 }
+        ];
+
+        // Estado global
+        let state = {
+            lx: [5.0], ly: [4.0],
+            selectedType: 'X', selectedIndex: 0,
+            selectedNode: null, // {i,j}
+            perfilViga: null
+        };
+
+        const canvas = document.getElementById('viewCanvas');
+        const ctx = canvas.getContext('2d');
+        const wrapper = document.getElementById('canvas-wrapper');
+
+        function formatNum(num, dec=0) { return new Intl.NumberFormat('en-US', {minimumFractionDigits: dec, maximumFractionDigits: dec}).format(num); }
+
+        // ========== ACTUALIZACIÓN GLOBAL ==========
+        function globalUpdate() {
+            // Leer longitudes
+            state.lx = Array.from(document.querySelectorAll('#listX input')).map(i => parseFloat(i.value) || 0);
+            state.ly = Array.from(document.querySelectorAll('#listY input')).map(i => parseFloat(i.value) || 0);
+            
+            // Actualizar resumen
+            const totalX = state.lx.reduce((a,b)=>a+b,0).toFixed(2);
+            const totalY = state.ly.reduce((a,b)=>a+b,0).toFixed(2);
+            document.getElementById('resumen-lx').innerText = totalX;
+            document.getElementById('resumen-ly').innerText = totalY;
+            const qLosa = parseFloat(document.getElementById('q-losa').value)||0;
+            const qAcab = parseFloat(document.getElementById('q-acabados').value)||0;
+            const qUso = parseFloat(document.getElementById('q-uso').value)||0;
+            document.getElementById('resumen-carga').innerText = (qLosa+qAcab+qUso).toFixed(0);
+
+            // Actualizar vigas
+            updateCalculoViga();
+
+            // Actualizar columna si hay nodo seleccionado
+            if (state.selectedNode) {
+                sincronizarNodoConUI();
+                updateColumnas();
+            }
+
+            renderCanvas();
+            if (window.MathJax) MathJax.typesetPromise();
+        }
+
+        function updateCalculoViga() {
+            const L = state.selectedType === 'X' ? state.lx[state.selectedIndex] : state.ly[state.selectedIndex];
+            const qLosa = parseFloat(document.getElementById('q-losa').value)||0;
+            const qAcab = parseFloat(document.getElementById('q-acabados').value)||0;
+            const qUso = parseFloat(document.getElementById('q-uso').value)||0;
+            const ancho = parseFloat(document.getElementById('ancho-t').value)||0;
+            const Fy = parseFloat(document.getElementById('fy-acero').value)||2530;
+            const E = parseFloat(document.getElementById('E-acero').value)||2100000;
+            const fLim = parseFloat(document.getElementById('f-lim').value)||300;
+
+            const qmuerta = (qLosa + qAcab + 250) * ancho; // 250 pp vigas
+            const qviva = qUso * ancho;
+            const q = qmuerta + qviva;
+            const M = (q * L * L) / 8;
+            const SxReq = (M * 100) / (0.66 * Fy); // ASD básico
+
+            document.getElementById('formula-momento').innerHTML = `\\[ q = ${formatNum(q)} \\text{ kg/m}, \\; L=${L.toFixed(2)}\\text{ m} \\] \\[ M = \\frac{qL^2}{8} = ${formatNum(M)} \\text{ kg·m} \\]`;
+            document.getElementById('formula-sx').innerHTML = `\\[ S_{req} = \\frac{M \\cdot 100}{0.66F_y} = ${formatNum(SxReq,1)} \\text{ cm}^3 \\]`;
+
+            let idx = perfilesIPN.findIndex(p => p.Sx >= SxReq);
+            let cumpleFlecha = false, fReal = 0;
+            const fAdm = (L*100)/fLim;
+            let perfil = null;
+            while (idx < perfilesIPN.length && idx >= 0) {
+                perfil = perfilesIPN[idx];
+                fReal = (5 * (q/100) * Math.pow(L*100,4)) / (384 * E * perfil.Ix);
+                if (fReal <= fAdm) { cumpleFlecha = true; break; }
+                idx++;
+            }
+            if (!cumpleFlecha && idx < perfilesIPN.length) perfil = perfilesIPN[idx];
+            else if (idx >= perfilesIPN.length) perfil = perfilesIPN[perfilesIPN.length-1];
+            state.perfilViga = perfil;
+
+            document.getElementById('profile-res').innerHTML = `Perfil: <strong>${perfil.nombre}</strong> (Sx=${perfil.Sx} cm³, Ix=${formatNum(perfil.Ix)} cm⁴)`;
+            document.getElementById('formula-flecha').innerHTML = `\\[ f_{real} = ${fReal.toFixed(2)}\\text{ cm} \\;\\; f_{adm} = ${fAdm.toFixed(2)}\\text{ cm} \\]`;
+            const defDiv = document.getElementById('deflection-status');
+            const badge = document.getElementById('final-badge');
+            if (cumpleFlecha) {
+                defDiv.innerHTML = `<span style="color:var(--success);">✓ Cumple flecha</span>`;
+                badge.innerText = `USAR ${perfil.nombre}`;
+                badge.className = "status-pill status-ok";
+            } else {
+                defDiv.innerHTML = `<span style="color:var(--danger);">✗ No cumple flecha</span>`;
+                badge.innerText = `RIGIDEZ INSUFICIENTE`;
+                badge.className = "status-pill status-error";
+            }
+
+            const label = document.getElementById('selected-label');
+            label.innerText = state.selectedType === 'X' ? `Viga X${state.selectedIndex+1} (L=${L.toFixed(2)}m)` : `Viga Y-${String.fromCharCode(65+state.selectedIndex)} (L=${L.toFixed(2)}m)`;
+
+            if (!document.getElementById('tab-perfil').classList.contains('hidden')) actualizarPestanaPerfil();
+        }
+
+        function actualizarPestanaPerfil() {
+            const cont = document.getElementById('perfil-detalle-contenido');
+            const p = state.perfilViga;
+            if (!p) { cont.innerHTML = 'Sin perfil seleccionado'; return; }
+            cont.innerHTML = `<h3>${p.nombre}</h3><table class="prop-table">
+                <tr><td>h</td><td>${p.h} mm</td></tr><tr><td>b</td><td>${p.b} mm</td></tr><tr><td>tw</td><td>${p.t_alma} mm</td></tr><tr><td>tf</td><td>${p.t_ala} mm</td></tr>
+                <tr><td>Área</td><td>${p.area} cm²</td></tr><tr><td>Ix</td><td>${formatNum(p.Ix)} cm⁴</td></tr><tr><td>Sx</td><td>${p.Sx} cm³</td></tr>
+                <tr><td>Iy</td><td>${p.Iy} cm⁴</td></tr><tr><td>Sy</td><td>${p.Sy} cm³</td></tr><tr><td>ry</td><td>${p.Ry} cm</td></tr>
+            </table>`;
+        }
+
+        // ========== COLUMNAS ==========
+        function sincronizarNodoConUI() {
+            if (!state.selectedNode) return;
+            const {i,j} = state.selectedNode;
+            const numFilas = state.ly.length, numCols = state.lx.length;
+            let pos = 'central';
+            if ((i===0||i===numFilas-1) && (j===0||j===numCols-1)) pos='esquina';
+            else if (i===0||i===numFilas-1||j===0||j===numCols-1) pos='perimetral';
+            document.getElementById('col-posicion').value = pos;
+            let lx1=0, lx2=0, ly1=0, ly2=0;
+            if (j>0) lx1 = state.lx[j-1];
+            if (j<numCols) lx2 = state.lx[j];
+            if (i>0) ly1 = state.ly[i-1];
+            if (i<numFilas) ly2 = state.ly[i];
+            document.getElementById('col-lx1').value = lx1.toFixed(2);
+            document.getElementById('col-lx2').value = lx2.toFixed(2);
+            document.getElementById('col-ly1').value = ly1.toFixed(2);
+            document.getElementById('col-ly2').value = ly2.toFixed(2);
+            document.getElementById('col-nodo-info').innerText = `Nodo (${j+1},${String.fromCharCode(65+i)}) · ${pos}`;
+        }
+
+        function updateColumnas() {
+            const pos = document.getElementById('col-posicion').value;
+            const lx1 = parseFloat(document.getElementById('col-lx1').value)||0;
+            const lx2 = parseFloat(document.getElementById('col-lx2').value)||0;
+            const ly1 = parseFloat(document.getElementById('col-ly1').value)||0;
+            const ly2 = parseFloat(document.getElementById('col-ly2').value)||0;
+            const nPisos = parseFloat(document.getElementById('n-pisos').value)||1;
+            const qLosa = parseFloat(document.getElementById('q-losa').value)||0;
+            const qAcab = parseFloat(document.getElementById('q-acabados').value)||0;
+            const qUso = parseFloat(document.getElementById('q-uso').value)||0;
+            const Fy = parseFloat(document.getElementById('fy-acero').value)||2530;
+            const fc = parseFloat(document.getElementById('fc-concreto').value)||210;
+            const Lc = parseFloat(document.getElementById('col-hlibre').value)||3.0;
+            const K = parseFloat(document.getElementById('col-kfactor').value)||1.0;
+            const E = parseFloat(document.getElementById('E-acero').value)||2100000;
+
+            const At = ((lx1/2)+(lx2/2)) * ((ly1/2)+(ly2/2));
+            const PD = ((qLosa+qAcab+250) * At * nPisos)/1000;
+            const PL = (qUso * At * nPisos)/1000;
+            const Pu = 1.2*PD + 1.6*PL;
+
+            // Concreto
+            let lambda=1.1, n=0.30;
+            if(pos==='perimetral'){lambda=1.25;n=0.25;} if(pos==='esquina'){lambda=1.5;n=0.20;}
+            const areaConcReq = (lambda * (PD+PL)*1000) / (n * fc);
+            const b = parseFloat(document.getElementById('col-dimB').value)||35;
+            const h = parseFloat(document.getElementById('col-dimH').value)||35;
+            const cumpleConc = (b*h) >= areaConcReq;
+            document.getElementById('col-cumple-area').innerHTML = cumpleConc ? `✓ Concreto ${b}x${h} adecuado` : `✗ Área insuficiente`;
+            document.getElementById('col-cumple-area').className = `status-pill ${cumpleConc?'status-ok':'status-error'}`;
+
+            // Acero con pandeo
+            const areaReqIni = (5 * Pu*1000) / (0.6*Fy);
+            document.getElementById('col-area-req').innerText = areaReqIni.toFixed(2);
+            let perfilFinal = null, cumple = false, ratio = 1;
+            let phiPn = 0, Fcr = 0, esb = 0;
+            for (let p of perfilesIPN) {
+                if (p.area < areaReqIni) continue;
+                const KLr = (K * Lc * 100) / p.Ry;
+                esb = KLr;
+                const Fe = (Math.PI*Math.PI*E) / (KLr*KLr);
+                Fcr = (KLr <= 4.71*Math.sqrt(E/Fy)) ? (0.658**(Fy/Fe))*Fy : 0.877*Fe;
+                phiPn = 0.9 * Fcr * p.area / 1000;
+                if (phiPn >= Pu) { perfilFinal = p; cumple = true; ratio = Pu/phiPn; break; }
+            }
+            if (!perfilFinal) {
+                perfilFinal = perfilesIPN[perfilesIPN.length-1];
+                const KLr = (K*Lc*100)/perfilFinal.Ry;
+                const Fe = (Math.PI*Math.PI*E)/(KLr*KLr);
+                Fcr = (KLr <= 4.71*Math.sqrt(E/Fy)) ? (0.658**(Fy/Fe))*Fy : 0.877*Fe;
+                phiPn = 0.9 * Fcr * perfilFinal.area / 1000;
+                ratio = Pu/phiPn;
+            }
+            document.getElementById('col-perfil-nombre').innerText = perfilFinal.nombre;
+            document.getElementById('col-phipn').innerText = phiPn.toFixed(2);
+            document.getElementById('col-pu-val').innerText = Pu.toFixed(2);
+            document.getElementById('col-ratio').innerText = ratio.toFixed(3);
+            const badge = document.getElementById('col-pandeo-badge');
+            badge.innerText = cumple ? `✓ Perfil ${perfilFinal.nombre} adecuado (φPn ≥ Pu)` : `✗ No cumple pandeo (φPn=${phiPn.toFixed(1)} < ${Pu.toFixed(1)})`;
+            badge.className = `status-pill ${cumple?'status-ok':'status-error'}`;
+            document.getElementById('col-form-acero').innerHTML = `\\[ A_{req} = ${areaReqIni.toFixed(1)}\\text{ cm}^2 \\] \\[ \\lambda = ${esb.toFixed(1)},\\; F_{cr}=${Fcr.toFixed(0)}\\text{ kg/cm}^2 \\]`;
+
+            if (window.MathJax) MathJax.typesetPromise();
+        }
+
+        // ========== CANVAS (CON ÁREA TRIBUTARIA) ==========
+        function renderCanvas() {
+            const tX = state.lx.reduce((a,b)=>a+b,0)||1, tY = state.ly.reduce((a,b)=>a+b,0)||1;
+            const w = wrapper.clientWidth - 30, h = wrapper.clientHeight - 30;
+            const scale = Math.min(w/tX, h/tY, 60);
+            const PAD = 30;
+            canvas.width = Math.max(tX*scale + PAD*2, w);
+            canvas.height = Math.max(tY*scale + PAD*2, h);
+            const px = [PAD]; state.lx.forEach(v => px.push(px[px.length-1] + v*scale));
+            const py = [PAD]; state.ly.forEach(v => py.push(py[py.length-1] + v*scale));
+
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+            state.hitBoxes = [];
+
+            // --- DIBUJAR ÁREA TRIBUTARIA SI HAY NODO SELECCIONADO ---
+            if (state.selectedNode) {
+                const {i, j} = state.selectedNode;
+                const numFilas = state.ly.length, numCols = state.lx.length;
+                
+                // Calcular límites del área en unidades de longitud (metros)
+                let xMin = px[j];
+                let xMax = px[j];
+                let yMin = py[i];
+                let yMax = py[i];
+                
+                if (j > 0) xMin -= (state.lx[j-1]/2) * scale;
+                if (j < numCols) xMax += (state.lx[j]/2) * scale;
+                if (i > 0) yMin -= (state.ly[i-1]/2) * scale;
+                if (i < numFilas) yMax += (state.ly[i]/2) * scale;
+                
+                // Dibujar rectángulo semitransparente
+                ctx.fillStyle = 'rgba(139, 92, 246, 0.2)';
+                ctx.fillRect(xMin, yMin, xMax - xMin, yMax - yMin);
+                
+                // Borde punteado
+                ctx.strokeStyle = '#8b5cf6';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([6, 6]);
+                ctx.strokeRect(xMin, yMin, xMax - xMin, yMax - yMin);
+                ctx.setLineDash([]);
+                
+                // Calcular dimensiones reales en metros
+                const anchoX = (xMax - xMin) / scale;
+                const anchoY = (yMax - yMin) / scale;
+                
+                // Etiquetas de dimensiones
+                ctx.font = `bold ${Math.max(10, scale/7)}px Inter`;
+                ctx.fillStyle = '#6d28d9';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                
+                // Etiqueta horizontal (mitad superior del área)
+                const midX = (xMin + xMax) / 2;
+                const midY = (yMin + yMax) / 2;
+                ctx.fillText(`${anchoX.toFixed(2)} m`, midX, yMin - 8);
+                // Etiqueta vertical (lado izquierdo)
+                ctx.save();
+                ctx.translate(xMin - 12, midY);
+                ctx.rotate(-Math.PI/2);
+                ctx.fillText(`${anchoY.toFixed(2)} m`, 0, 0);
+                ctx.restore();
+                
+                // Área en m² en el centro
+                const areaM2 = anchoX * anchoY;
+                ctx.font = `bold ${Math.max(11, scale/6)}px Inter`;
+                ctx.fillStyle = '#5b21b6';
+                ctx.fillText(`At = ${areaM2.toFixed(2)} m²`, midX, midY);
+                
+                // Guardar hitbox del área tributaria para clic
+                state.hitBoxes.push({
+                    t: 'AREA_TRIBUTARIA',
+                    node: {i, j},
+                    x1: xMin, y1: yMin,
+                    x2: xMax, y2: yMax
+                });
+            }
+
+            // Grilla
+            ctx.setLineDash([4,4]); ctx.strokeStyle="#cbd5e1"; ctx.lineWidth=1;
+            py.forEach(y=>{ctx.beginPath(); ctx.moveTo(px[0]-15,y); ctx.lineTo(px[px.length-1]+15,y); ctx.stroke();});
+            px.forEach(x=>{ctx.beginPath(); ctx.moveTo(x,py[0]-15); ctx.lineTo(x,py[py.length-1]+15); ctx.stroke();});
+            
+            // Vigas
+            ctx.setLineDash([]); ctx.lineWidth=Math.max(3, scale/8);
+            py.forEach((y,i)=>{ px.forEach((x,j)=>{ if(j<px.length-1){
+                ctx.strokeStyle = (state.selectedType==='X'&&state.selectedIndex===j)?"#2563eb":"#f97316";
+                ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(px[j+1],y); ctx.stroke();
+                state.hitBoxes.push({t:'X',i:j, x1:x,y1:y-12,x2:px[j+1],y2:y+12});
+            }})});
+            px.forEach((x,j)=>{ py.forEach((y,i)=>{ if(i<py.length-1){
+                ctx.strokeStyle = (state.selectedType==='Y'&&state.selectedIndex===i)?"#2563eb":"#0f172a";
+                ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x,py[i+1]); ctx.stroke();
+                state.hitBoxes.push({t:'Y',i:i, x1:x-12,y1:y,x2:x+12,y2:py[i+1]});
+            }})});
+            
+            // Nodos
+            const r = Math.max(5, scale/10);
+            px.forEach((x,j)=>{ py.forEach((y,i)=>{
+                const sel = state.selectedNode && state.selectedNode.i===i && state.selectedNode.j===j;
+                ctx.fillStyle = sel ? "#8b5cf6" : "#2563eb";
+                ctx.beginPath(); ctx.arc(x,y,sel?r+3:r,0,2*Math.PI); ctx.fill();
+                ctx.strokeStyle="white"; ctx.lineWidth=2; ctx.stroke();
+                state.hitBoxes.push({t:'NODE',i,j, x1:x-r-5,y1:y-r-5,x2:x+r+5,y2:y+r+5});
+            })});
+            
+            // Etiquetas ejes
+            ctx.font = `bold ${Math.max(10, scale/7)}px Inter`; ctx.fillStyle="#64748b";
+            px.forEach((x,j)=>{ if(j>0) ctx.fillText(j,x-5,py[0]-10); });
+            py.forEach((y,i)=>{ if(i>0) ctx.fillText(String.fromCharCode(64+i),px[0]-20,y+5); });
+        }
+
+        function handleCanvasTap(e) {
+            e.preventDefault();
+            const rect = canvas.getBoundingClientRect();
+            const sx = canvas.width/rect.width, sy = canvas.height/rect.height;
+            const cx = (e.touches?e.touches[0].clientX:e.clientX) - rect.left;
+            const cy = (e.touches?e.touches[0].clientY:e.clientY) - rect.top;
+            const mx = cx * sx, my = cy * sy;
+            
+            // Prioridad: área tributaria, luego nodo, luego vigas
+            let hit = null;
+            for (let b of state.hitBoxes) {
+                if (mx>=b.x1 && mx<=b.x2 && my>=b.y1 && my<=b.y2) {
+                    if (b.t === 'AREA_TRIBUTARIA') {
+                        hit = {t: 'NODE', i: b.node.i, j: b.node.j};
+                        break;
+                    } else if (b.t === 'NODE' || b.t === 'X' || b.t === 'Y') {
+                        hit = b;
+                        // No romper para dar prioridad a área si existe
+                    }
+                }
+            }
+            if (hit) {
+                if (hit.t === 'NODE') {
+                    state.selectedNode = {i: hit.i, j: hit.j};
+                    sincronizarNodoConUI();
+                    updateColumnas();
+                    switchTab('columnas');
+                } else {
+                    state.selectedType = hit.t; 
+                    state.selectedIndex = hit.i;
+                    updateCalculoViga();
+                    switchTab('calculo');
+                }
+                renderCanvas();
+            }
+        }
+
+        canvas.addEventListener('mousedown', handleCanvasTap);
+        canvas.addEventListener('touchstart', handleCanvasTap, {passive: false});
+        window.addEventListener('resize', ()=>{ renderCanvas(); });
+
+        // ========== UI ==========
+        window.switchTab = function(tab) {
+            document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+            ['grilla','calculo','perfil','columnas'].forEach(id=>document.getElementById(`tab-${id}`).classList.add('hidden'));
+            document.getElementById(`tab-${tab}`).classList.remove('hidden');
+            document.getElementById(`btn-tab-${tab}`).classList.add('active');
+            if (tab==='perfil') actualizarPestanaPerfil();
+            if (tab==='columnas' && state.selectedNode) { sincronizarNodoConUI(); updateColumnas(); }
+            renderCanvas();
+            if (window.MathJax) MathJax.typesetPromise();
+        };
+
+        window.addRow = function(listId) {
+            const cont = document.getElementById(listId);
+            const rows = cont.children.length;
+            const label = listId==='listX' ? `${rows+1}-${rows+2}` : `${String.fromCharCode(65+rows)}-${String.fromCharCode(66+rows)}`;
+            const div = document.createElement('div'); div.className='tramo-row';
+            div.innerHTML = `<span class="tramo-label">Tramo ${label}</span><input type="number" step="0.1" value="4.0" class="tramo-input" oninput="globalUpdate()"><button class="btn-del" onclick="deleteRow(this)">×</button>`;
+            cont.appendChild(div);
+            globalUpdate();
+        };
+
+        window.deleteRow = function(btn) {
+            btn.closest('.tramo-row').remove();
+            globalUpdate();
+        };
+
+        window.globalUpdate = globalUpdate;
+        window.updateColumnas = updateColumnas;
+
+        window.onload = () => {
+            state.selectedNode = {i:0, j:0};
+            globalUpdate();
+            switchTab('grilla');
+        };
+    })();
+</script>
+</body>
+</html>
