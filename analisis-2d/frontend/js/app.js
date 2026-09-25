@@ -234,7 +234,11 @@ const App = (function () {
         $('kpi-estado').className = 'kpi-valor mal';
       }
     } catch (e) {
-      mostrarError('Sin conexión con el motor: ' + e.message);
+      console.error('Error en analizar():', e);
+      const falloRed = (e instanceof TypeError) && /fetch|network/i.test(e.message);
+      mostrarError(falloRed
+        ? 'Sin conexión con el motor: verifica que el servidor esté corriendo (./run.sh).'
+        : 'Error inesperado de la interfaz: ' + e.message);
     } finally {
       calculando = false;
       if (pendiente) { pendiente = false; analizar(); }
@@ -248,8 +252,14 @@ const App = (function () {
   }
 
   /* ================= paneles de resultados ================= */
+  function fmtDelta(cm) {
+    const a = Math.abs(cm);
+    const dec = a === 0 ? 0 : (a < 0.01 ? 4 : (a < 0.1 ? 3 : 2));
+    return cm.toLocaleString('es-VE', { maximumFractionDigits: dec }) + ' cm';
+  }
+
   function renderKPIs(res, ms) {
-    $('kpi-delta').textContent = fmt.format(res.kpi.delta_max * 100) + ' cm';
+    $('kpi-delta').textContent = fmtDelta(res.kpi.delta_max * 100);
     $('kpi-mmax').textContent = fmt.format(res.kpi.M_max) + ' kg·m';
     $('kpi-ry').textContent = fmt.format(res.kpi.suma_Ry) + ' kg';
     const ok = res.kpi.equilibrio_ok;
@@ -268,7 +278,7 @@ const App = (function () {
 
   function renderTablas(res) {
     /* --- reacciones --- */
-    const tb = $('tabla-reacciones tbody');
+    const tb = $('tabla-reacciones').querySelector('tbody');
     tb.innerHTML = '';
     for (const r of res.reacciones) {
       tb.insertAdjacentHTML('beforeend',
@@ -277,7 +287,7 @@ const App = (function () {
     if (!res.reacciones.length) tb.innerHTML = '<tr><td colspan="3" class="vacio">—</td></tr>';
 
     /* --- barras --- */
-    const tb2 = $('tabla-barras tbody');
+    const tb2 = $('tabla-barras').querySelector('tbody');
     tb2.innerHTML = '';
     for (const b of res.barras) {
       tb2.insertAdjacentHTML('beforeend',
@@ -293,7 +303,7 @@ const App = (function () {
     if (!res.barras.length) tb2.innerHTML = '<tr><td colspan="6" class="vacio">—</td></tr>';
 
     /* --- desplazamientos --- */
-    const tb3 = $('tabla-nudos tbody');
+    const tb3 = $('tabla-nudos').querySelector('tbody');
     tb3.innerHTML = '';
     for (const n of [...res.nudos].sort((a, b) => Math.abs(b.uy) - Math.abs(a.uy))) {
       tb3.insertAdjacentHTML('beforeend',
