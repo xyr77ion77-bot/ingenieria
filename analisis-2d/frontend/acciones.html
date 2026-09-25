@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Acciones y Combinaciones · COVENIN 1756-1:2019</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<header>
+  <div class="marca">
+    <h1>⚖️ Acciones y Combinaciones</h1>
+    <div class="sub">COVENIN 1756-1:2019 §8.3 · CP + CV + SH + SV → envolvente · kg · m · kg/cm²</div>
+  </div>
+  <div class="acciones">
+    <button id="btn-calcular" class="primario">⚡ Calcular combinaciones</button>
+    <span class="sep"></span>
+    <button id="btn-guardar" title="Descargar proyecto (modelo + acciones)">💾 Guardar</button>
+    <button id="btn-abrir" title="Abrir proyecto">📂 Abrir</button>
+    <input type="file" id="file-abrir" accept=".json,application/json" hidden>
+  </div>
+</header>
+
+<nav class="app-tabs">
+  <a href="/">🏗️ Análisis 2D</a>
+  <a href="/acciones.html" class="activo">⚖️ Acciones y combinaciones</a>
+  <span class="desactivado" title="Fase 3">🗂️ Plantillas</span>
+  <span class="desactivado" title="Fase 4">🧱 Acero 1618</span>
+  <span class="desactivado" title="Fase 5">🩻 Concreto</span>
+</nav>
+
+<main>
+
+  <!-- ==================== ENTRADAS ==================== -->
+  <aside id="panel-izq">
+
+    <div class="card">
+      <h2><span class="num">1</span> Cargas por barra (kg/m ↓)</h2>
+      <div class="mini">CP = permanente · CV = variable. El peso propio (si está activo en la barra) se suma a CP.</div>
+      <div class="tabla-compacta" id="tabla-barras-cargas"></div>
+      <div class="fila-2">
+        <button class="suave" id="btn-cp-todas">CP → todas</button>
+        <button class="suave" id="btn-cv-todas">CV → todas</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><span class="num">2</span> Cargas nodales (kg, ↓ negativo)</h2>
+      <div class="tabla-compacta" id="tabla-nudos-cargas"></div>
+      <div class="mini">Solo carga vertical por tipo. Para Fx/Mz puntuales usa la pestaña Análisis 2D (entran como CP).</div>
+    </div>
+
+    <div class="card">
+      <h2><span class="num">3</span> Sismo — COVENIN 1756-1:2019</h2>
+      <div class="fila-3">
+        <label class="campo">A₀<input type="number" id="s-A0" step="0.01" min="0" value="0.21"></label>
+        <label class="campo">A₁<input type="number" id="s-A1" step="0.01" min="0" value="0.18"></label>
+        <label class="campo">T'<sub>L</sub> (s)<input type="number" id="s-TL" step="0.1" min="0" value="3.9"></label>
+      </div>
+      <div class="fila-2">
+        <label class="campo">Grupo (Tabla 14)
+          <select id="s-grupo">
+            <option value="A1">A1 — esencial (α=2,0)</option>
+            <option value="A2">A2 — α=1,5</option>
+            <option value="B1">B1 — α=1,2</option>
+            <option value="B2" selected>B2 — α=1,0 (vivienda/oficinas)</option>
+            <option value="C">C — α=0,7</option>
+          </select></label>
+        <label class="campo">Nivel de diseño (Tabla 15)
+          <select id="s-nd">
+            <option value="ND3" selected>ND3 — R=6 · Cd=4,25 · Ω₀=3</option>
+            <option value="ND2">ND2 — R=3,5 · Cd=3,25 · Ω₀=2,5</option>
+            <option value="ND1">ND1 — R=2,5 · Cd=2,25 · Ω₀=2</option>
+          </select></label>
+      </div>
+      <div class="fila-2">
+        <label class="campo">Clase de sitio (Tabla 3)
+          <select id="s-sitio">
+            <option>A</option><option>AB</option><option>B</option><option>BC</option>
+            <option>C</option><option selected>CD</option><option>D</option>
+            <option>DE</option><option>E</option>
+          </select></label>
+        <label class="campo">Topografía (Tabla 11)
+          <select id="s-topo">
+            <option value="leve" selected>Leve</option>
+            <option value="mod">Moderada</option>
+            <option value="sev">Severa</option>
+          </select></label>
+      </div>
+      <div class="fila-3">
+        <label class="campo">H basamento (m)<input type="number" id="s-H" step="10" min="0" value="0"></label>
+        <label class="campo">ρ amort. (§7.3.4)<input type="number" id="s-rho" step="0.1" min="0.5" value="1.0"></label>
+        <label class="campo">FI (§6.4)<input type="number" id="s-FI" step="0.1" min="1" value="1.0"></label>
+      </div>
+      <div class="fila-3">
+        <label class="campo">Ct (Tabla 24)<input type="number" id="s-ct" step="0.01" min="0.04" value="0.08"></label>
+        <label class="campo">Fracción CV (Tabla 20)
+          <select id="s-fracc">
+            <option value="0.15">Vivienda 15 %</option>
+            <option value="0.25" selected>Oficinas 25 %</option>
+            <option value="0.25">Comercio 25 %</option>
+            <option value="0.5">Agrupación/Estac. 50 %</option>
+            <option value="0.8">Almacén 80 %</option>
+            <option value="1">Recipientes 100 %</option>
+          </select></label>
+        <label class="campo">% V₀ del pórtico<input type="number" id="s-fracp" step="5" min="1" max="100" value="100"></label>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><span class="num">4</span> Opciones de combinación (§8.3.2)</h2>
+      <label class="check"><input type="checkbox" id="o-sismo" checked> Incluir acción sísmica (SH)</label>
+      <label class="check"><input type="checkbox" id="o-sv" checked> Incluir componente vertical SV = CSV·CP (§8.3.1.4)</label>
+      <label class="check"><input type="checkbox" id="o-omega"> Con sobrerresistencia Ω₀·ρ — fórmulas 8.11–8.15</label>
+      <div class="fila-2">
+        <label class="campo">ρ redundancia (Tabla 13)<input type="number" id="o-rhoR" step="0.1" min="1" value="1.0"></label>
+        <label class="campo">γ (§8.3.2.b)
+          <select id="o-gamma">
+            <option value="auto" selected>Auto (CV &lt; 500 → 0,5)</option>
+            <option value="0.5">Forzar 0,5</option>
+            <option value="1">Forzar 1,0</option>
+          </select></label>
+      </div>
+      <div class="mini">Voladizos: la norma exige además 0,3·SV neto hacia arriba — verifícalo aparte (próxima iteración).</div>
+    </div>
+
+  </aside>
+
+  <!-- ==================== CENTRO ==================== -->
+  <section id="panel-centro">
+    <div class="kpis" id="kpis-sismo">
+      <div class="kpi"><span class="kpi-rotulo">AA</span><span class="kpi-valor" id="k-AA">—</span></div>
+      <div class="kpi"><span class="kpi-rotulo">TC (s)</span><span class="kpi-valor" id="k-TC">—</span></div>
+      <div class="kpi"><span class="kpi-rotulo">Ta (s)</span><span class="kpi-valor" id="k-Ta">—</span></div>
+      <div class="kpi"><span class="kpi-rotulo">μ</span><span class="kpi-valor" id="k-mu">—</span></div>
+      <div class="kpi"><span class="kpi-rotulo">C</span><span class="kpi-valor" id="k-C">—</span></div>
+      <div class="kpi"><span class="kpi-rotulo">Cmín</span><span class="kpi-valor" id="k-Cmin">—</span></div>
+      <div class="kpi"><span class="kpi-rotulo">V₀d (kg)</span><span class="kpi-valor" id="k-V0d">—</span></div>
+      <div class="kpi"><span class="kpi-rotulo">Ft (kg)</span><span class="kpi-valor" id="k-Ft">—</span></div>
+      <div class="kpi"><span class="kpi-rotulo">CSV</span><span class="kpi-valor" id="k-CSV">—</span></div>
+      <div class="kpi"><span class="kpi-rotulo">γ</span><span class="kpi-valor" id="k-gamma">—</span></div>
+    </div>
+
+    <div class="card">
+      <h2><span class="num">📈</span> Espectro inelástico Ad(T) (7.18–7.23)</h2>
+      <canvas id="espectro" height="240"></canvas>
+      <div class="mini" id="espectro-nota">Configura el sismo y calcula para ver el espectro.</div>
+    </div>
+
+    <div class="card">
+      <h2><span class="num">📊</span> Peso sísmico y fuerzas por nivel (§8.2.2 · §9.4)</h2>
+      <table class="tabla-datos" id="tabla-niveles">
+        <thead><tr><th>Nivel</th><th>y (m)</th><th>W (kg)</th><th>Fi (kg)</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="caja-error oculto" id="caja-error"><b>No se pudo calcular</b><div id="texto-error"></div></div>
+    <div class="mini" id="lbl-tiempo"></div>
+  </section>
+
+  <!-- ==================== RESULTADOS ==================== -->
+  <aside id="panel-der">
+    <div class="card">
+      <h2><span class="num">Σ</span> Combinaciones evaluadas</h2>
+      <div class="mini" id="lista-combos">Pulsa «Calcular combinaciones».</div>
+    </div>
+
+    <div class="tabs" id="tabs-env">
+      <button class="tab activo" data-tab="barras">Barras</button>
+      <button class="tab" data-tab="reacciones">Reacciones</button>
+      <button class="tab" data-tab="nudos">Desplaz.</button>
+    </div>
+
+    <div class="tabla-wrap" id="tab-env-barras">
+      <table id="tabla-env-barras">
+        <thead><tr><th>Barra</th><th>N (min → max)</th><th>V (min → max)</th><th>M⁺</th><th>M⁻</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <div class="mini">Pasa el cursor sobre un valor para ver la combinación que gobierna. M⁺/M⁻ = máx/mín con signo en el vano.</div>
+    </div>
+    <div class="tabla-wrap oculto" id="tab-env-reacciones">
+      <table id="tabla-env-reacciones">
+        <thead><tr><th>Apoyo</th><th>GDL</th><th>min</th><th>max</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="tabla-wrap oculto" id="tab-env-nudos">
+      <table id="tabla-env-nudos">
+        <thead><tr><th>Nudo</th><th>ux (cm)</th><th>uy (cm)</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </aside>
+
+</main>
+
+<script src="js/acciones.js"></script>
+</body>
+</html>

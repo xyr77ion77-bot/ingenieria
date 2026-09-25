@@ -24,6 +24,7 @@ from pydantic import BaseModel
 from engine import ERROR
 from engine.modelo import Modelo
 from engine.solver import analizar
+from engine.acciones import analizar_con_combinaciones
 from engine import ejemplos
 
 BASE = os.path.dirname(os.path.abspath(__file__))
@@ -64,6 +65,26 @@ def api_validar(modelo: dict):
         return {"ok": True}
     except ERROR as e:
         return JSONResponse(status_code=422, content={"ok": False, "error": str(e)})
+
+
+@app.post("/api/combinaciones")
+def api_combinaciones(payload: dict):
+    """
+    Fase 2: casos CP/CV/SH/SV + combinaciones COVENIN 1756-1 §8.3.2
+    + envolvente. payload = {modelo, acciones}
+    """
+    modelo = payload.get("modelo")
+    acciones = payload.get("acciones") or {}
+    if not isinstance(modelo, dict):
+        return JSONResponse(status_code=422, content={
+            "ok": False, "error": "Falta el objeto 'modelo'."})
+    try:
+        return analizar_con_combinaciones(modelo, acciones)
+    except ERROR as e:
+        return JSONResponse(status_code=422, content={"ok": False, "error": str(e)})
+    except Exception as e:  # noqa: BLE001
+        return JSONResponse(status_code=500, content={
+            "ok": False, "error": f"Error interno del motor: {e}"})
 
 
 @app.get("/api/ejemplos")

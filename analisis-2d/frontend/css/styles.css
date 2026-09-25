@@ -307,3 +307,66 @@ tr:hover td { background: #f8fafc; }
   body { overflow: auto; }
   #lienzo-wrap { min-height: 60vh; }
 }
+
+/* ================================================================
+   Pestañas de aplicación (Fase 2) y tablas de la pestaña Acciones
+   ================================================================ */
+.app-tabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 16px;
+  background: #1e293b;
+  border-bottom: 3px solid var(--azul);
+}
+.app-tabs a, .app-tabs span {
+  padding: 9px 16px;
+  font-size: .8rem;
+  font-weight: 700;
+  color: #94a3b8;
+  text-decoration: none;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -3px;
+  cursor: pointer;
+}
+.app-tabs a:hover { color: #e2e8f0; }
+.app-tabs a.activo { color: #fff; border-bottom-color: #fff; }
+.app-tabs .desactivado { opacity: .45; cursor: not-allowed; }
+
+.tabla-compacta table { width: 100%; border-collapse: collapse; font-size: .78rem; }
+.tabla-compacta th {
+  text-align: left; font-size: .66rem; text-transform: uppercase;
+  color: var(--texto2); padding: 4px 6px; border-bottom: 1px solid var(--borde);
+}
+.tabla-compacta td { padding: 2px 6px; border-bottom: 1px solid #f1f5f9; }
+.tabla-compacta input {
+  width: 100%; padding: 4px 6px; border: 1px solid var(--borde);
+  border-radius: 6px; font-size: .78rem; font-weight: 600; text-align: right;
+  outline: none;
+}
+.tabla-compacta input:focus { border-color: var(--azul); }
+.tabla-compacta .num { text-align: right; font-variant-numeric: tabular-nums; color: var(--texto2); }
+
+.fila-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+
+.tabla-datos { width: 100%; border-collapse: collapse; font-size: .8rem; }
+.tabla-datos th {
+  text-align: left; font-size: .68rem; text-transform: uppercase;
+  color: var(--texto2); padding: 5px 8px; border-bottom: 1px solid var(--borde);
+}
+.tabla-datos td { padding: 5px 8px; border-bottom: 1px solid #f1f5f9; }
+.tabla-datos td.num, .tabla-datos th.num { text-align: right; font-variant-numeric: tabular-nums; }
+
+.combo-fila {
+  font-size: .72rem; line-height: 1.5; padding: 5px 8px;
+  border-bottom: 1px dashed #e2e8f0; color: var(--texto2);
+}
+.combo-fila b { color: var(--texto); }
+
+.env-celda { cursor: help; border-bottom: 1px dotted #94a3b8; }
+
+#panel-centro {
+  display: flex; flex-direction: column; gap: 10px;
+  overflow-y: auto; min-width: 0; min-height: 0;
+}
+#espectro { width: 100%; display: block; }

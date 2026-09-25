@@ -35,6 +35,8 @@ lineal de primer orden:
 | `modelo.py`    | Entidades (Nudo, Barra, Apoyo, CargaNodal) + validaciones con mensajes amables |
 | `solver.py`    | Rigidez local 6×6, transformación, ensamblaje, cargas equivalentes (FEF), partición libres/restringidos, reacciones, fuerzas de extremo, diagramas N(x) V(x) M(x), detección de mecanismos |
 | `ejemplos.py`  | 7 estructuras de ejemplo (viga simple, voladizo, continua, pórticos, marco con cumbrera) |
+| `covenin1756.py` | Motor sísmico COVENIN 1756-1:2019 (port del JS auditado del repo): espectro Ad(T) 7.18–7.23, μ, C/Cmín, Ta, Ft, Fi, Tablas 8–24, CSV vertical (8.4–8.5 + Tabla 19) |
+| `acciones.py` | Fase 2: casos CP/CV/SH/SV, combinaciones §8.3.2 (8.6–8.15 con Ω₀ρ opcional), γ auto, envolvente con combinación gobernante |
 
 **Convención de resultados internos**
 
@@ -57,15 +59,34 @@ lineal de primer orden:
 7. Peso propio → ΣRy = γAL ✓
 8. Detección de estructura inestable ✓
 
+**Verificación de la Fase 2** (`backend/tests_combinaciones.py`, 6 tests): el port
+del motor sísmico se compara contra los valores dorados del JS auditado (T1),
+casos CP/CV/SH/SV (T2), γ §8.3.2.b (T3), superposición lineal (T4), SRSS (T5)
+y envolvente gravitacional (T6).
+
 ```bash
-.venv/bin/python backend/tests_engine.py
+.venv/bin/python backend/tests_engine.py          # motor (8 tests)
+.venv/bin/python backend/tests_combinaciones.py   # acciones y combinaciones (6 tests)
 ```
 
 El solver además autoverifica en cada corrida: ΣFx/ΣFy de reacciones contra
 cargas, residuo del sistema (mecanismos), número de condición y modo rígido
 descargado (avisos).
 
-## 🖥️ Interfaz (`frontend/`)
+## 🖥️ Interfaz (`frontend/`) — pestañas de aplicación
+
+**Pestaña «⚖️ Acciones y Combinaciones»** (`/acciones.html`, Fase 2):
+
+- CP/CV por barra y por nudo (kg/m, kg) con aplicación rápida a todas
+- Parámetros del sismo: A₀, A₁, T'L, grupo α, ND (R/Cd/Ω₀), sitio, topografía,
+  H basamento, ρ, FI, Ct, fracción de CV (Tabla 20) y % de V₀ que toma el pórtico
+- Combinaciones §8.3.2 automáticas (8.6–8.10, con 8.11–8.15 opcional por Ω₀ρ),
+  γ auto (0,5 si CV < 500 kg/m²) o forzado
+- Resultados: KPIs (AA, TC, Ta, μ, C, Cmín, V₀d, Ft, CSV, γ), gráfico del
+  espectro Ad(T), tabla W/Fi por nivel, lista de combinaciones y **envolvente**
+  N/V/M por barra, reacciones y desplazamientos con la combinación que gobierna
+
+**Pestaña «🏗️ Análisis 2D»**:
 
 - **Lienzo interactivo**: rejilla magnética 0,25 m, zoom con rueda, paneo,
   nudos/barras/apoyos/cargas con clic, barras encadenadas, arrastre de nudos.
@@ -86,19 +107,17 @@ descargado (avisos).
 |-----------------------|------------------------------------|
 | `POST /api/analizar`  | Análisis completo del modelo       |
 | `POST /api/validar`   | Validación sin análisis            |
+| `POST /api/combinaciones` | Casos CP/CV/SH/SV + combinaciones §8.3.2 + envolvente |
 | `GET  /api/ejemplos`  | Lista de ejemplos                  |
 | `GET  /api/ejemplos/{id}` | Modelo de ejemplo              |
 | `GET  /api/salud`     | Ping                               |
 
 ## 🗺️ Ruta de crecimiento sugerida
 
-1. **Fase 2 — Combinaciones y normativa**: cargas COVENIN 1756 (1.2CP+γCV±S,
-   0.9CP±S), viento COVENIN 2003, espectro/sismo del módulo
-   `ACERO/calculadora-sismica` (ya auditado en este repo).
-2. **Fase 3 — Diseño de miembros**: verificación AISC/COVENIN 1618
-   (pandeo con el radio del eje que gobierna, interacción H1, cortante de
-   alma) reutilizando las lecciones de auditoría de `verificaciones.js`.
-3. **Fase 4 — Motor más rico**: cargas trapezoidales/puntuales sobre barras,
-   liberaciones de extremo (rótulas), calentamiento/decremento térmico,
-   análisis de 2º orden (P-Δ).
-4. **Fase 5 — Publicación**: reporte imprimible de cálculo.
+1. **Fase 2 — Acciones y Combinaciones** ✅ HECHA: CP/CV + sismo estático
+   equivalente + combinaciones §8.3.2 + envolvente (pestaña «Acciones»).
+2. **Fase 3 — Diseño Acero COVENIN 1618-98**: tensión/compresión/flexión/
+   interacción con las fuerzas de la envolvente (pestaña «Acero 1618»).
+3. **Fase 4 — Plantillas**: pórtico simple, nave a dos aguas, cerchas planas
+   y curvas (pestaña «Plantillas»).
+4. **Fase 5 — Concreto y Madera** + rótulas, cargas sobre vanos, P-Δ.
