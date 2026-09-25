@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Análisis Estructural 2D · Motor Python</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<header>
+  <div class="marca">
+    <h1>🏗️ Análisis Estructural 2D</h1>
+    <div class="sub">Motor Python · método de rigideces · unidades: kg · m · kg/cm²</div>
+  </div>
+  <div class="acciones">
+    <select id="sel-ejemplo" title="Ejemplos listos para calcular"></select>
+    <button id="btn-cargar-ejemplo" title="Cargar el ejemplo seleccionado">Cargar</button>
+    <span class="sep"></span>
+    <button id="btn-guardar" title="Descargar proyecto .json">💾 Guardar</button>
+    <button id="btn-abrir" title="Abrir proyecto .json">📂 Abrir</button>
+    <input type="file" id="file-abrir" accept=".json,application/json" hidden>
+    <button id="btn-limpiar" title="Borrar todo">🗑</button>
+    <button id="btn-analizar" class="primario">⚡ Analizar</button>
+  </div>
+</header>
+
+<div id="toolbar">
+  <div class="grupo" id="modos">
+    <button data-modo="seleccionar" class="activo" title="Seleccionar y mover (S)"><span class="ico">🖱️</span>Seleccionar</button>
+    <button data-modo="nudo" title="Añadir nudo (N)"><span class="ico">•</span>Nudo</button>
+    <button data-modo="barra" title="Dibujar barras (B)"><span class="ico">╱</span>Barra</button>
+    <button data-modo="apoyo" title="Colocar apoyos (A)"><span class="ico">△</span>Apoyo</button>
+    <button data-modo="puntual" title="Carga puntual en nudo (P)"><span class="ico">↓</span>Puntual</button>
+    <button data-modo="repartida" title="Carga repartida en barra (D)"><span class="ico">⇩</span>Repartida</button>
+  </div>
+  <div class="grupo">
+    <label class="check"><input type="checkbox" id="chk-snap" checked> Imán</label>
+    <label class="check"><input type="checkbox" id="chk-auto" checked> Auto-calcular</label>
+    <label class="check"><input type="checkbox" id="chk-etiquetas" checked> Etiquetas</label>
+  </div>
+  <div class="grupo crece"></div>
+  <div class="grupo">
+    <span class="mini-rotulo">Resultados:</span>
+    <label class="check chipM"><input type="checkbox" id="chk-M" checked> <b style="color:#dc2626">M</b></label>
+    <label class="check chipV"><input type="checkbox" id="chk-V" checked> <b style="color:#2563eb">V</b></label>
+    <label class="check chipN"><input type="checkbox" id="chk-N"> <b style="color:#059669">N</b></label>
+    <label class="check"><input type="checkbox" id="chk-def"> <b style="color:#7c3aed">Deformada</b></label>
+    <span class="sep"></span>
+    <button id="btn-zoom-menos" title="Alejar">−</button>
+    <button id="btn-zoom-mas" title="Acercar">+</button>
+    <button id="btn-zoom-fit" title="Encuadrar todo">⤢</button>
+  </div>
+</div>
+
+<main>
+
+  <!-- ==================== PANEL IZQUIERDO ==================== -->
+  <aside id="panel-izq">
+
+    <div class="card cfg-modo oculto" data-modo="barra">
+      <h2><span class="num">1</span> Nueva barra</h2>
+      <label class="campo">Material
+        <select id="cfg-material">
+          <option value="2100000">Acero A36 — E = 2,1×10⁶ kg/cm²</option>
+          <option value="2200000">Acero HSLA — E = 2,2×10⁶</option>
+          <option value="217000">Concreto GC 210 — E = 2,17×10⁵</option>
+          <option value="250000">Concreto GC 280 — E = 2,5×10⁵</option>
+          <option value="120000">Madera — E = 1,2×10⁵</option>
+        </select>
+      </label>
+      <label class="campo">Sección
+        <select id="cfg-tipo-seccion">
+          <option value="perfil">Perfil laminado</option>
+          <option value="rect">Rectangular b×h</option>
+          <option value="manual">Personalizada (A, I)</option>
+        </select>
+      </label>
+      <label class="campo cfg-seccion" data-tipo="perfil">Perfil
+        <select id="cfg-perfil"></select>
+      </label>
+      <div class="cfg-seccion oculto" data-tipo="rect">
+        <div class="fila-2">
+          <label class="campo">b (cm)<input type="number" id="cfg-rect-b" value="30" min="1"></label>
+          <label class="campo">h (cm)<input type="number" id="cfg-rect-h" value="50" min="1"></label>
+        </div>
+      </div>
+      <div class="cfg-seccion oculto" data-tipo="manual">
+        <div class="fila-2">
+          <label class="campo">A (cm²)<input type="number" id="cfg-man-A" value="100" min="0.1"></label>
+          <label class="campo">I (cm⁴)<input type="number" id="cfg-man-I" value="10000" min="0"></label>
+        </div>
+      </div>
+      <label class="check"><input type="checkbox" id="cfg-pp"> Incluir peso propio (γ = 7 850 kg/m³)</label>
+      <div class="mini">Clic: nudo inicial → clic: nudo final. Crea nudos al vuelo y encadena barras. Clic derecho termina.</div>
+    </div>
+
+    <div class="card cfg-modo oculto" data-modo="apoyo">
+      <h2><span class="num">1</span> Tipo de apoyo</h2>
+      <label class="campo">Condición
+        <select id="cfg-apoyo-tipo">
+          <option value="articulado">Articulado (ux, uy)</option>
+          <option value="fijo">Empotrado (ux, uy, rz)</option>
+          <option value="deslizX">Deslizante vertical (uy)</option>
+          <option value="deslizY">Deslizante horizontal (ux)</option>
+          <option value="ninguno">Quitar apoyo</option>
+        </select>
+      </label>
+      <div class="mini">Clic sobre un nudo para asignarlo.</div>
+    </div>
+
+    <div class="card cfg-modo oculto" data-modo="puntual">
+      <h2><span class="num">1</span> Carga puntual</h2>
+      <div class="fila-2">
+        <label class="campo">Fx (kg)<input type="number" id="cfg-Fx" value="0" step="100"></label>
+        <label class="campo">Fy (kg)<input type="number" id="cfg-Fy" value="-1000" step="100"></label>
+      </div>
+      <label class="campo">Mz (kg·m)<input type="number" id="cfg-Mz" value="0" step="100"></label>
+      <div class="mini">Convención: Fx+ → derecha · Fy+ → arriba · Mz+ antihorario. Se acumula por nudo.</div>
+    </div>
+
+    <div class="card cfg-modo oculto" data-modo="repartida">
+      <h2><span class="num">1</span> Carga repartida</h2>
+      <label class="campo">w gravedad (kg/m)<input type="number" id="cfg-w" value="1000" step="50" min="0"></label>
+      <div class="mini">Carga vertical hacia abajo (gravedad) sobre la barra. En columnas se vuelve axial automáticamente.</div>
+    </div>
+
+    <div class="card oculto" id="card-seleccion">
+      <h2><span class="num">✎</span> Selección</h2>
+      <div class="contenido"></div>
+    </div>
+
+    <div class="card">
+      <h2><span class="num">ℹ</span> Modelo</h2>
+      <label class="campo">Título del proyecto<input type="text" id="in-titulo" placeholder="Estructura sin nombre"></label>
+      <div class="chips">
+        <span class="chip">Nudos: <b id="res-nudos">0</b></span>
+        <span class="chip">Barras: <b id="res-barras">0</b></span>
+        <span class="chip">Apoyos: <b id="res-apoyos">0</b></span>
+        <span class="chip">Cargas: <b id="res-cargas">0</b></span>
+      </div>
+      <div class="mini">
+        Convención de resultados: <b>N</b> (+ tracción) · <b>V</b> (+ par horario) ·
+        <b>M</b> (+ flexión simple, se dibuja en el lado de tracción).
+      </div>
+      <button class="ancho suave" id="btn-copiar-json">⧉ Copiar JSON del modelo</button>
+    </div>
+
+  </aside>
+
+  <!-- ==================== LIENZO ==================== -->
+  <section id="lienzo-wrap">
+    <canvas id="lienzo"></canvas>
+    <div id="status-bar">
+      <span id="status-modo"></span>
+      <span class="crece"></span>
+      <span id="status-coords"></span>
+      <span id="status-escala"></span>
+    </div>
+    <div id="toast"></div>
+  </section>
+
+  <!-- ==================== PANEL DERECHO ==================== -->
+  <aside id="panel-der">
+    <div class="kpis">
+      <div class="kpi"><span class="kpi-rotulo">δ máx</span><span class="kpi-valor" id="kpi-delta">—</span></div>
+      <div class="kpi"><span class="kpi-rotulo">|M| máx</span><span class="kpi-valor" id="kpi-mmax">—</span></div>
+      <div class="kpi"><span class="kpi-rotulo">ΣRy</span><span class="kpi-valor" id="kpi-ry">—</span></div>
+      <div class="kpi"><span class="kpi-rotulo">Estado</span><span class="kpi-valor" id="kpi-estado">—</span></div>
+    </div>
+
+    <div class="caja-error oculto" id="caja-error">
+      <b>No se pudo analizar</b>
+      <div id="texto-error"></div>
+    </div>
+
+    <div class="caja-avisos oculto" id="caja-avisos">
+      <b>Avisos</b>
+      <div id="texto-avisos"></div>
+    </div>
+
+    <div class="mini" id="kpi-tiempo"></div>
+
+    <div class="tabs" id="tabs-resultados">
+      <button class="tab activo" data-tab="reacciones">Reacciones</button>
+      <button class="tab" data-tab="barras">Barras</button>
+      <button class="tab" data-tab="nudos">Desplaz.</button>
+    </div>
+
+    <div class="tabla-wrap" id="tab-reacciones">
+      <table id="tabla-reacciones">
+        <thead><tr><th>Nudo</th><th>GDL</th><th>Valor (kg, kg·m)</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="tabla-wrap oculto" id="tab-barras">
+      <table id="tabla-barras">
+        <thead><tr><th>Barra</th><th>N<sub>i</sub></th><th>V<sub>i</sub></th><th>M<sub>i</sub></th><th>M<sub>j</sub></th><th>M máx</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <div class="mini">N (+ tracción), V y M en kg y kg·m. M en extremo i (M<sub>i</sub>) y j (M<sub>j</sub>).</div>
+    </div>
+
+    <div class="tabla-wrap oculto" id="tab-nudos">
+      <table id="tabla-nudos">
+        <thead><tr><th>Nudo</th><th>ux (cm)</th><th>uy (cm)</th><th>θz (mrad)</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </aside>
+
+</main>
+
+<script src="js/perfiles.js"></script>
+<script src="js/estado.js"></script>
+<script src="js/api.js"></script>
+<script src="js/canvas.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
