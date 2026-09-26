@@ -78,6 +78,43 @@ def _matriz_transformacion(c, s):
     return T
 
 
+def _aplicar_liberaciones(k_loc, FEF, rel_i, rel_j):
+    """Condensación estática de las rotaciones liberadas (rótulas).
+
+    Liberar el momento en un extremo significa M_extremo = 0: elimino ese
+    GDL de la matriz 6×6 por eliminación estática (como condensar un GDL
+    esclavo):
+
+        θ_lib = −(k[fila_lib, resto]·u + FEF[lib]) / k[lib, lib]
+        k_mod = k_ee − k_ei·k_ii⁻¹·k_ie   ·  FEF_mod = FEF_e − k_ei·FEF_i/k_ii
+
+    Las filas/columnas del GDL liberado quedan en cero, de modo que en el
+    post-proceso f_lib = 0 automáticamente. Con rótulas en ambos extremos
+    el elemento reduce a viga simplemente apoyada (solo axial + 3EI-term).
+    Devuelve (k_mod, FEF_mod).
+    """
+    k = np.array(k_loc, dtype=float)
+    FEF = np.array(FEF, dtype=float)
+    for dof in ((2,) if rel_i else ()) + ((5,) if rel_j else ()):
+        pivote = k[dof, dof]
+        if abs(pivote) < 1e-12:
+            continue          # nada que condensar (rigidez nula)
+        # k_mod para todas las filas/columnas excepto el DOF liberado
+        for a in range(6):
+            if a == dof:
+                continue
+            fa = k[a, dof] / pivote
+            for b in range(6):
+                if b == dof:
+                    continue
+                k[a, b] -= fa * k[dof, b]
+            FEF[a] -= fa * FEF[dof]
+        k[dof, :] = 0.0
+        k[:, dof] = 0.0
+        FEF[dof] = 0.0     # el extremo liberado no puede tomar momento
+    return k, FEF
+
+
 def _fuerzas_fijacion(w_perp, w_ax, L):
     """
     FEF (local): fuerzas de empotramiento que los apoyos aplican a la
@@ -175,6 +212,9 @@ def analizar(modelo: Modelo) -> dict:
 
         k_loc = _matriz_rigidez_local(EA, EI, L)
         T = _matriz_transformacion(c, s)
+        FEF = _fuerzas_fijacion(w_perp, w_ax, L)
+        if b.rel_i or b.rel_j:
+            k_loc, FEF = _aplicar_liberaciones(k_loc, FEF, b.rel_i, b.rel_j)
         k_glob = T.T @ k_loc @ T
 
         gi = gdl(b.ni)
@@ -185,7 +225,6 @@ def analizar(modelo: Modelo) -> dict:
             for b_ in range(6):
                 K[g[a_], g[b_]] += k_glob[a_, b_]
 
-        FEF = _fuerzas_fijacion(w_perp, w_ax, L)
         Feq_eq = -(T.T @ FEF)          # cargas equivalentes en nudos
         for a_ in range(6):
             Feq[g[a_]] += Feq_eq[a_]
@@ -223,6 +262,28 @@ def analizar(modelo: Modelo) -> dict:
 
     libres = np.array(libres, dtype=int)
     restringidos = np.array(restringidos, dtype=int)
+
+    avisos = []   # avisos no fatales para la UI
+
+    # GDL sin rigidez (p. ej. la rotación de un nudo donde todas las barras
+    # conectadas terminan en rótula): la estructura ES estable pero ese GDL
+    # queda indeterminado. Si el GDL además recibe carga sería un mecanismo;
+    # si no, es redundante y se fija (U = 0).
+    sueltos = [j for j in libres
+               if np.all(K[j, :] == 0.0) and np.all(K[:, j] == 0.0)]
+    if sueltos:
+        con_carga = [j for j in sueltos if abs(Feq[j]) > 1e-9]
+        if con_carga:
+            ids = ", ".join(ids_nudos[j // 3] for j in con_carga)
+            raise ERROR(
+                "Hay nudos con rotación libre sin rigidez y carga aplicada "
+                f"({ids}): la estructura es un mecanismo. Revisa las "
+                "rótulas (liberaciones) y los apoyos.")
+        libres = np.array([j for j in libres if j not in set(sueltos)],
+                          dtype=int)
+        avisos.append("Rotaciones de nudo sin rigidez fijadas a cero "
+                      "(extremos articulados): no afectan los resultados "
+                      "de fuerzas.")
 
     Kff = K[np.ix_(libres, libres)]
     Ff = Feq[libres]
@@ -267,7 +328,6 @@ def analizar(modelo: Modelo) -> dict:
     U[libres] = Uf
 
     # condición de la matriz (aviso de semirrigidez numérica)
-    avisos = []
     try:
         cond = np.linalg.cond(Kff)
         if cond > 1e10:
@@ -316,6 +376,7 @@ def analizar(modelo: Modelo) -> dict:
         barras_res.append({
             "id": b.id,
             "ni": b.ni, "nj": b.nj,
+            "rel_i": bool(b.rel_i), "rel_j": bool(b.rel_j),
             # fuerzas en extremos (convención interna: ver _diagramas_barra)
             "Ni": float(Ns[0]), "Vi": float(Vs[0]), "Mi": float(Ms[0]),
             "Nj": float(Ns[-1]), "Vj": float(Vs[-1]), "Mj": float(Ms[-1]),

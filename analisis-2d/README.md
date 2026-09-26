@@ -33,7 +33,7 @@ lineal de primer orden:
 | Archivo        | Contenido |
 |----------------|-----------|
 | `modelo.py`    | Entidades (Nudo, Barra, Apoyo, CargaNodal) + validaciones con mensajes amables |
-| `solver.py`    | Rigidez local 6×6, transformación, ensamblaje, cargas equivalentes (FEF), partición libres/restringidos, reacciones, fuerzas de extremo, diagramas N(x) V(x) M(x), detección de mecanismos |
+| `solver.py`    | Rigidez local 6×6, transformación, ensamblaje, cargas equivalentes (FEF), **liberaciones de extremo (rótula M=0, `rel_i`/`rel_j` por condensación estática)**, partición libres/restringidos (fija GDL rotacionales sin rigidez), reacciones, fuerzas de extremo, diagramas N(x) V(x) M(x), detección de mecanismos |
 | `ejemplos.py`  | 7 estructuras de ejemplo (viga simple, voladizo, continua, pórticos, marco con cumbrera) |
 | `covenin1756.py` | Motor sísmico COVENIN 1756-1:2019 (port del JS auditado del repo): espectro Ad(T) 7.18–7.23, μ, C/Cmín, Ta, Ft, Fi, Tablas 8–24, CSV vertical (8.4–8.5 + Tabla 19) |
 | `acciones.py` | Fase 2: casos CP/CV/SH/SV, combinaciones §8.3.2 (8.6–8.15 con Ω₀ρ opcional), γ auto, envolvente con combinación gobernante |

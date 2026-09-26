@@ -167,12 +167,12 @@ Para el pórtico abierto en el corte:
    - rígida → nada (elemento marco actual);
    - articulada → requiere **liberaciones de extremo** (M=0) en la barra.
 
-> ⚠️ **Dependencia del motor**: hoy el solver NO tiene liberaciones de extremo.
-> Para los patrones con vigas articuladas hace falta la extensión planificada
-> del núcleo (M0: «liberaciones rótula»). Mientras no exista, la UI ofrece:
-> (a) bloquear patrones articulados con nota, o (b) aproximación I≈10⁻⁴·I
-> (no recomendada: condiciona la matriz). **Decisión sugerida: implementar
-> liberaciones como primer paso de programación del Modelador.**
+> ✅ **Dependencia del motor RESUELTA**: el solver tiene liberaciones de
+> extremo (`Barra.rel_i` / `Barra.rel_j`, rótula M=0 por condensación
+> estática) con tests dorados en `tests_liberaciones.py` (viga
+> empotrada-rótula, biapoyada articulada, pórtico con viga articulada).
+> Las uniones articuladas del generador usan `rel_j=True` en la viga
+> (rótula del lado de la viga).
 
 5. El modelo generado se abre en la pestaña **Análisis 2D** como modelo nuevo
    (título «Pórtico X:1») y de ahí fluye a Acciones → Acero/Concreto.

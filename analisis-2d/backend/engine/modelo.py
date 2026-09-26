@@ -36,6 +36,9 @@ class Barra:
     q_perp: float = 0.0             # carga uniforme ⊥ al eje, kg/m
     q_axial: float = 0.0            # carga uniforme a lo largo del eje, kg/m
     peso_propio: bool = False       # si True: suma peso = A[kg/m] = A·7850/10⁴
+    # liberaciones de extremo (rótula: momento interno = 0 en ese extremo)
+    rel_i: bool = False             # True = rótula en el nudo inicial i
+    rel_j: bool = False             # True = rótula en el nudo final j
 
 
 @dataclass
@@ -151,6 +154,8 @@ class Modelo:
                         q_perp=float(b.get("q_perp", 0) or 0),
                         q_axial=float(b.get("q_axial", 0) or 0),
                         peso_propio=bool(b.get("peso_propio", False)),
+                        rel_i=bool(b.get("rel_i", False)),
+                        rel_j=bool(b.get("rel_j", False)),
                     ) for b in d.get("barras", [])
                 ],
                 apoyos=[
