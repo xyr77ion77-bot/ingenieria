@@ -1,0 +1,17 @@
+{
+ "_nota": "Filas con celdas perdidas por el OCR, corregidas a mano desde el PDF original (HE.pdf p1/p7 dims + p2/p8 propiedades). Justificación: la validación física (Sx≈2Ix/h, rx≈√(Ix/A), G≈0,785A) falló para estas 2 filas de 114 de la serie HE.",
+ "HEB160": {
+   "justificacion": "OCR perdió tw=8 en p1 → fila corrida. Valores leídos del PDF y de la fila p2 completa.",
+   "G": 42.6, "h": 160.0, "b": 160.0, "tw": 8.0, "tf": 13.0, "r1": 15.0,
+   "A": 54.3, "d": 134.0, "orificio": "M20", "pmin": 80.0, "pmax": 84.0,
+   "Ix": 2492.0, "Sx": 311.5, "Zx": 354.0, "rx": 6.78, "Avz": 17.59,
+   "Iy": 889.2, "Zy": 170.0, "ry": 4.05, "Sy": 51.57, "It": 31.24, "Iw": 47.94
+ },
+ "HEB800": {
+   "justificacion": "OCR perdió r en p1 → fila corrida. Valores leídos del PDF (p7 dims, p8 propiedades completas).",
+   "G": 262.0, "h": 800.0, "b": 300.0, "tw": 17.5, "tf": 30.0, "r1": 30.0,
+   "A": 334.2, "d": 734.0, "orificio": "M27", "pmin": 134.0, "pmax": 198.0,
+   "Ix": 359100.0, "Sx": 8977.0, "Zx": 10230.0, "rx": 32.78, "Avz": 161.8,
+   "Iy": 14900.0, "Zy": 1553.0, "ry": 6.68, "Sy": 118.6, "It": 946.0, "Iw": 21840.0
+ }
+}

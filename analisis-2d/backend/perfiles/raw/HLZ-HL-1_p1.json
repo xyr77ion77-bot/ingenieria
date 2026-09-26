@@ -1,0 +1,104 @@
+{
+ "celdas": {
+  "48.4": {
+   "82.3": "Dimensioni:AMStandard Tolleranze:EN 10034:1993 Dimensions:AMStandard Tolerances:EN10034:1993 Tolerancias:EN10034:1993",
+   "146.7": "Estado dela superficie:conforme a EN10163-3:2004,claseC,subclase1 European extra wide flange beams",
+   "134.1": "Profili H ad ali extra larghe Surface condition:according toEN10163-3:2004,class C,subclass1"
+  },
+  "133.8": {
+   "146.7": "Condizioni disuperficie:secondo EN10163-3:2004,classeC,sottoclasse1"
+  },
+  "201.6": {
+   "91.3": "Denominacion Designation",
+   "231.1": "Dimensions Dimensiones Dimensioni",
+   "386.9": "Dimensiones de construccion Dimensions for detailing Dimensioni di dettaglio",
+   "489.9": "Surface Superficie Superficie",
+   "99.6": "Designazione"
+  },
+  "238.8": {
+   "123.2": "G kg/m",
+   "146.7": "h mm",
+   "192.4": "b mm",
+   "231.1": "tw mm",
+   "249.7": "tf wW",
+   "284.1": "mm r",
+   "318.4": "X102 mm² A",
+   "352.7": "d mm",
+   "430.7": "mm Pmin",
+   "470.2": "Pmax mm",
+   "489.9": "AL m²/m",
+   "524.1": "AG 1/zW"
+  },
+  "286.9": {
+   "53.8": "HLZ 1100 A *",
+   "123.2": "393,1",
+   "146.7": "1075,4",
+   "192.4": "458",
+   "231.1": "20,0",
+   "249.7": "31,0",
+   "284.1": "35",
+   "318.4": "500,8",
+   "352.7": "935,9",
+   "386.9": "M27",
+   "430.7": "154",
+   "470.2": "352",
+   "489.9": "3,858",
+   "524.1": "9,814"
+  },
+  "298.1": {
+   "53.8": "HLZ1100 B *",
+   "123.2": "407,5",
+   "146.7": "1079,4",
+   "192.4": "458",
+   "231.1": "20,0",
+   "249.7": "33,0",
+   "284.1": "35",
+   "318.4": "519,1",
+   "352.7": "935,9",
+   "386.9": "M27",
+   "430.7": "154",
+   "470.2": "352",
+   "489.9": "3,866",
+   "524.1": "9,486"
+  },
+  "309.2": {
+   "53.8": "HLZ 1100C *",
+   "123.2": "430,4",
+   "146.7": "1083,4",
+   "192.4": "459",
+   "231.1": "21,0",
+   "249.7": "35,0",
+   "284.1": "35",
+   "318.4": "548,3",
+   "352.7": "935,9",
+   "386.9": "M27",
+   "430.7": "154",
+   "470.2": "354",
+   "489.9": "3,876",
+   "524.1": "9,004"
+  },
+  "320.4": {
+   "53.8": "HLZ1100 D *",
+   "123.2": "453,3",
+   "146.7": "1087,4",
+   "192.4": "460",
+   "231.1": "22,0",
+   "249.7": "37,0",
+   "284.1": "35",
+   "318.4": "577,5",
+   "352.7": "935,9",
+   "386.9": "M27",
+   "430.7": "156",
+   "470.2": "354",
+   "489.9": "3,886",
+   "524.1": "8,572"
+  }
+ },
+ "fuera": [
+  "Perfiles H de alas muy anchas",
+  "Dimensiones:AMStandard",
+  "Tonelaje minimo y condiciones de suministro previo acuerdo.",
+  "Minimum tonnage and delivery conditions upon agreement.",
+  "Tonnellaggio minimo e condizioni di fornitura da concordare."
+ ]
+}
