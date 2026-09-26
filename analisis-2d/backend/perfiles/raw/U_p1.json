@@ -1,0 +1,110 @@
+{
+ "celdas": {
+  "67.0": {
+   "135.1": "Channels with taper flanges Surfacecondition:according toEN10163-3:2004,classC,subclass1",
+   "115.2": "Dimensions:inaccordancewithAMstandard",
+   "501.1": "-ym ys",
+   "82.5": "Tolleranze:EN10279:2000 Tolerances:EN10279:2000 Dimensioni:secondolo standardAM",
+   "123.2": "Profili U ad ali inclinate",
+   "146.8": "Condizioni disuperficie:secondo EN10163-3:2004,classeC,sottoclasse1"
+  },
+  "200.9": {
+   "82.5": "Denominacion Designazione Designation",
+   "270.4": "Dimensions  Dimensioni Dimensiones",
+   "501.1": "Superficie Superficie Surface"
+  },
+  "240.7": {
+   "123.2": "G kg/m",
+   "162.7": "h mm",
+   "187.7": "b mm",
+   "229.2": "tw mm",
+   "270.4": "tf mm",
+   "311.6": "「1 mm",
+   "352.8": "mm [2",
+   "412.0": "P mm",
+   "441.5": "mm² A x102",
+   "476.4": "AL m²/m",
+   "517.6": "AG 1/w"
+  },
+  "291.2": {
+   "63.4": "U 40 ×20 x 4*",
+   "123.2": "2,65",
+   "162.7": "40",
+   "187.7": "20",
+   "229.2": "4,0",
+   "270.4": "5,5",
+   "311.6": "5,0",
+   "352.8": "2,5",
+   "412.0": "18.8",
+   "441.5": "3,38",
+   "476.4": "0,149",
+   "517.6": "56,17"
+  },
+  "313.6": {
+   "63.4": "U40×20x5*",
+   "123.2": "2,87",
+   "162.7": "40",
+   "187.7": "20",
+   "229.2": "5,0",
+   "270.4": "5,5",
+   "311.6": "5,0",
+   "352.8": "2,5",
+   "412.0": "19,0",
+   "441.5": "3,66",
+   "476.4": "0,142",
+   "517.6": "51,20"
+  },
+  "335.9": {
+   "63.4": "U50x25x5*",
+   "123.2": "3,86",
+   "162.7": "50",
+   "187.7": "25",
+   "229.2": "5,0",
+   "270.4": "6,0",
+   "311.6": "6,0",
+   "352.8": "3,0",
+   "412.0": "25,7",
+   "441.5": "4,92",
+   "476.4": "0,181",
+   "517.6": "48,22"
+  },
+  "358.2": {
+   "63.4": "U60x30x6*",
+   "123.2": "5,07",
+   "162.7": "60",
+   "187.7": "30",
+   "229.2": "6,0",
+   "270.4": "6,0",
+   "311.6": "6,0",
+   "352.8": "3,0",
+   "412.0": "35,5",
+   "441.5": "6,46",
+   "476.4": "0,215",
+   "517.6": "44,06"
+  },
+  "380.5": {
+   "63.4": "U 65x 42x5.5*",
+   "123.2": "7,09",
+   "162.7": "65",
+   "187.7": "42",
+   "229.2": "5,5",
+   "270.4": "7,5",
+   "311.6": "7,5",
+   "352.8": "4,0",
+   "412.0": "33,7",
+   "441.5": "9,03",
+   "476.4": "0,273",
+   "517.6": "39,57"
+  }
+ },
+ "fuera": [
+  "Perfiles U de alas inclinadas",
+  "Dimensiones:conformealanormaAM",
+  "Tolerancias:EN10279:2000",
+  "Estadodela superficie:conformea EN10163-3:2004,claseC,subclase1",
+  "450",
+  "Tonelaje minimo y condiciones de suministro previo acuerdo.",
+  "Minimum tonnage and delivery conditions upon agreement.",
+  "Tonnellaggio minimo e condizioni di fornitura da concordare."
+ ]
+}

@@ -1,0 +1,84 @@
+{
+ "celdas": {
+  "53.9": {
+   "87.7": "Tolerancias:EN10059:2003",
+   "150.1": "Estadodela superficie:conformea EN10163-3:2004,claseC,subclase1"
+  },
+  "60.4": {
+   "87.7": "Tolerances:EN10059:2003 Square bars Dimensions:EN10059:2003",
+   "133.4": "Surface condition:According toEN10163-3:2004,classC,subclass1",
+   "68.2": "Quadri"
+  },
+  "129.4": {
+   "87.7": "Tolleranze:EN10059:2003 Dimensioni:EN10059:2003",
+   "150.1": "Condizioni disuperficie:secondo EN10163-3:2004,classeC,sottoclasse1"
+  },
+  "200.9": {
+   "150.1": "Barras cuadradas Square bars Quadri",
+   "239.8": "Aristas redondeadas* Spigoli arrotondati* Rounded edges*",
+   "391.2": "EN 10025-2: 2004",
+   "87.7": "exe"
+  },
+  "243.4": {
+   "150.1": "kg/m Masa / Mass/ Massa",
+   "239.8": "Masa / Mass / Massa kg/m",
+   "362.0": "r1) ww"
+  },
+  "291.2": {
+   "53.7": "90 x 90+",
+   "150.1": "63,6"
+  },
+  "302.4": {
+   "68.2": "100x100+",
+   "150.1": "78,5"
+  },
+  "313.6": {
+   "68.2": "110x110+",
+   "150.1": "95,0"
+  },
+  "324.7": {
+   "68.2": "120 x120+",
+   "150.1": "113,0"
+  },
+  "335.9": {
+   "68.2": "130x130+",
+   "150.1": "132,6"
+  },
+  "347.0": {
+   "68.2": "140 x 140+",
+   "239.8": "153,2",
+   "362.0": "10"
+  },
+  "358.2": {
+   "68.2": "150x150+",
+   "239.8": "176,0",
+   "362.0": "10"
+  },
+  "369.4": {
+   "68.2": "155x155+",
+   "239.8": "186,9",
+   "362.0": "10"
+  },
+  "380.5": {
+   "68.2": "160x160+",
+   "239.8": "200,3",
+   "362.0": "10"
+  }
+ },
+ "fuera": [
+  "Barras cuadradas",
+  "Dimensiones:EN10059:2003",
+  "a",
+  "a",
+  "Pedido minimo: 40 t por perfil y calidad o segun acuerdo",
+  "Minimum order: 4Ot per section and grade or upon agreement.",
+  "Ordine minimo: 4Ot per sezione e qualita o da concordare.",
+  "Dimensiones y tolerancias: conforme a la norma AM",
+  "Dimensions and tolerances: AM Standard.",
+  " Dimensioni e tolleranze: AM standards.",
+  "Tolerancia de r +3/-5mm",
+  "Tolerance on r +3/-5mm",
+  "Tolleranza su r +3/-5mm",
+  "125"
+ ]
+}
