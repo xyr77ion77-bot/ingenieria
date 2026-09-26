@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Modelador · Planta y cortes</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/modelador.css">
+</head>
+<body>
+
+<header>
+  <div class="marca">
+    <h1>📐 Modelador</h1>
+    <div class="sub">Geometría del edificio: planta + cortes · unidades: kg · m · kg/cm²</div>
+  </div>
+  <div class="acciones">
+    <input id="inp-titulo" type="text" value="Estructura sin nombre"
+           title="Nombre de la estructura" spellcheck="false">
+    <span class="sep"></span>
+    <button id="btn-guardar" title="Descargar geometría .json">💾 Guardar</button>
+    <button id="btn-abrir" title="Abrir geometría .json">📂 Abrir</button>
+    <input type="file" id="file-abrir" accept=".json,application/json" hidden>
+    <button id="btn-png-planta" title="Exportar planta a PNG (memoria de cálculo)">🖼 PNG planta</button>
+    <button id="btn-limpiar" title="Borrar todo el modelador">🗑</button>
+  </div>
+</header>
+
+<nav class="app-tabs">
+  <a href="/">🏗️ Análisis 2D</a>
+  <a href="/acciones.html">⚖️ Acciones y combinaciones</a>
+  <a href="/modelador.html" class="activo">📐 Modelador</a>
+  <span class="desactivado" title="Fase 3">🗂️ Plantillas</span>
+  <span class="desactivado" title="Fase 4">🧱 Acero 1618</span>
+  <span class="desactivado" title="Fase 5">🩻 Concreto</span>
+</nav>
+
+<div class="modelador-layout">
+
+  <!-- ══════════ IZQUIERDA: PLANTA ══════════ -->
+  <section class="panel panel-planta">
+    <div class="panel-cabecera">
+      <b>PLANTA</b>
+      <span id="lbl-planta" class="mini-rotulo">—</span>
+    </div>
+
+    <div class="lienzo-wrap" id="wrap-planta">
+      <canvas id="cv-planta"></canvas>
+    </div>
+
+    <div class="panel-controles">
+      <div class="grupo">
+        <span class="mini-rotulo">Vanos X:</span>
+        <button id="btn-mas-lx" title="Añadir vano en X">＋</button>
+        <button id="btn-menos-lx" title="Eliminar el último vano en X">−</button>
+        <span class="sep"></span>
+        <span class="mini-rotulo">Vanos Y:</span>
+        <button id="btn-mas-ly" title="Añadir vano en Y">＋</button>
+        <button id="btn-menos-ly" title="Eliminar el último vano en Y">−</button>
+      </div>
+      <div class="grupo">
+        <span id="lbl-resistentes" class="conteo-resistentes">Resist. X: 0 · Y: 0</span>
+        <span id="aviso-rho" class="aviso-rho oculto"
+              title="COVENIN 1756-1 §6.3, Tabla 13">⚠ &lt;2 resistentes</span>
+      </div>
+      <div class="grupo ayuda">
+        Clic en un eje: marcar/desmarcar pórtico resistente (X rojo · Y azul) y
+        abrir su corte a la derecha. Clic en un tramo: editar su luz.
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ DERECHA: CORTE ══════════ -->
+  <section class="panel panel-corte">
+    <div class="panel-cabecera">
+      <b>CORTE</b>
+      <span id="lbl-corte" class="mini-rotulo">sin pórtico seleccionado</span>
+    </div>
+    <div class="lienzo-wrap lienzo-corte" id="wrap-corte">
+      <canvas id="cv-corte"></canvas>
+    </div>
+    <div class="panel-controles">
+      <div class="grupo ayuda" id="ayuda-corte">
+        Selecciona un eje resistente en la planta para ver y editar su corte
+        aquí (niveles, columnas, uniones y bases).
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script src="js/modelador.js"></script>
+</body>
+</html>

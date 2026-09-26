@@ -1,6 +1,6 @@
 # 📐 Especificación — Pestaña «Modelador» (Planta + Corte)
 
-> Estado: **diseño aprobado por el usuario, pendiente de programación.**
+> Estado: **diseño aprobado · en programación.** Pasos 1 y 2 listos (liberaciones de extremo en el motor; pestaña + vista Planta).
 > Principio: la geometría del edificio se define UNA vez (planta + cortes) y
 > alimenta Análisis 2D, Acero y Concreto. Ninguna otra pestaña dibuja geometría.
 
@@ -194,9 +194,13 @@ Para el pórtico abierto en el corte:
 
 ## 8. Orden de programación propuesto (cuando des el visto bueno)
 
-1. **Liberaciones de extremo en el motor** (rótula M=0) + tests — prerequisite.
-2. Esqueleto de la pestaña Modelador + vista Planta (retícula, vanos, ejes
-   resistentes) con el patrón de canvas_planta.js.
+1. ✅ **Liberaciones de extremo en el motor** (rótula M=0) + tests —
+   `tests_liberaciones.py` (19 checks) · commit propio.
+2. ✅ **Esqueleto de la pestaña + vista Planta** — `frontend/modelador.html`
+   + `frontend/js/modelador.js` + `css/modelador.css`: retícula editable,
+   vanos ±/luz por clic, ejes resistentes con clic (X rojo · Y azul),
+   aviso ρ §6.3 si <2 por dirección, PNG, guardar/abrir .json, localStorage.
+   El panel derecho muestra el pórtico seleccionado (vista de corte = paso 3).
 3. Vista Corte (niveles, columnas on/off, uniones, bases) + modelo de datos.
 4. Botón «Generar modelo 2D» + mapping al motor + tests de mapping.
 5. Pulido: perfil real, área tributaria, exportar PNG, avisos de ρ.

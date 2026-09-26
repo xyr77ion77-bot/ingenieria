@@ -75,6 +75,15 @@ descargado (avisos).
 
 ## 🖥️ Interfaz (`frontend/`) — pestañas de aplicación
 
+**Pestaña «📐 Modelador»** (`/modelador.html`, paso 2 del plan):
+
+- Planta editable: retícula de ejes (1,2… · A,B…), ± vanos y luz por clic
+- **Ejes resistentes** con clic (pórticos: X rojo · Y azul) — conteo y
+  aviso de redundancia ρ (COVENIN 1756-1 §6.3, Tabla 13) si hay <2 por dirección
+- Exportar planta a PNG · guardar/abrir geometría .json · localStorage
+- El panel derecho recibe el pórtico seleccionado (vista de corte = paso 3)
+- La especificación completa vive en `docs/MODELADOR-ESPEC.md`
+
 **Pestaña «⚖️ Acciones y Combinaciones»** (`/acciones.html`, Fase 2):
 
 - CP/CV por barra y por nudo (kg/m, kg) con aplicación rápida a todas
