@@ -162,6 +162,20 @@ function ModeladorMigrar(d) {
   };
 }
 
+/* ---------------- compat de eventos (compartido Planta/Corte) ----------------
+   Navegadores sin Pointer Events usan mousedown/touchstart; «gestoUnico»
+   evita el doble disparo cuando el navegador manda varios eventos por el
+   mismo gesto (p. ej. pointerdown + mousedown). Vive a nivel de archivo
+   porque la planta Y el corte lo usan. */
+const ultimoGesto = {};
+function gestoUnico(clave, tipo) {
+  const t = Date.now();
+  const a = ultimoGesto[clave];
+  if (a && a.tipo !== tipo && t - a.t < 250) return false;
+  ultimoGesto[clave] = { tipo, t };
+  return true;
+}
+
 /* ---------------- lienzo de la PLANTA ---------------- */
 
 const Planta = (function () {
@@ -189,18 +203,6 @@ const Planta = (function () {
 
   const $id = (id) => document.getElementById(id);
   const sum = (a) => a.reduce((x, y) => x + y, 0);
-
-  /* compat de eventos: navegadores sin Pointer Events usan
-     mousedown/touchstart; «gestoUnico» evita el doble disparo cuando el
-     navegador manda varios eventos por el mismo gesto */
-  const ultimoGesto = {};
-  function gestoUnico(clave, tipo) {
-    const t = Date.now();
-    const a = ultimoGesto[clave];
-    if (a && a.tipo !== tipo && t - a.t < 250) return false;
-    ultimoGesto[clave] = { tipo, t };
-    return true;
-  }
 
   function init() {
     cv = $id('cv-planta');
@@ -257,7 +259,7 @@ const Planta = (function () {
     ctx.fillRect(0, 0, w, h);
     /* sello de versión: permite confirmar de un vistazo qué JS corre */
     ctx.fillStyle = '#94a3b8'; ctx.font = '10px monospace'; ctx.textAlign = 'right';
-    ctx.fillText('v20260927c', w - 6, h - 6); ctx.textAlign = 'left';
+    ctx.fillText('v20260927d', w - 6, h - 6); ctx.textAlign = 'left';
     hitBoxes = [];
 
     const sel = EstadoM.seleccion.eje;
@@ -1149,4 +1151,4 @@ document.addEventListener('DOMContentLoaded', () => {
     document.body.appendChild(d);
   }
 });
-console.log('[UI] modelador v20260927c listo');
+console.log('[UI] modelador v20260927d listo');
