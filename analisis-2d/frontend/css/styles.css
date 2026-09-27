@@ -398,3 +398,26 @@ tr:hover td { background: #f8fafc; }
   font-size: 12px;
   max-width: 150px;
 }
+
+/* ================================================================
+   App única (SPA): vistas por pestaña + barras de sección
+   ================================================================ */
+.vista {
+  display: none;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+}
+.vista.activa { display: flex; }
+.vista main { flex: 1; min-height: 0; }
+
+.barra-seccion {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: #fff;
+  border-bottom: 1px solid var(--borde);
+  flex-wrap: wrap;
+}
+.barra-seccion .mini { color: var(--texto2); font-size: 12px; }

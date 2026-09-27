@@ -142,3 +142,10 @@
   font-size: 12.5px;
 }
 .subpanel button:hover { border-color: var(--azul); color: var(--azul); }
+
+/* dentro de la app única (SPA): el layout se adapta a la sección */
+#vista-modelador .modelador-layout {
+  height: auto;
+  flex: 1;
+  min-height: 420px;
+}

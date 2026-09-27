@@ -526,7 +526,9 @@ const Panel = (function () {
     $id('btn-png-planta').onclick = () =>
       Planta.exportarPNG('planta_' + EstadoM.datos.titulo.replace(/\s+/g, '_'));
 
-    $id('btn-guardar').onclick = () => {
+    /* Guardar/Abrir del modelador suelto solo en la página independiente;
+       en la app única lo sustituye el proyecto completo (proyecto.js) */
+    if ($id('btn-guardar')) $id('btn-guardar').onclick = () => {
       const a = document.createElement('a');
       a.download = 'modelador_' +
         EstadoM.datos.titulo.replace(/\s+/g, '_') + '.json';
@@ -536,8 +538,8 @@ const Panel = (function () {
       a.click();
     };
 
-    $id('btn-abrir').onclick = () => $id('file-abrir').click();
-    $id('file-abrir').addEventListener('change', (e) => {
+    if ($id('btn-abrir')) $id('btn-abrir').onclick = () => $id('file-abrir').click();
+    if ($id('file-abrir')) $id('file-abrir').addEventListener('change', (e) => {
       const f = e.target.files[0];
       if (!f) return;
       const rd = new FileReader();
@@ -554,8 +556,12 @@ const Panel = (function () {
       rd.readAsText(f);
       e.target.value = '';
     });
+    /* app única: al volver a esta pestaña, redibuja el lienzo */
+    window.addEventListener('pestana-activada', (e) => {
+      if (e.detail === 'modelador') Planta.render();
+    });
 
-    $id('btn-limpiar').onclick = () => {
+    $id('btn-limpiar-modelador').onclick = () => {
       if (!confirm('¿Borrar TODA la geometría del modelador?')) return;
       EstadoM.datos = ModeladorMigrar({});
       EstadoM.seleccion.eje = null;

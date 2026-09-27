@@ -75,7 +75,14 @@ descargado (avisos).
 
 ## 🖥️ Interfaz (`frontend/`) — pestañas de aplicación
 
-**Pestaña «📐 Modelador»** (`/modelador.html`, paso 2 del plan):
+**App única** (`/`, una sola página): tres vistas con rutas propias por hash
+(`#modelador` · `#acciones` · `#analisis`) que cambian sin recargar, y un
+**proyecto único** (v3: Modelador + Acciones + modelo 2D) que se guarda y
+abre de una pieza desde cualquier pestaña (`js/proyecto.js`; compatibilidad
+con los archivos/claves antiguas). Las páginas sueltas `modelador.html` /
+`acciones.html` siguen funcionando de manera independiente.
+
+**Pestaña «📐 Modelador»** (`#modelador`, paso 2 del plan):
 
 - Planta editable: retícula de ejes (1,2… · A,B…), ± vanos y luz por clic
 - **Ejes resistentes** con clic (pórticos: X rojo · Y azul) — conteo y

@@ -353,7 +353,7 @@ const AccionesApp = (function () {
       const ms = Math.round(performance.now() - t0);
       if (!j.ok) { mostrarError(j.error || 'Error desconocido'); return; }
       res = j;
-      $('caja-error').classList.add('oculto');
+      $('acc-caja-error').classList.add('oculto');
       $('lbl-tiempo').textContent = `resuelto en ${ms} ms · γ = ${j.gamma} · CSV = ${fmt.format(j.csv)}`;
       renderKPIs(j);
       dibujarEspectro(j);
@@ -367,8 +367,8 @@ const AccionesApp = (function () {
   }
 
   function mostrarError(msg) {
-    $('caja-error').classList.remove('oculto');
-    $('texto-error').textContent = msg;
+    $('acc-caja-error').classList.remove('oculto');
+    $('acc-texto-error').textContent = msg;
   }
 
   /* ================= render de resultados ================= */
@@ -541,11 +541,22 @@ const AccionesApp = (function () {
     renderTablaNudos();
 
     $('btn-calcular').addEventListener('click', calcular);
-    $('btn-guardar').addEventListener('click', guardarProyecto);
-    $('btn-abrir').addEventListener('click', () => $('file-abrir').click());
-    $('file-abrir').addEventListener('change', abrirProyecto);
+    /* Guardar/Abrir de acciones sueltos solo en la página independiente;
+       en la app única lo sustituye el proyecto completo (proyecto.js) */
+    if ($('btn-guardar')) $('btn-guardar').addEventListener('click', guardarProyecto);
+    if ($('btn-abrir')) $('btn-abrir').addEventListener('click', () => $('file-abrir').click());
+    if ($('file-abrir')) $('file-abrir').addEventListener('change', abrirProyecto);
     $('btn-aplicar-niveles').addEventListener('click', aplicarNivelesABarras);
     cargarTablas2002();
+    /* app única: al volver a esta pestaña, re-lee el proyecto y redibuja */
+    window.addEventListener('pestana-activada', (e) => {
+      if (e.detail !== 'acciones') return;
+      cargarModeloProyecto();
+      renderTablaBarras();
+      renderTablaNudos();
+      renderCargasNivel();
+      escribirFormulario();
+    });
     $('btn-cp-todas').addEventListener('click', () => {
       const v = prompt('CP para todas las barras (kg/m):', '1000');
       if (v === null) return;

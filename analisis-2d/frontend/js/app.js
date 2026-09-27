@@ -159,9 +159,11 @@ const App = (function () {
 
   function bindAcciones() {
     $('btn-analizar').addEventListener('click', () => analizar());
-    $('btn-guardar').addEventListener('click', guardarArchivo);
-    $('btn-abrir').addEventListener('click', () => $('file-abrir').click());
-    $('file-abrir').addEventListener('change', abrirArchivo);
+    /* Guardar/Abrir del modelo suelto solo en la página independiente;
+       en la app única lo sustituye el proyecto completo (proyecto.js) */
+    if ($('btn-guardar')) $('btn-guardar').addEventListener('click', guardarArchivo);
+    if ($('btn-abrir')) $('btn-abrir').addEventListener('click', () => $('file-abrir').click());
+    if ($('file-abrir')) $('file-abrir').addEventListener('change', abrirArchivo);
     $('btn-limpiar').addEventListener('click', () => {
       if (!confirm('¿Borrar todo el modelo?')) return;
       Estado.cargarModelo({ titulo: 'Estructura sin nombre', nudos: [], barras: [], apoyos: [], cargas_nodales: [] });
