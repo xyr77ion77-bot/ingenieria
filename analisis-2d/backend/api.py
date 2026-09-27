@@ -25,6 +25,7 @@ from engine import ERROR
 from engine.modelo import Modelo
 from engine.solver import analizar
 from engine.acciones import analizar_con_combinaciones
+from engine.diseno_acero import disenar as diseno_acero_disenar
 from engine import ejemplos
 
 BASE = os.path.dirname(os.path.abspath(__file__))
@@ -51,6 +52,29 @@ def api_analizar(modelo: dict):
     try:
         res = analizar(m)
         return res
+    except ERROR as e:
+        return JSONResponse(status_code=422, content={"ok": False, "error": str(e)})
+    except Exception as e:  # noqa: BLE001
+        return JSONResponse(status_code=500, content={
+            "ok": False, "error": f"Error interno del motor: {e}"})
+
+
+@app.post("/api/diseno-acero")
+def api_diseno_acero(payload: dict):
+    """
+    Fase 4: diseño de pórticos COVENIN 1618-1998 (estados límites).
+    payload = {modelo, acciones, params:{fy, perfil_viga, perfil_columna,
+    k_col, lb_viga_m, cb, limite_flecha, series, optimizar}}
+    Devuelve filas por barra (ratios ✓/✗), perfil óptimo y memoria.
+    """
+    modelo = payload.get("modelo")
+    acciones = payload.get("acciones") or {}
+    if not isinstance(modelo, dict):
+        return JSONResponse(status_code=422, content={
+            "ok": False, "error": "Falta el objeto 'modelo'."})
+    try:
+        return diseno_acero_disenar(modelo, acciones,
+                                    payload.get("params") or {})
     except ERROR as e:
         return JSONResponse(status_code=422, content={"ok": False, "error": str(e)})
     except Exception as e:  # noqa: BLE001
