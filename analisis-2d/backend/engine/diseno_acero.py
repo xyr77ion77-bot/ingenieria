@@ -54,13 +54,18 @@ def cargar_perfiles(series=None):
         for p in d['perfiles']:
             if not p.get('Ix') or not p.get('Sx') or not p.get('A'):
                 continue
+            # las series L/SQ/R no traen todas las dimensiones de perfiles I
+            h = p.get('h') or 0.0
+            b = p.get('b') or 0.0
+            tw = p.get('tw') or 0.0
+            tf = p.get('tf') or 0.0
             salida.append({
                 'nombre': p['nombre'], 'serie': s, 'G': p.get('G') or 0.0,
-                'h': p['h'] / 10.0, 'b': p['b'] / 10.0,
-                'tw': p['tw'] / 10.0, 'tf': p['tf'] / 10.0,
-                'd': (p.get('d') or p['h'] - 2 * p['tf']) / 10.0,
+                'h': h / 10.0, 'b': b / 10.0,
+                'tw': tw / 10.0, 'tf': tf / 10.0,
+                'd': (p.get('d') or h - 2 * tf) / 10.0,
                 'A': p['A'], 'Ix': p['Ix'], 'Sx': p['Sx'], 'Zx': p.get('Zx') or p['Sx'],
-                'rx': p['rx'], 'ry': p.get('ry') or 1.0,
+                'rx': p.get('rx') or 1.0, 'ry': p.get('ry') or 1.0,
                 'Iy': p.get('Iy') or 0.0, 'It': p.get('It') or 0.0,
                 'Iw': (p.get('Iw') or 0.0) * 1e3,   # ×10³ cm⁶ → cm⁶
                 'Avz': p.get('Avz') or p['A'],

@@ -290,6 +290,20 @@ const AccionesApp = (function () {
     $('o-gamma').value = s.gamma_manual == null ? 'auto' : String(s.gamma_manual);
   }
 
+  function datosAPI() {
+    /* Payload listo para los motores que lo re-resuelven (/api/diseno-acero):
+       mismo modelo y acciones que usa «Calcular combinaciones».
+       Normaliza fraccion_portico igual que calcular().
+       Si el usuario no tocó nada aún, cae al proyecto guardado/por defecto. */
+    if (!modelo) cargarModeloProyecto();
+    if (!acc) cargarLocal();
+    if (!modelo || !acc) return null;
+    const fp = acc.sismo.fraccion_portico;
+    const accAPI = { ...acc, sismo: { ...acc.sismo,
+      fraccion_portico: fp > 1 ? fp / 100 : fp } };
+    return { modelo: modelo, acciones: accAPI };
+  }
+
   /* ================= cálculo ================= */
   async function calcular() {
     if (!modelo) {
@@ -547,5 +561,6 @@ const AccionesApp = (function () {
     cargarModeloProyecto,
     aplicarNivelesABarras,
     renderCargasNivel,
+    datosAPI,
   };
 })();

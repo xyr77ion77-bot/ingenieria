@@ -5,8 +5,8 @@
   <meta http-equiv="Cache-Control" content="no-cache">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Software Estructural · Modelador · Acciones · Análisis 2D</title>
-  <link rel="stylesheet" href="css/styles.css?v=20260927i">
-  <link rel="stylesheet" href="css/modelador.css?v=20260927i">
+  <link rel="stylesheet" href="css/styles.css?v=20260927j">
+  <link rel="stylesheet" href="css/modelador.css?v=20260927j">
   <script>
   /* diagnóstico global: cualquier error JS (incl. SyntaxError de navegadores
      viejos) muestra un banner rojo — ES5, corre antes que todos los módulos */
@@ -59,7 +59,8 @@
   <a href="#sec-espectro">④ Espectro y fuerzas</a>
   <a href="#sec-combos">⑤ Combinaciones</a>
   <a href="#sec-envolvente">⑥ Envolvente</a>
-  <a href="#sec-memoria">⑦ Memoria</a>
+  <a href="#sec-acero">⑦ Acero 1618</a>
+  <a href="#sec-memoria">⑧ Memoria</a>
 </nav>
 
 <div class="pagina-modelador">
@@ -337,8 +338,56 @@
     </div>
   </section>
 
+  <section class="sec" id="sec-acero">
+    <header class="sec-tit"><span class="sec-num">7</span><b>Acero — COVENIN 1618-1998</b><span class="sec-sub">vigas (flexión · corte · flecha) y columnas (compresión · interacción P-M) · BD 874 perfiles</span></header>
+    <div class="sec-cuerpo">
+    <div class="duo duo-iguales">
+      <div class="card">
+        <h2><span class="num">1</span> Parámetros de diseño</h2>
+        <div class="fila-2">
+          <label class="campo">Fy acero (kg/cm²)<input type="number" id="ac-fy" value="2500" step="50" min="1200"></label>
+          <label class="campo">K columnas<input type="number" id="ac-kcol" value="1.5" step="0.1" min="1"></label>
+        </div>
+        <div class="fila-2">
+          <label class="campo">Cb vigas<input type="number" id="ac-cb" value="1.0" step="0.05" min="1"></label>
+          <label class="campo">Lb vigas (m) — vacío = luz real<input type="number" id="ac-lb" placeholder="auto" step="0.1" min="0"></label>
+        </div>
+        <div class="fila-2">
+          <label class="campo">Perfil vigas asignado<input type="text" id="ac-perfil-viga" list="dl-perfiles-viga" value="IPE 300" autocomplete="off"></label>
+          <label class="campo">Perfil columnas asignado<input type="text" id="ac-perfil-col" list="dl-perfiles-col" value="HE 200 B" autocomplete="off"></label>
+        </div>
+        <datalist id="dl-perfiles-viga"></datalist>
+        <datalist id="dl-perfiles-col"></datalist>
+        <div class="fila-2">
+          <label class="campo">Límite de flecha (servicio CP+CV)
+            <select id="ac-lim">
+              <option value="300" selected>L/300 — normal</option>
+              <option value="360">L/360 — exigente</option>
+            </select></label>
+          <div class="mini" style="align-self:end">φ: flexión 0,90 · compresión 0,85 · corte 1,00 — §15/16/18 de la norma.</div>
+        </div>
+      </div>
+      <div class="card">
+        <h2><span class="num">2</span> Ejecutar</h2>
+        <button type="button" class="primario" id="btn-verificar-acero">🔍 Verificar sección asignada</button>
+        <button type="button" class="suave" id="btn-optimizar-acero">⚡ Optimizar (menor peso de la BD)</button>
+        <div id="acero-optimo" class="oculto"></div>
+        <div id="acero-estado" class="mini"></div>
+        <div class="mini">Flechas con el caso de servicio 1,0·CP + 1,0·CV (sin factores), límite L/300 · L/360. Interacción 18-1a/b con amplificación B1 y θ P-Δ por nivel (deriva de la envolvente). Solo pórticos: vigas horizontales y columnas.</div>
+      </div>
+    </div>
+    <div id="acero-caja-error" class="oculto" style="color:#b91c1c;font-weight:600"></div>
+    <div class="tabla-wrap oculto" id="acero-tabla-wrap">
+      <table id="tabla-acero">
+        <thead><tr><th>Barra</th><th>Tipo</th><th>Perfil</th><th>Pu (kg)</th><th>Vu (kg)</th><th>Mu (t·m)</th><th>L (m)</th><th>Estados límites</th><th>Gobierna</th><th>Combo</th><th>OK</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    </div>
+  </section>
+
   <section class="sec" id="sec-memoria">
-    <header class="sec-tit"><span class="sec-num">7</span><b>Memoria de cálculo</b><span class="sec-sub">cada valor con su fórmula, sustitución, fuente y porqué</span></header>
+    <header class="sec-tit"><span class="sec-num">8</span><b>Memoria de cálculo</b><span class="sec-sub">cada valor con su fórmula, sustitución, fuente y porqué</span></header>
     <div class="sec-cuerpo">
     <div class="card">
       <h2><button type="button" class="suave" id="btn-imprimir-memoria" title="Imprimir o guardar la memoria en PDF (en el diálogo del navegador)">🖨 Imprimir la memoria</button></h2>
@@ -579,15 +628,16 @@
 </main>
 </section>
 
-<script src="js/proyecto.js?v=20260927i"></script>
-<script src="js/pestanas.js?v=20260927i"></script>
-<script src="js/perfiles.js?v=20260927i"></script>
-<script src="js/estado.js?v=20260927i"></script>
-<script src="js/api.js?v=20260927i"></script>
-<script src="js/canvas.js?v=20260927i"></script>
-<script src="js/app.js?v=20260927i"></script>
-<script src="js/acciones.js?v=20260927i"></script>
-<script src="js/memoria.js?v=20260927i"></script>
-<script src="js/modelador.js?v=20260927i"></script>
+<script src="js/proyecto.js?v=20260927j"></script>
+<script src="js/pestanas.js?v=20260927j"></script>
+<script src="js/perfiles.js?v=20260927j"></script>
+<script src="js/estado.js?v=20260927j"></script>
+<script src="js/api.js?v=20260927j"></script>
+<script src="js/canvas.js?v=20260927j"></script>
+<script src="js/app.js?v=20260927j"></script>
+<script src="js/acciones.js?v=20260927j"></script>
+<script src="js/acero.js?v=20260927j"></script>
+<script src="js/memoria.js?v=20260927j"></script>
+<script src="js/modelador.js?v=20260927j"></script>
 </body>
 </html>

@@ -26,6 +26,7 @@ from engine.modelo import Modelo
 from engine.solver import analizar
 from engine.acciones import analizar_con_combinaciones
 from engine.diseno_acero import disenar as diseno_acero_disenar
+from engine.diseno_acero import cargar_perfiles, _SERIES_ARCHIVO
 from engine import ejemplos
 
 BASE = os.path.dirname(os.path.abspath(__file__))
@@ -139,6 +140,16 @@ def api_generar(payload: dict):
     except Exception as e:  # noqa: BLE001
         return JSONResponse(status_code=500, content={
             "ok": False, "error": f"Error generando el modelo: {e}"})
+
+
+@app.get("/api/perfiles")
+def api_perfiles():
+    """Catálogo de perfiles (BD 874) para los datalists del diseño: {serie, nombre, G}."""
+    try:
+        return {"ok": True, "perfiles": cargar_perfiles(list(_SERIES_ARCHIVO.keys()))}
+    except Exception as e:  # noqa: BLE001
+        return JSONResponse(status_code=500, content={
+            "ok": False, "error": f"Error interno del motor: {e}"})
 
 
 @app.get("/api/salud")
