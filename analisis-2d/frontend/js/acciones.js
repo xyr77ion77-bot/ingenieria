@@ -62,56 +62,6 @@ const AccionesApp = (function () {
   }
 
   /* ================= construcción de tablas ================= */
-  function longBarra(b) {
-    const ni = modelo.nudos.find(n => n.id === b.ni);
-    const nj = modelo.nudos.find(n => n.id === b.nj);
-    if (!ni || !nj) return 0;
-    return Math.hypot(nj.x - ni.x, nj.y - ni.y);
-  }
-
-  function renderTablaBarras() {
-    const div = $('tabla-barras-cargas');
-    if (!modelo || !modelo.barras.length) {
-      div.innerHTML = '<div class="mini">El proyecto no tiene barras. Crea el modelo en la pestaña Análisis 2D.</div>';
-      return;
-    }
-    let html = '<table><thead><tr><th>Barra</th><th>L (m)</th><th>CP</th><th>CV</th></tr></thead><tbody>';
-    for (const b of modelo.barras) {
-      html += `<tr><td>${b.id}${b.peso_propio ? ' <span title="con peso propio">⚖</span>' : ''}</td>
-        <td class="num">${fmt.format(longBarra(b))}</td>
-        <td><input type="number" step="50" class="in-cp" data-id="${b.id}" value="${acc.barra_cp[b.id] ?? 0}"></td>
-        <td><input type="number" step="50" class="in-cv" data-id="${b.id}" value="${acc.barra_cv[b.id] ?? 0}"></td></tr>`;
-    }
-    div.innerHTML = html + '</tbody></table>';
-    div.querySelectorAll('.in-cp').forEach(inp =>
-      inp.addEventListener('input', () => { acc.barra_cp[inp.dataset.id] = +inp.value || 0; guardarLocal(); }));
-    div.querySelectorAll('.in-cv').forEach(inp =>
-      inp.addEventListener('input', () => { acc.barra_cv[inp.dataset.id] = +inp.value || 0; guardarLocal(); }));
-  }
-
-  function renderTablaNudos() {
-    const div = $('tabla-nudos-cargas');
-    if (!modelo || !modelo.nudos.length) { div.innerHTML = ''; return; }
-    let html = '<table><thead><tr><th>Nudo</th><th>Fy CP (kg)</th><th>Fy CV (kg)</th></tr></thead><tbody>';
-    for (const n of modelo.nudos) {
-      const cp = acc.nodo_cp[n.id]?.Fy ?? 0;
-      const cv = acc.nodo_cv[n.id]?.Fy ?? 0;
-      html += `<tr><td>${n.id}</td>
-        <td><input type="number" step="100" class="in-ncp" data-id="${n.id}" value="${cp}"></td>
-        <td><input type="number" step="100" class="in-ncv" data-id="${n.id}" value="${cv}"></td></tr>`;
-    }
-    div.innerHTML = html + '</tbody></table>';
-    div.querySelectorAll('.in-ncp').forEach(inp =>
-      inp.addEventListener('input', () => {
-        acc.nodo_cp[inp.dataset.id] = { Fx: 0, Fy: +inp.value || 0, Mz: 0 };
-        guardarLocal();
-      }));
-    div.querySelectorAll('.in-ncv').forEach(inp =>
-      inp.addEventListener('input', () => {
-        acc.nodo_cv[inp.dataset.id] = { Fx: 0, Fy: +inp.value || 0, Mz: 0 };
-        guardarLocal();
-      }));
-  }
 
   /* ============ cargas por nivel — COVENIN-MINDUR 2002-88 ============ */
 
@@ -171,6 +121,14 @@ const AccionesApp = (function () {
     return { cp, cv, fuente_cv: 'Tabla 5.1' };
   }
 
+  function sincronizarCargas() {
+    /* con las tablas manuales eliminadas, las barras SIEMPRE reflejan la
+       norma: al cambiar tipo/ambiente/cobertura/ancho → re-aplicar */
+    if (modelo && modelo.barras && modelo.barras.length) {
+      aplicarNivelesABarras(true);
+    }
+  }
+
   function renderCargasNivel() {
     const div = $('tabla-cargas-nivel');
     const banner = $('banner-modelador');
@@ -220,29 +178,26 @@ const AccionesApp = (function () {
     div.querySelectorAll('.in-amb').forEach(sel =>
       sel.addEventListener('change', () => {
         cfgNivel(sel.dataset.n).ambiente = sel.value;
-        guardarLocal(); renderCargasNivel();
+        guardarLocal(); renderCargasNivel(); sincronizarCargas();
       }));
     div.querySelectorAll('.in-cob').forEach(sel =>
       sel.addEventListener('change', () => {
         cfgNivel(sel.dataset.n).cobertura = sel.value;
-        guardarLocal(); renderCargasNivel();
+        guardarLocal(); renderCargasNivel(); sincronizarCargas();
       }));
     div.querySelectorAll('.in-ancho').forEach(inp =>
-      inp.addEventListener('input', () => {
+      inp.addEventListener('change', () => {
         cfgNivel(inp.dataset.n).ancho = +inp.value || 0;
-        guardarLocal();
-        /* refresca solo la columna q sin perder el foco */
-        const tr = inp.closest('tr');
-        const n = niveles.find(x => x.nombre === inp.dataset.n);
-        const { cp, cv } = cpCvNivel(n, cfgNivel(n.nombre));
-        tr.children[5].innerHTML = '<b>' + fmt.format((cp + cv) * (+inp.value || 0)) + '</b>';
+        guardarLocal(); renderCargasNivel(); sincronizarCargas();
       }));
   }
 
   function aplicarNivelesABarras(silencioso) {
     const niveles = nivelesModelador();
     if (!modelo || !modelo.barras.length || !niveles.length) {
-      alert('No hay barras en el proyecto (genera el modelo 2D desde el Modelador).');
+      if (silencioso !== true) {
+        alert('No hay barras en el proyecto (genera el modelo 2D desde el Modelador).');
+      }
       return;
     }
     let aplicadas = 0;
@@ -267,7 +222,6 @@ const AccionesApp = (function () {
                    ' · CV ' + Math.round(cv * a) + ' kg/m');
     });
     guardarLocal();
-    renderTablaBarras();
     if (silencioso !== true) {
       alert('Barras actualizadas: ' + aplicadas + '\n\n' + detalle.join('\n'));
     }
@@ -284,7 +238,7 @@ const AccionesApp = (function () {
         .join('');
       sel.addEventListener('change', () => {
         acc.cargas2002.tipo = sel.value;
-        guardarLocal(); renderCargasNivel();
+        guardarLocal(); renderCargasNivel(); sincronizarCargas();
       });
       renderCargasNivel();
     } catch (e) {
@@ -524,8 +478,7 @@ const AccionesApp = (function () {
           acc = { ...accPorDefecto(), ...j.acciones };
           guardarLocal();
           escribirFormulario();
-          renderTablaBarras();
-          renderTablaNudos();
+          renderCargasNivel();
         }
       } catch (err) {
         mostrarError('El archivo no es un proyecto válido: ' + err.message);
@@ -540,8 +493,6 @@ const AccionesApp = (function () {
     cargarLocal();
     const tenia = cargarModeloProyecto();
     escribirFormulario();
-    renderTablaBarras();
-    renderTablaNudos();
 
     $('btn-calcular').addEventListener('click', calcular);
     /* Guardar/Abrir de acciones sueltos solo en la página independiente;
@@ -549,31 +500,16 @@ const AccionesApp = (function () {
     if ($('btn-guardar')) $('btn-guardar').addEventListener('click', guardarProyecto);
     if ($('btn-abrir')) $('btn-abrir').addEventListener('click', () => $('file-abrir').click());
     if ($('file-abrir')) $('file-abrir').addEventListener('change', abrirProyecto);
-    $('btn-aplicar-niveles').addEventListener('click', aplicarNivelesABarras);
+    $('btn-aplicar-niveles').addEventListener('click', () => aplicarNivelesABarras(false));
     cargarTablas2002();
     /* app única: al volver a esta pestaña, re-lee el proyecto y redibuja */
     window.addEventListener('pestana-activada', (e) => {
       /* Acciones vive dentro de la pestaña «Modelador + Acciones» */
       if (e.detail !== 'modelador') return;
       cargarModeloProyecto();
-      renderTablaBarras();
-      renderTablaNudos();
       renderCargasNivel();
       escribirFormulario();
     });
-    $('btn-cp-todas').addEventListener('click', () => {
-      const v = prompt('CP para todas las barras (kg/m):', '1000');
-      if (v === null) return;
-      modelo?.barras.forEach(b => { acc.barra_cp[b.id] = +v || 0; });
-      guardarLocal(); renderTablaBarras();
-    });
-    $('btn-cv-todas').addEventListener('click', () => {
-      const v = prompt('CV para todas las barras (kg/m):', '300');
-      if (v === null) return;
-      modelo?.barras.forEach(b => { acc.barra_cv[b.id] = +v || 0; });
-      guardarLocal(); renderTablaBarras();
-    });
-
     document.querySelectorAll('#tabs-env .tab').forEach(t => {
       t.addEventListener('click', () => {
         document.querySelectorAll('#tabs-env .tab').forEach(x =>
@@ -582,28 +518,23 @@ const AccionesApp = (function () {
           $('tab-env-' + id).classList.toggle('oculto', id !== t.dataset.tab));
       });
     });
-
-    if (!tenia) {
-      // cargar un ejemplo automáticamente para probar rápido
-      fetch('/api/ejemplos/portico_sismo')
-        .then(r => r.json())
-        .then(j => {
-          modelo = j.modelo;
-          localStorage.setItem(CLAVE_MODELO, JSON.stringify(modelo));
-          renderTablaBarras();
-          renderTablaNudos();
-        })
-        .catch(() => {});
-    }
   }
 
-  document.addEventListener('DOMContentLoaded', init);
+  document.addEventListener('DOMContentLoaded', () => {
+    try {
+      init();
+    } catch (err) {
+      /* nunca un init muerto en silencio */
+      console.error('Acciones: error al iniciar', err);
+      mostrarError('⚠ Las Acciones no pudieron iniciar: ' + err.message +
+                   '  (recarga con Ctrl+Shift+R si el navegador sirvió JS viejo)');
+    }
+  });
   return {
     calcular,
     /* hooks para la app única (el generador del Modelador los usa) */
     cargarModeloProyecto,
     aplicarNivelesABarras,
-    renderTablaBarras,
     renderCargasNivel,
   };
 })();

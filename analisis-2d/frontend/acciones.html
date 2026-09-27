@@ -2,9 +2,10 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
+  <meta http-equiv="Cache-Control" content="no-cache">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Acciones y Combinaciones · COVENIN 1756-1:2019</title>
-  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/styles.css?v=20260927a">
 </head>
 <body>
 
@@ -37,17 +38,7 @@
   <aside id="panel-izq">
 
     <div class="card">
-      <h2><span class="num">1</span> Cargas por barra (kg/m ↓)</h2>
-      <div class="mini">CP = permanente · CV = variable. El peso propio (si está activo en la barra) se suma a CP.</div>
-      <div class="tabla-compacta" id="tabla-barras-cargas"></div>
-      <div class="fila-2">
-        <button class="suave" id="btn-cp-todas">CP → todas</button>
-        <button class="suave" id="btn-cv-todas">CV → todas</button>
-      </div>
-    </div>
-
-    <div class="card">
-      <h2><span class="num">2</span> Cargas por nivel — COVENIN 2002-88</h2>
+      <h2><span class="num">1</span> Cargas por nivel — COVENIN 2002-88 (norma, no manual)</h2>
       <div id="banner-modelador" class="aviso-modelador oculto"></div>
       <div class="fila-2" style="margin-bottom:6px">
         <label class="mini">Tipo de edificación (Tabla 5.1):</label>
@@ -65,13 +56,7 @@
     </div>
 
     <div class="card">
-      <h2><span class="num">3</span> Cargas nodales (kg, ↓ negativo)</h2>
-      <div class="tabla-compacta" id="tabla-nudos-cargas"></div>
-      <div class="mini">Solo carga vertical por tipo. Para Fx/Mz puntuales usa la pestaña Análisis 2D (entran como CP).</div>
-    </div>
-
-    <div class="card">
-      <h2><span class="num">4</span> Sismo — COVENIN 1756-1:2019</h2>
+      <h2><span class="num">2</span> Sismo — COVENIN 1756-1:2019</h2>
       <div class="fila-3">
         <label class="campo">A₀<input type="number" id="s-A0" step="0.01" min="0" value="0.21"></label>
         <label class="campo">A₁<input type="number" id="s-A1" step="0.01" min="0" value="0.18"></label>
@@ -128,7 +113,7 @@
     </div>
 
     <div class="card">
-      <h2><span class="num">5</span> Opciones de combinación (§8.3.2)</h2>
+      <h2><span class="num">3</span> Opciones de combinación (§8.3.2)</h2>
       <label class="check"><input type="checkbox" id="o-sismo" checked> Incluir acción sísmica (SH)</label>
       <label class="check"><input type="checkbox" id="o-sv" checked> Incluir componente vertical SV = CSV·CP (§8.3.1.4)</label>
       <label class="check"><input type="checkbox" id="o-omega"> Con sobrerresistencia Ω₀·ρ — fórmulas 8.11–8.15</label>
@@ -215,6 +200,6 @@
 
 </main>
 
-<script src="js/acciones.js"></script>
+<script src="js/acciones.js?v=20260927a"></script>
 </body>
 </html>

@@ -258,16 +258,19 @@ const Planta = (function () {
       }
     }
 
-    /* --- hitboxes de tramos (editar luz) — franja central del tramo --- */
+    /* --- hitboxes de tramos (editar luz): franja CORRIDA de 18 px en el
+           centro del vano, retirada 14 px de los ejes para no pisarlas --- */
     for (let j = 0; j < lx.length; j++) {
-      const xc = (arX[j] + arX[j + 1]) / 2, yc = (y0 + y1) / 2;
+      const yc = (y0 + y1) / 2;
+      if (arX[j + 1] - arX[j] <= 30) continue;
       hitBoxes.push({ t: 'TRAMO', dir: 'X', idx: j,
-                      x1: xc - 26, y1: yc - 10, x2: xc + 26, y2: yc + 10 });
+                      x1: arX[j] + 14, y1: yc - 9, x2: arX[j + 1] - 14, y2: yc + 9 });
     }
     for (let i = 0; i < ly.length; i++) {
-      const xc = (x0 + x1) / 2, yc = (arY[i] + arY[i + 1]) / 2;
+      const xc = (x0 + x1) / 2;
+      if (arY[i + 1] - arY[i] <= 30) continue;
       hitBoxes.push({ t: 'TRAMO', dir: 'Y', idx: i,
-                      x1: xc - 26, y1: yc - 10, x2: xc + 26, y2: yc + 10 });
+                      x1: xc - 9, y1: arY[i] + 14, x2: xc + 9, y2: arY[i + 1] - 14 });
     }
 
     /* --- etiquetas de ejes --- */
@@ -326,11 +329,16 @@ const Planta = (function () {
   }
 
   function buscarHit(px, py) {
+    /* el eje SIEMPRE gana sobre el tramo: recorre al revés y devuelve la
+       primera EJE encontrada; los tramos solo ganan si no hay eje debajo */
+    let otro = null;
     for (let k = hitBoxes.length - 1; k >= 0; k--) {
       const hb = hitBoxes[k];
-      if (px >= hb.x1 && px <= hb.x2 && py >= hb.y1 && py <= hb.y2) return hb;
+      if (px < hb.x1 || px > hb.x2 || py < hb.y1 || py > hb.y2) continue;
+      if (hb.t === 'EJE') return hb;
+      if (!otro) otro = hb;
     }
-    return null;
+    return otro;
   }
 
   function onTap(e) {
@@ -1022,14 +1030,25 @@ const Panel = (function () {
 /* ---------------- arranque ---------------- */
 
 document.addEventListener('DOMContentLoaded', () => {
-  EstadoM.cargarLocal();
-  Panel.vincular();
-  Planta.init();
-  Corte.vincularNiveles();
-  Corte.renderNiveles();
-  Corte.vincularCorte();
-  Corte.refrescarSelector();
-  Panel.actualizar();
-  Corte.setEje(EstadoM.seleccion.eje ? EstadoM.seleccion.eje.dir : null,
-               EstadoM.seleccion.eje ? EstadoM.seleccion.eje.id : null);
+  try {
+    EstadoM.cargarLocal();
+    Panel.vincular();
+    Planta.init();
+    Corte.vincularNiveles();
+    Corte.renderNiveles();
+    Corte.vincularCorte();
+    Corte.refrescarSelector();
+    Panel.actualizar();
+    Corte.setEje(EstadoM.seleccion.eje ? EstadoM.seleccion.eje.dir : null,
+                 EstadoM.seleccion.eje ? EstadoM.seleccion.eje.id : null);
+  } catch (err) {
+    /* nunca un init muerto en silencio: banner visible + consola */
+    console.error('Modelador: error al iniciar', err);
+    const d = document.createElement('div');
+    d.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:9999;' +
+      'background:#b91c1c;color:#fff;padding:10px 16px;font:13px system-ui,sans-serif';
+    d.textContent = '⚠ El Modelador no pudo iniciar: ' + err.message +
+                    '  (recarga con Ctrl+Shift+R si el navegador sirvió JS viejo)';
+    document.body.appendChild(d);
+  }
 });
