@@ -11,6 +11,7 @@
 | # | Decisión | Elección |
 |---|----------|----------|
 | 1 | Ubicación | **Pestaña nueva «Modelador»** — fuente de geometría del proyecto |
+| 1b | **Orden del flujo** (ampliación aprobada) | **El Modelador es la PRIMERA ventana** del cálculo de Acero/Concreto, junto con Acciones y Combinaciones: Modelador (geometría + cargas) → Acciones (CP/CV, sismo §8) → análisis → Acero 1618 / Concreto. Nav reordenada en las 3 pestañas. |
 | 2 | Pórticos | **Marcar ejes resistentes** X/Y en la planta (clic) |
 | 3 | Corte editable | **Geometría + uniones** (secciones se asignan en Acero/Concreto) |
 | 4 | Conexión con el motor | **Botón «Generar modelo 2D»** (sin sincronización automática) |
@@ -18,6 +19,8 @@
 | 6 | Niveles | **Globales del edificio** (una lista compartida; un pórtico puede tener menos) |
 | 7 | Columnas en corte | **Activables/desactivables** (vano salteado con viga de luz completa) |
 | 8 | Uniones | **Patrón global + excepción por nudo**; bases empotrada/articulada por columna |
+
+**Cargas**: las cargas del Modelador seguirán la norma que el usuario adjuntó (`Norma2002_8_CRITERIOS.pdf`, criterios de cargas COVENIN 2002) — **PDF pendiente de recibir en el workspace** (no persistió el adjunto; el usuario lo subirá a `ACERO/`). Integrar sus criterios (mínimos de carga por uso, CP/CV) al modelo de datos del Modelador antes del paso 4 (generador).
 
 Reutiliza el patrón de `ACERO/calculadora-sismica/js/canvas_planta.js`:
 `estado → coordenadas → dibujo → hitBoxes → pointer events`, ejes numerados
