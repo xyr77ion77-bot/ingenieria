@@ -259,7 +259,7 @@ const Planta = (function () {
     ctx.fillRect(0, 0, w, h);
     /* sello de versión: permite confirmar de un vistazo qué JS corre */
     ctx.fillStyle = '#94a3b8'; ctx.font = '10px monospace'; ctx.textAlign = 'right';
-    ctx.fillText('v20260927e', w - 6, h - 6); ctx.textAlign = 'left';
+    ctx.fillText('v20260927f', w - 6, h - 6); ctx.textAlign = 'left';
     hitBoxes = [];
 
     const sel = EstadoM.seleccion.eje;
@@ -623,6 +623,9 @@ const Corte = (function () {
     if (window.PointerEvent) wrapC.addEventListener('pointerdown', downC);
     cvC.addEventListener('pointermove', onHoverC);
     window.addEventListener('resize', dibujar);
+    if (window.ResizeObserver) {
+      try { new ResizeObserver(dibujar).observe(wrapC); } catch (e) { /* opcional */ }
+    }
     return true;
   }
 
@@ -1166,4 +1169,4 @@ document.addEventListener('DOMContentLoaded', () => {
     document.body.appendChild(d);
   }
 });
-console.log('[UI] modelador v20260927e listo');
+console.log('[UI] modelador v20260927f listo');
