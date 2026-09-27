@@ -122,11 +122,12 @@ const EstadoM = {
 function ModeladorMigrar(d) {
   /* normaliza un objeto venido de archivo/localStorage */
   const g = d.geometria || {};
-  return {
-    titulo: d.titulo || 'Estructura sin nombre',
-    geometria: {
-      lx: (g.lx || [5, 5, 5]).map(Number),
-      ly: (g.ly || [5, 5, 4, 4]).map(Number),
+  /* luces válidas (> 0); un estado corrupto/viejo cae a los de fábrica */
+  const lx = (g.lx || []).map(Number).filter(v => v > 0);
+  const ly = (g.ly || []).map(Number).filter(v => v > 0);
+  const geo = {
+    lx: lx.length ? lx : [5, 5, 5],
+    ly: ly.length ? ly : [5, 5, 4, 4],
       niveles: (g.niveles && g.niveles.length
         ? g.niveles
         : [{ nombre: 'N1', h_piso: 4 }]).map(n => ({
@@ -137,11 +138,26 @@ function ModeladorMigrar(d) {
             pendiente: (n.pendiente != null && n.pendiente !== '')
               ? Number(n.pendiente) : 0,
           })),
-    },
-    ejes_resistentes: {
-      X: ((d.ejes_resistentes || {}).X || []).map(Number),
-      Y: ((d.ejes_resistentes || {}).Y || []).map(String),
-    },
+  };
+  /* resistentes: guardar los válidos del estado; si el estado viejo no
+     traía la clave (o todos resultaron inválidos), recuperar los de
+     fábrica: primer y último eje en cada dirección. Sin esto, la planta
+     queda «0 ejes» y no hay nada que clicar. */
+  const r = d.ejes_resistentes || {};
+  const res = {
+    X: (Array.isArray(r.X) ? r.X : []).map(Number)
+        .filter(j => j >= 1 && j <= geo.lx.length),
+    Y: (Array.isArray(r.Y) ? r.Y : []).map(String)
+        .filter(l => /^[A-Z]$/.test(l) && (l.charCodeAt(0) - 65) < geo.ly.length),
+  };
+  if (!res.X.length && !res.Y.length) {
+    res.X = [1, geo.lx.length + 1];                 /* ejes = vanos + 1 */
+    res.Y = ['A', String.fromCharCode(65 + geo.ly.length)];
+  }
+  return {
+    titulo: d.titulo || 'Estructura sin nombre',
+    geometria: geo,
+    ejes_resistentes: res,
     cortes: d.cortes || {},
   };
 }
@@ -241,7 +257,7 @@ const Planta = (function () {
     ctx.fillRect(0, 0, w, h);
     /* sello de versión: permite confirmar de un vistazo qué JS corre */
     ctx.fillStyle = '#94a3b8'; ctx.font = '10px monospace'; ctx.textAlign = 'right';
-    ctx.fillText('v20260927b', w - 6, h - 6); ctx.textAlign = 'left';
+    ctx.fillText('v20260927c', w - 6, h - 6); ctx.textAlign = 'left';
     hitBoxes = [];
 
     const sel = EstadoM.seleccion.eje;
@@ -275,26 +291,36 @@ const Planta = (function () {
       ctx.beginPath(); ctx.moveTo(x0, arY[i]); ctx.lineTo(x1, arY[i]); ctx.stroke();
     }
 
-    /* --- ejes resistentes: gruesos y con color --- */
-    ctx.lineWidth = 4; ctx.setLineDash([]);
-    for (const j of resX) {
+    /* --- ejes: resistentes gruesos con color; el resto gris punteado.
+           TODOS son clicables → la planta siempre se puede recuperar --- */
+    ctx.setLineDash([]);
+    for (let j = 1; j <= arX.length; j++) {
       const x = arX[j - 1];
       if (x == null) continue;
+      const esRes = EstadoM.ejeResistente('X', j);
       const selAqui = sel && sel.dir === 'X' && sel.id === j;
-      ctx.strokeStyle = selAqui ? '#b91c1c' : '#dc2626';
+      ctx.lineWidth = esRes ? 4 : 1.5;
+      ctx.setLineDash(esRes ? [] : [6, 5]);
+      ctx.strokeStyle = selAqui ? '#b91c1c'
+        : (esRes ? '#dc2626' : '#94a3b8');
       ctx.beginPath(); ctx.moveTo(x, y0); ctx.lineTo(x, y1); ctx.stroke();
       hitBoxes.push({ t: 'EJE', dir: 'X', id: j,
                       x1: x - 11, y1: y0 - 14, x2: x + 11, y2: y1 + 14 });
     }
-    for (const l of resY) {
-      const y = arY[EstadoM.idxLetra(l)];
-      if (y == null) continue;
+    for (let i = 0; i < arY.length; i++) {
+      const l = EstadoM.letraEje(i);
+      const y = arY[i];
+      const esRes = EstadoM.ejeResistente('Y', l);
       const selAqui = sel && sel.dir === 'Y' && sel.id === l;
-      ctx.strokeStyle = selAqui ? '#1d4ed8' : '#2563eb';
+      ctx.lineWidth = esRes ? 4 : 1.5;
+      ctx.setLineDash(esRes ? [] : [6, 5]);
+      ctx.strokeStyle = selAqui ? '#1d4ed8'
+        : (esRes ? '#2563eb' : '#94a3b8');
       ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1, y); ctx.stroke();
       hitBoxes.push({ t: 'EJE', dir: 'Y', id: l,
                       x1: x0 - 14, y1: y - 11, x2: x1 + 14, y2: y + 11 });
     }
+    ctx.setLineDash([]);
 
     /* --- nudos de cruce --- */
     const rN = Math.max(5, scale / 10);
@@ -973,7 +999,8 @@ const Panel = (function () {
     const r = EstadoM.datos.ejes_resistentes;
     $id('lbl-planta').textContent =
       'Estructura: ' + EstadoM.datos.titulo +
-      ' · ' + r.X.length + ' ejes X × ' + r.Y.length + ' ejes Y';
+      ' · ' + (g.lx.length + 1) + ' ejes X (' + r.X.length + ' resist.) × ' +
+      (g.ly.length + 1) + ' ejes Y (' + r.Y.length + ' resist.)';
     $id('lbl-resistentes').textContent =
       'Resist. X: ' + r.X.length + ' · Y: ' + r.Y.length;
     const aviso = $id('aviso-rho');
@@ -1122,4 +1149,4 @@ document.addEventListener('DOMContentLoaded', () => {
     document.body.appendChild(d);
   }
 });
-console.log('[UI] modelador v20260927b listo');
+console.log('[UI] modelador v20260927c listo');
