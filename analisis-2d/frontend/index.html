@@ -12,7 +12,7 @@
 <header>
   <div class="marca">
     <h1>🏗️ Software Estructural</h1>
-    <div class="sub">Modelador → Acciones (2002-88 + 1756-1) → Análisis · kg · m · kg/cm²</div>
+    <div class="sub">Modelador (planta + corte) con sus Acciones → Análisis · kg · m · kg/cm²</div>
   </div>
   <div class="acciones">
     <button id="btn-guardar-proyecto" class="primario" title="Descargar el proyecto completo (Modelador + Acciones + modelo 2D)">💾 Guardar proyecto</button>
@@ -22,8 +22,7 @@
 </header>
 
 <nav class="app-tabs">
-  <a href="#modelador" data-tab="modelador">📐 Modelador</a>
-  <a href="#acciones" data-tab="acciones">⚖️ Acciones y combinaciones</a>
+  <a href="#modelador" data-tab="modelador">📐 Modelador + Acciones</a>
   <a href="#analisis" data-tab="analisis">🏗️ Análisis 2D</a>
   <span class="desactivado" title="Fase 3">🗂️ Plantillas</span>
   <span class="desactivado" title="Fase 4">🧱 Acero 1618</span>
@@ -32,7 +31,9 @@
 
 <!-- ═══════════ VISTA 1 · MODELADOR ═══════════ -->
 <section id="vista-modelador" class="vista">
-<div class="barra-seccion"><input id="inp-titulo" type="text" value="Estructura sin nombre" title="Nombre de la estructura" spellcheck="false"><span class="sep"></span><button id="btn-png-planta" title="Exportar planta a PNG (memoria de cálculo)">🖼 PNG planta</button><button id="btn-limpiar-modelador" title="Borrar todo el modelador">🗑</button></div>
+<div class="barra-seccion"><input id="inp-titulo" type="text" value="Estructura sin nombre" title="Nombre de la estructura" spellcheck="false"><span class="sep"></span><button id="btn-png-planta" title="Exportar planta a PNG (memoria de cálculo)">🖼 PNG planta</button><button id="btn-limpiar-modelador" title="Borrar todo el modelador">🗑</button>
+    <span class="sep"></span>
+    <button id="btn-calcular" class="primario" title="Combinaciones COVENIN 1756-1 con las cargas del proyecto">⚡ Calcular combinaciones</button></div>
 <div class="modelador-layout">
 
   <!-- ══════════ IZQUIERDA: PLANTA ══════════ -->
@@ -65,7 +66,8 @@
         Clic en un eje: marcar/desmarcar pórtico resistente (X rojo · Y azul) y
         abrir su corte a la derecha. Clic en un tramo: editar su luz.
       </div>
-    </div>
+    
+  </div>
   </section>
 
   <!-- ══════════ DERECHA: CORTE ══════════ -->
@@ -95,19 +97,12 @@
     </div>
   </section>
 
-</div>
-</section>
 
-<!-- ═══════════ VISTA 2 · ACCIONES ═══════════ -->
-<section id="vista-acciones" class="vista">
-  <div class="barra-seccion">
-    <button id="btn-calcular" class="primario">⚡ Calcular combinaciones</button>
-    <span class="mini" id="hint-acciones">Cargas por nivel desde el Modelador (COVENIN 2002-88) · sismo COVENIN 1756-1</span>
-  </div>
-<main>
+  <aside class="panel dock-acciones">
+      <div class="panel-cabecera"><b>ACCIONES Y COMBINACIONES</b>
+        <span class="mini-rotulo">COVENIN 2002-88 + 1756-1 · kg · m</span></div>
+      <div class="dock-cuerpo">
 
-  <!-- ==================== ENTRADAS ==================== -->
-  <aside id="panel-izq">
 
     <div class="card">
       <h2><span class="num">1</span> Cargas por barra (kg/m ↓)</h2>
@@ -217,10 +212,7 @@
       <div class="mini">Voladizos: la norma exige además 0,3·SV neto hacia arriba — verifícalo aparte (próxima iteración).</div>
     </div>
 
-  </aside>
-
-  <!-- ==================== CENTRO ==================== -->
-  <section id="panel-centro">
+  
     <div class="kpis" id="kpis-sismo">
       <div class="kpi"><span class="kpi-rotulo">AA</span><span class="kpi-valor" id="k-AA">—</span></div>
       <div class="kpi"><span class="kpi-rotulo">TC (s)</span><span class="kpi-valor" id="k-TC">—</span></div>
@@ -250,10 +242,7 @@
 
     <div class="caja-error oculto" id="acc-caja-error"><b>No se pudo calcular</b><div id="acc-texto-error"></div></div>
     <div class="mini" id="lbl-tiempo"></div>
-  </section>
-
-  <!-- ==================== RESULTADOS ==================== -->
-  <aside id="panel-der">
+  
     <div class="card">
       <h2><span class="num">Σ</span> Combinaciones evaluadas</h2>
       <div class="mini" id="lista-combos">Pulsa «Calcular combinaciones».</div>
@@ -284,10 +273,12 @@
         <tbody></tbody>
       </table>
     </div>
-  </aside>
-
-</main>
+      </div>
+    </aside></div>
 </section>
+
+<!-- ═══════════ VISTA 2 · ACCIONES ═══════════ -->
+
 
 <!-- ═══════════ VISTA 3 · ANÁLISIS 2D ═══════════ -->
 <section id="vista-analisis" class="vista">

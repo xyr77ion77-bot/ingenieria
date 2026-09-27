@@ -1,21 +1,22 @@
 /* ================================================================
    pestanas.js — Navegación interna de la aplicación única
    ---------------------------------------------------------------
-   La app es UNA página con tres vistas (Modelador · Acciones ·
-   Análisis). Cada vista tiene su ruta propia por hash (#modelador,
-   #acciones, #analisis) — enlaces directos y recarga mantienen la
-   pestaña. Al activar una vista se re-renderiza (los lienzos se
-   redimensionan con el evento resize y las tablas de Acciones se
-   reconstruyen desde el proyecto).
+   La app es UNA página con DOS vistas:
+     · #modelador = «Modelador + Acciones» (planta | corte | acciones)
+     · #analisis  = Análisis 2D
+   (#acciones también cae en la primera, por compatibilidad).
+   Al activar una vista se re-renderiza (resize de lienzos y
+   reconstrucción de las tablas de Acciones desde el proyecto).
    ================================================================ */
 
 'use strict';
 
 const Pestanas = (function () {
-  const ORDEN = ['modelador', 'acciones', 'analisis'];
+  const ORDEN = ['modelador', 'analisis'];   /* Acciones vive DENTRO de Modelador */
 
   function actual() {
     const h = location.hash.replace('#', '');
+    if (h === 'acciones') return 'modelador';   /* compat: unidas en una pestaña */
     return ORDEN.includes(h) ? h : 'modelador';
   }
 

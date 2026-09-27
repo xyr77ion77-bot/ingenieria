@@ -550,7 +550,8 @@ const AccionesApp = (function () {
     cargarTablas2002();
     /* app única: al volver a esta pestaña, re-lee el proyecto y redibuja */
     window.addEventListener('pestana-activada', (e) => {
-      if (e.detail !== 'acciones') return;
+      /* Acciones vive dentro de la pestaña «Modelador + Acciones» */
+      if (e.detail !== 'modelador') return;
       cargarModeloProyecto();
       renderTablaBarras();
       renderTablaNudos();

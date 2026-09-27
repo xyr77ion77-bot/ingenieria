@@ -75,8 +75,10 @@ descargado (avisos).
 
 ## 🖥️ Interfaz (`frontend/`) — pestañas de aplicación
 
-**App única** (`/`, una sola página): tres vistas con rutas propias por hash
-(`#modelador` · `#acciones` · `#analisis`) que cambian sin recargar, y un
+**App única** (`/`, una sola página): DOS vistas — **«📐 Modelador + Acciones»**
+(`#modelador`: planta | corte | panel de Acciones en 3 columnas, según orden
+expreso del usuario) y **«🏗️ Análisis 2D»** (`#analisis`) — que cambian sin
+recargar, con un
 **proyecto único** (v3: Modelador + Acciones + modelo 2D) que se guarda y
 abre de una pieza desde cualquier pestaña (`js/proyecto.js`; compatibilidad
 con los archivos/claves antiguas). Las páginas sueltas `modelador.html` /
