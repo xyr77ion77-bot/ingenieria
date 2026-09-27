@@ -80,9 +80,31 @@
       <canvas id="cv-corte"></canvas>
     </div>
     <div class="panel-controles">
+      <div class="grupo">
+        <span class="mini-rotulo">Pórtico:</span>
+        <select id="sel-corte" title="Eje resistente abierto en el corte"></select>
+      </div>
+      <div class="grupo">
+        <span class="mini-rotulo">Uniones:</span>
+        <select id="sel-patron" title="Patrón de uniones (aplicable a todo el pórtico)">
+          <option value="pr_momento">P-RM todo rígido</option>
+          <option value="vigas_articuladas">Vigas articuladas</option>
+          <option value="todo_articulado">Todo articulado</option>
+        </select>
+      </div>
+      <div class="grupo">
+        <span class="mini-rotulo">Niveles propios:</span>
+        <button id="btn-menos-np" title="Este pórtico baja un nivel">−</button>
+        <b id="lbl-np">–</b>
+        <button id="btn-mas-np" title="Restaurar un nivel propio">＋</button>
+      </div>
+      <div class="grupo">
+        <button id="btn-png-corte" title="Exportar el corte a PNG">🖼 PNG</button>
+      </div>
       <div class="grupo ayuda" id="ayuda-corte">
-        Selecciona un eje resistente en la planta para ver y editar su corte
-        aquí (niveles, columnas, uniones y bases).
+        Clic en una <b>columna</b>: activar/desactivar (vano salteado) ·
+        clic en la <b>base</b>: empotrada/articulada · clic en un
+        <b>nudo</b>: excepción de unión ⚡.
       </div>
     </div>
     <div class="subpanel">

@@ -63,6 +63,47 @@ const EstadoM = {
     return !!this.datos.cortes[dir + ':' + id];
   },
 
+  /* configuración del pórtico (cortes["X:1"]) — se crea al vuelo y se
+     completa si la retícula creció (§5 de la espec) */
+  clavesColumnas(dir) {
+    const g = this.datos.geometria;
+    const n = dir === 'X' ? g.ly.length : g.lx.length;
+    const out = [];
+    for (let i = 0; i < n; i++) out.push(dir === 'X' ? this.letraEje(i) : String(i + 1));
+    return out;
+  },
+
+  corteDe(dir, id) {
+    const key = dir + ':' + id;
+    const cs = this.datos.cortes;
+    if (!cs[key]) {
+      const columnas = {};
+      this.clavesColumnas(dir).forEach(k => {
+        columnas[k] = { activa: true, base: 'empotrada' };
+      });
+      cs[key] = {
+        niveles_propios: this.datos.geometria.niveles.length,
+        columnas,
+        uniones: { patron: 'pr_momento', excepciones: {} },
+      };
+    } else {
+      /* asegurar columnas nuevas (± vanos después de crear el corte) */
+      this.clavesColumnas(dir).forEach(k => {
+        if (!cs[key].columnas[k]) {
+          cs[key].columnas[k] = { activa: true, base: 'empotrada' };
+        }
+      });
+    }
+    return cs[key];
+  },
+
+  /* tipo efectivo de unión de un nudo (patrón salvo excepción) */
+  tipoUnion(corte, nodoKey) {
+    const ex = corte.uniones.excepciones[nodoKey];
+    if (ex) return ex;
+    return corte.uniones.patron === 'pr_momento' ? 'rígida' : 'articulada';
+  },
+
   guardarLocal() {
     try {
       localStorage.setItem('modelador_v1', JSON.stringify(this.datos));
@@ -430,16 +471,333 @@ const Corte = (function () {
     const lbl = $id('lbl-corte');
     if (dir == null) {
       lbl.textContent = 'sin pórtico seleccionado';
-      $id('ayuda-corte').innerHTML =
-        'Selecciona un eje resistente en la planta para ver y editar su ' +
-        'corte aquí (niveles, columnas, uniones y bases).';
+      const selc = $id('sel-corte');
+      if (selc) selc.value = '';
+      $id('lbl-np').textContent = '–';
+      dibujar();
       return;
     }
-    lbl.textContent = 'Pórtico ' + dir + ':' + id;
-    $id('ayuda-corte').innerHTML =
-      'Pórtico <b>' + dir + ':' + id + '</b> seleccionado. La vista editable ' +
-      'del corte (niveles, columnas, uniones y bases) se activa en el ' +
-      '<b>paso 3</b> del plan (MODELADOR-ESPEC §8).';
+    lbl.textContent = 'Pórtico ' + dir + ':' + id +
+      ' (corre en ' + (dir === 'X' ? 'Y' : 'X') + ')';
+    const corte = EstadoM.corteDe(dir, id);
+    $id('sel-patron').value = corte.uniones.patron;
+    $id('lbl-np').textContent = corte.niveles_propios + ' / ' +
+      EstadoM.datos.geometria.niveles.length;
+    dibujar();
+  }
+
+  /* ---------------- dibujo del CORTE ---------------- */
+  let cvC = null, ctxC = null, wrapC = null;
+  let hitsC = [];
+  let geomC = null;
+
+  const M = 62;                       /* margen del lienzo del corte */
+
+  function lienzos() {
+    if (cvC) return true;
+    cvC = $id('cv-corte');
+    if (!cvC) return false;
+    ctxC = cvC.getContext('2d');
+    wrapC = cvC.parentElement;
+    cvC.addEventListener('pointerdown', onTapC);
+    cvC.addEventListener('pointermove', onHoverC);
+    window.addEventListener('resize', dibujar);
+    return true;
+  }
+
+  function dibujar() {
+    if (!lienzos()) return;
+    const d = EstadoM.datos;
+    const w = Math.max(wrapC.clientWidth, 240);
+    const h = Math.max(wrapC.clientHeight || 300, 240);
+    const dpr = window.devicePixelRatio || 1;
+    cvC.width = Math.round(w * dpr);
+    cvC.height = Math.round(h * dpr);
+    cvC.style.width = w + 'px';
+    cvC.style.height = h + 'px';
+    ctxC.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctxC.clearRect(0, 0, w, h);
+    ctxC.fillStyle = '#fbfcfd';
+    ctxC.fillRect(0, 0, w, h);
+    hitsC = [];
+
+    const sel = EstadoM.seleccion.eje;
+    if (!sel) {
+      ctxC.fillStyle = '#94a3b8';
+      ctxC.font = '13px system-ui, sans-serif';
+      ctxC.textAlign = 'center';
+      ctxC.fillText('Selecciona un eje resistente en la planta (o arriba)',
+                    w / 2, h / 2);
+      geomC = null;
+      return;
+    }
+
+    const corte = EstadoM.corteDe(sel.dir, sel.id);
+    const niveles = d.geometria.niveles.slice(0, corte.niveles_propios);
+    const luces = (sel.dir === 'X' ? d.geometria.ly : d.geometria.lx)
+      .map(Number);
+    const claves = EstadoM.clavesColumnas(sel.dir);
+    const totL = luces.reduce((a, b) => a + b, 0) || 1;
+    const H = niveles.reduce((s2, n) => s2 + (+n.h_piso || 0), 0) || 1;
+
+    const scale = Math.min((w - 2 * M) / totL, (h - 2 * M - 14) / H, 95);
+    const xs = [M];
+    luces.forEach(v => xs.push(xs[xs.length - 1] + v * scale));
+    const y0 = h - M;                                  /* línea de base */
+    const elev = [0];                                  /* metros acumulados */
+    niveles.forEach(n => elev.push(elev[elev.length - 1] + (+n.h_piso || 0)));
+
+    /* terreno */
+    ctxC.strokeStyle = '#64748b'; ctxC.lineWidth = 2;
+    ctxC.beginPath();
+    ctxC.moveTo(xs[0] - 24, y0 + 1); ctxC.lineTo(xs[xs.length - 1] + 24, y0 + 1);
+    ctxC.stroke();
+    ctxC.lineWidth = 1;
+    for (let x = xs[0] - 20; x < xs[xs.length - 1] + 20; x += 9) {
+      ctxC.beginPath(); ctxC.moveTo(x, y0 + 2); ctxC.lineTo(x - 6, y0 + 9); ctxC.stroke();
+    }
+
+    /* niveles (líneas + etiquetas izquierda y h de piso a la derecha) */
+    ctxC.textBaseline = 'middle';
+    for (let k = 1; k < elev.length; k++) {
+      const y = y0 - elev[k] * scale;
+      ctxC.strokeStyle = '#cbd5e1'; ctxC.lineWidth = 1;
+      ctxC.beginPath(); ctxC.moveTo(xs[0], y); ctxC.lineTo(xs[xs.length - 1], y); ctxC.stroke();
+      ctxC.fillStyle = '#475569';
+      ctxC.font = 'bold 11.5px system-ui, sans-serif'; ctxC.textAlign = 'right';
+      ctxC.fillText(niveles[k - 1].nombre, xs[0] - 10, y);
+      ctxC.font = '10px system-ui, sans-serif'; ctxC.fillStyle = '#94a3b8';
+      ctxC.fillText('+' + elev[k].toFixed(2), xs[0] - 10, y + 12);
+      ctxC.textAlign = 'left';
+      ctxC.fillText('h=' + niveles[k - 1].h_piso.toFixed(2),
+                    xs[xs.length - 1] + 10, y);
+    }
+
+    /* columnas + bases + nudos */
+    const yTop = y0 - H * scale;
+    for (let i = 0; i < claves.length; i++) {
+      const clave = claves[i];
+      const colCfg = corte.columnas[clave];
+      const x = xs[i];
+      if (colCfg.activa) {
+        ctxC.strokeStyle = '#334155'; ctxC.lineWidth = 3;
+        ctxC.setLineDash([]);
+        ctxC.beginPath(); ctxC.moveTo(x, y0); ctxC.lineTo(x, yTop); ctxC.stroke();
+      } else {
+        ctxC.strokeStyle = '#94a3b8'; ctxC.lineWidth = 2;
+        ctxC.setLineDash([6, 5]);
+        ctxC.beginPath(); ctxC.moveTo(x, y0); ctxC.lineTo(x, yTop); ctxC.stroke();
+        ctxC.setLineDash([]);
+      }
+      /* base */
+      const artic = colCfg.base === 'articulada';
+      ctxC.beginPath();
+      ctxC.moveTo(x - 8, y0); ctxC.lineTo(x + 8, y0); ctxC.lineTo(x, y0 - 9);
+      ctxC.closePath();
+      if (artic) {
+        ctxC.strokeStyle = '#334155'; ctxC.lineWidth = 1.6; ctxC.stroke();
+        ctxC.fillStyle = '#334155';
+        [-4, 4].forEach(dx => {
+          ctxC.beginPath(); ctxC.arc(x + dx, y0 + 4, 2.2, 0, 7); ctxC.fill();
+        });
+      } else {
+        ctxC.fillStyle = '#334155'; ctxC.fill();
+      }
+      hitsC.push({ t: 'BASE', clave, x1: x - 13, y1: y0 - 12, x2: x + 13, y2: y0 + 9 });
+      /* nudo en la cima de cada nivel (columna activa) */
+      if (colCfg.activa) {
+        for (let k = 1; k < elev.length; k++) {
+          const y = y0 - elev[k] * scale;
+          const nk = 'N' + k + '|' + clave;
+          const tipo = EstadoM.tipoUnion(corte, nk);
+          const ex = !!corte.uniones.excepciones[nk];
+          if (tipo === 'rígida') {
+            ctxC.fillStyle = '#0f172a';
+            ctxC.fillRect(x - 4, y - 4, 8, 8);
+          } else {
+            ctxC.fillStyle = '#f8fafc';
+            ctxC.beginPath(); ctxC.arc(x, y, 3.8, 0, 7); ctxC.fill();
+            ctxC.strokeStyle = '#0f172a'; ctxC.lineWidth = 1.6; ctxC.stroke();
+          }
+          if (ex) {
+            ctxC.fillStyle = '#f59e0b';
+            ctxC.beginPath(); ctxC.arc(x + 7, y - 7, 3, 0, 7); ctxC.fill();
+          }
+          hitsC.push({ t: 'JUNT', clave, nivel: k, x1: x - 9, y1: y - 9, x2: x + 11, y2: y + 9 });
+        }
+      }
+      /* alternar columna (zona media del fuste) */
+      hitsC.push({ t: 'COL', clave, x1: x - 9, y1: yTop + 14, x2: x + 9, y2: y0 - 18 });
+    }
+
+    /* vigas entre columnas activas consecutivas (luz heredada) */
+    for (let k = 1; k < elev.length; k++) {
+      const y = y0 - elev[k] * scale;
+      let i = -1;
+      for (let j = 0; j < claves.length; j++) {
+        const activa = corte.columnas[claves[j]].activa;
+        if (!activa) continue;
+        if (i >= 0) {
+          ctxC.strokeStyle = '#2563eb'; ctxC.lineWidth = 3.5;
+          ctxC.beginPath(); ctxC.moveTo(xs[i], y); ctxC.lineTo(xs[j], y); ctxC.stroke();
+          const luz = luces.slice(i, j).reduce((a, b) => a + b, 0);
+          if ((xs[j] - xs[i]) > 34) {
+            ctxC.fillStyle = '#64748b'; ctxC.font = '10px system-ui';
+            ctxC.textAlign = 'center';
+            ctxC.fillText(luz.toFixed(1) + ' m', (xs[i] + xs[j]) / 2, y + 12);
+          }
+        }
+        i = j;
+      }
+    }
+
+    /* leyenda */
+    ctxC.fillStyle = '#64748b'; ctxC.font = '10.5px system-ui';
+    ctxC.textAlign = 'left'; ctxC.textBaseline = 'alphabetic';
+    const lx0 = M - 50, ly0 = h - 16;
+    ctxC.fillStyle = '#0f172a'; ctxC.fillRect(lx0, ly0 - 4, 7, 7);
+    ctxC.fillStyle = '#64748b'; ctxC.fillText('rígida', lx0 + 11, ly0 + 2);
+    ctxC.beginPath(); ctxC.arc(lx0 + 62, ly0, 3.4, 0, 7); ctxC.fillStyle = '#f8fafc'; ctxC.fill();
+    ctxC.strokeStyle = '#0f172a'; ctxC.lineWidth = 1.4; ctxC.stroke();
+    ctxC.fillStyle = '#64748b'; ctxC.fillText('articulada', lx0 + 70, ly0 + 2);
+    ctxC.fillStyle = '#f59e0b'; ctxC.beginPath(); ctxC.arc(lx0 + 132, ly0, 3, 0, 7); ctxC.fill();
+    ctxC.fillStyle = '#64748b'; ctxC.fillText('excepción', lx0 + 139, ly0 + 2);
+    ctxC.strokeStyle = '#94a3b8'; ctxC.setLineDash([4, 3]); ctxC.lineWidth = 2;
+    ctxC.beginPath(); ctxC.moveTo(lx0 + 198, ly0 - 4); ctxC.lineTo(lx0 + 220, ly0 - 4); ctxC.stroke();
+    ctxC.setLineDash([]);
+    ctxC.fillText('columna fuera', lx0 + 225, ly0 + 2);
+
+    geomC = { xs, y0, elev, scale };
+  }
+
+  /* ---------------- interacción del corte ---------------- */
+
+  function localXYC(e) {
+    const r = cvC.getBoundingClientRect();
+    return { x: e.clientX - r.left, y: e.clientY - r.top };
+  }
+
+  function buscarHitC(px, py) {
+    for (let k = hitsC.length - 1; k >= 0; k--) {
+      const hb = hitsC[k];
+      if (px >= hb.x1 && px <= hb.x2 && py >= hb.y1 && py <= hb.y2) return hb;
+    }
+    return null;
+  }
+
+  function guardarYDibujar() {
+    EstadoM.guardarLocal();
+    dibujar();
+  }
+
+  function onTapC(e) {
+    e.preventDefault();
+    if (!geomC) return;
+    const { x, y } = localXYC(e);
+    const hb = buscarHitC(x, y);
+    if (!hb) return;
+    const sel = EstadoM.seleccion.eje;
+    if (!sel) return;
+    const corte = EstadoM.corteDe(sel.dir, sel.id);
+
+    if (hb.t === 'COL') {
+      const c = corte.columnas[hb.clave];
+      c.activa = !c.activa;
+      guardarYDibujar();
+    } else if (hb.t === 'BASE') {
+      const c = corte.columnas[hb.clave];
+      c.base = c.base === 'empotrada' ? 'articulada' : 'empotrada';
+      guardarYDibujar();
+    } else if (hb.t === 'JUNT') {
+      const nk = 'N' + hb.nivel + '|' + hb.clave;
+      const actual = EstadoM.tipoUnion(corte, nk);
+      const nuevoT = actual === 'rígida' ? 'articulada' : 'rígida';
+      const porPatron = corte.uniones.patron === 'pr_momento'
+        ? 'rígida' : 'articulada';
+      if (nuevoT === porPatron) delete corte.uniones.excepciones[nk];
+      else corte.uniones.excepciones[nk] = nuevoT;
+      guardarYDibujar();
+    }
+  }
+
+  function onHoverC(e) {
+    if (!geomC) return;
+    const { x, y } = localXYC(e);
+    const hb = buscarHitC(x, y);
+    cvC.style.cursor = hb ? 'pointer' : 'default';
+    if (hb) {
+      cvC.title = hb.t === 'COL' ? 'Columna ' + hb.clave +
+          ' (clic: activar/desactivar)'
+        : hb.t === 'BASE' ? 'Base ' + hb.clave + ' (clic: alterna)'
+        : 'Nudo N' + hb.nivel + '|' + hb.clave + ' (clic: excepción ⚡)';
+    }
+  }
+
+  /* ---------------- controles del corte ---------------- */
+
+  function refrescarSelector() {
+    const selc = $id('sel-corte');
+    if (!selc) return;
+    const r = EstadoM.datos.ejes_resistentes;
+    const opts = ['<option value="">— elige un pórtico —</option>'];
+    r.X.forEach(j => opts.push(
+      `<option value="X:${j}">X:${j} · corre en Y</option>`));
+    r.Y.forEach(l => opts.push(
+      `<option value="Y:${l}">Y:${l} · corre en X</option>`));
+    selc.innerHTML = opts.join('');
+    const sel = EstadoM.seleccion.eje;
+    selc.value = sel ? sel.dir + ':' + sel.id : '';
+  }
+
+  function vincularCorte() {
+    $id('sel-corte').addEventListener('change', (e) => {
+      const v = e.target.value;
+      if (!v) { EstadoM.seleccion.eje = null; setEje(null); Panel.actualizar(); return; }
+      const [dir, idTxt] = v.split(':');
+      const id = dir === 'X' ? +idTxt : idTxt;
+      EstadoM.seleccion.eje = { dir, id };
+      setEje(dir, id);
+      Planta.render();
+      EstadoM.guardarLocal();
+    });
+    $id('sel-patron').addEventListener('change', (e) => {
+      const sel = EstadoM.seleccion.eje;
+      if (!sel) { e.target.value = 'pr_momento'; return; }
+      const corte = EstadoM.corteDe(sel.dir, sel.id);
+      corte.uniones.patron = e.target.value;
+      /* el patrón reemplaza las uniones NO marcadas como excepción */
+      corte.uniones.excepciones = {};
+      guardarYDibujar();
+    });
+    $id('btn-menos-np').onclick = () => {
+      const sel = EstadoM.seleccion.eje;
+      if (!sel) return;
+      const corte = EstadoM.corteDe(sel.dir, sel.id);
+      if (corte.niveles_propios <= 1) return;
+      corte.niveles_propios--;
+      $id('lbl-np').textContent = corte.niveles_propios + ' / ' +
+        EstadoM.datos.geometria.niveles.length;
+      guardarYDibujar();
+    };
+    $id('btn-mas-np').onclick = () => {
+      const sel = EstadoM.seleccion.eje;
+      if (!sel) return;
+      const corte = EstadoM.corteDe(sel.dir, sel.id);
+      const total = EstadoM.datos.geometria.niveles.length;
+      if (corte.niveles_propios >= total) return;
+      corte.niveles_propios++;
+      $id('lbl-np').textContent = corte.niveles_propios + ' / ' + total;
+      guardarYDibujar();
+    };
+    $id('btn-png-corte').onclick = () => {
+      if (!cvC) return;
+      const a = document.createElement('a');
+      a.download = 'corte_' + (EstadoM.seleccion.eje
+        ? EstadoM.seleccion.eje.dir + EstadoM.seleccion.eje.id : 'x') +
+        '_' + Date.now() + '.png';
+      a.href = cvC.toDataURL('image/png');
+      a.click();
+    };
   }
 
   function vincularNiveles() {
@@ -463,7 +821,8 @@ const Corte = (function () {
     };
   }
 
-  return { setEje, renderNiveles, vincularNiveles };
+  return { setEje, renderNiveles, vincularNiveles, dibujar,
+           vincularCorte, refrescarSelector };
 })();
 
 /* ---------------- controles y etiquetas del panel izquierdo ---------------- */
@@ -482,6 +841,9 @@ const Panel = (function () {
     const aviso = $id('aviso-rho');
     const falta = r.X.length < 2 || r.Y.length < 2;
     aviso.classList.toggle('oculto', !falta);
+    if (typeof Corte !== 'undefined' && Corte.refrescarSelector) {
+      Corte.refrescarSelector();
+    }
     if (falta) {
       aviso.title = 'COVENIN 1756-1 §6.3, Tabla 13: con menos de 2 pórticos ' +
         'resistentes por dirección puede penalizar el factor de redundancia ρ. ' +
@@ -589,6 +951,8 @@ const Panel = (function () {
   function trasCambioGeometria() {
     Planta.render();
     Panel.actualizar();
+    Corte.refrescarSelector();
+    Corte.dibujar();
     EstadoM.guardarLocal();
   }
 
@@ -603,5 +967,9 @@ document.addEventListener('DOMContentLoaded', () => {
   Planta.init();
   Corte.vincularNiveles();
   Corte.renderNiveles();
+  Corte.vincularCorte();
+  Corte.refrescarSelector();
   Panel.actualizar();
+  Corte.setEje(EstadoM.seleccion.eje ? EstadoM.seleccion.eje.dir : null,
+               EstadoM.seleccion.eje ? EstadoM.seleccion.eje.id : null);
 });

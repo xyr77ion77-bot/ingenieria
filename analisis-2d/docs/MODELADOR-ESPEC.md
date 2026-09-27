@@ -211,6 +211,11 @@ Para el pórtico abierto en el corte:
    vanos ±/luz por clic, ejes resistentes con clic (X rojo · Y azul),
    aviso ρ §6.3 si <2 por dirección, PNG, guardar/abrir .json, localStorage.
    El panel derecho muestra el pórtico seleccionado (vista de corte = paso 3).
-3. Vista Corte (niveles, columnas on/off, uniones, bases) + modelo de datos.
+3. ✅ **Vista Corte** — dibujo de la elevación (niveles con h de piso,
+   columnas activas/desactivadas punteadas, vigas con luces heredadas,
+   nudos rígida/articulada con excepciones ⚡, bases empotrada/articulada
+   con símbolo), controles: selector de pórtico, patrón de uniones
+   (pr_momento / vigas_articuladas / todo_articulado), niveles propios ±,
+   PNG; datos en `cortes["X:1"]` según §5 (clic en planta o selector).
 4. Botón «Generar modelo 2D» + mapping al motor + tests de mapping.
 5. Pulido: perfil real, área tributaria, exportar PNG, avisos de ρ.
