@@ -11,7 +11,7 @@
 | # | Decisión | Elección |
 |---|----------|----------|
 | 1 | Ubicación | **Pestaña nueva «Modelador»** — fuente de geometría del proyecto |
-| 9 | **Unión Modelador ↔ Acciones** | **Proyecto único continuo**: ambas pestañas comparten el mismo proyecto (localStorage `modelador_v1`); no hay modo de Acciones sin geometría. |
+| 9 | **Unión Modelador ↔ Acciones** | **Proyecto único continuo**: una sola página (`/`) con las 3 vistas por hash (`#modelador` · `#acciones` · `#analisis`) y proyecto v3 común (Modelador + Acciones + modelo 2D) en `js/proyecto.js`; Guardar/Abrir es de una pieza desde cualquier pestaña; no hay modo de Acciones sin geometría. |
 | 10 | **Cargas de la norma** | **En Acciones, por nivel**: tipo de edificación (global) + ambiente de la Tabla 5.1 por nivel → CV; CP = losa (2500) + acabado + tabiquería §4.4; niveles «techo» → CV §5.2.4.2 y CP = pp del techo. |
 | 11 | **Peso sísmico W** | **Manual como hoy** (se asigna por barra/nudo); la norma solo sugiere los valores por nivel. |
 | 12 | **Cargas en vigas del 2D** | Al generar el modelo, las vigas reciben **q_perp = (CP+CV) × ancho tributario** del nivel (visible y editable en Análisis). |
