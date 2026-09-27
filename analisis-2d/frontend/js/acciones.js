@@ -180,6 +180,7 @@ const AccionesApp = (function () {
         cfgNivel(sel.dataset.n).ambiente = sel.value;
         guardarLocal(); renderCargasNivel(); sincronizarCargas();
       }));
+    if (window.Memoria) Memoria.vincular();
     div.querySelectorAll('.in-cob').forEach(sel =>
       sel.addEventListener('change', () => {
         cfgNivel(sel.dataset.n).cobertura = sel.value;
@@ -222,6 +223,7 @@ const AccionesApp = (function () {
                    ' · CV ' + Math.round(cv * a) + ' kg/m');
     });
     guardarLocal();
+    if (window.Memoria) Memoria.refrescarCargas();
     if (silencioso !== true) {
       alert('Barras actualizadas: ' + aplicadas + '\n\n' + detalle.join('\n'));
     }
@@ -310,6 +312,7 @@ const AccionesApp = (function () {
       const ms = Math.round(performance.now() - t0);
       if (!j.ok) { mostrarError(j.error || 'Error desconocido'); return; }
       res = j;
+      if (window.Memoria) Memoria.registrar(j);
       $('acc-caja-error').classList.add('oculto');
       $('lbl-tiempo').textContent = `resuelto en ${ms} ms · γ = ${j.gamma} · CSV = ${fmt.format(j.csv)}`;
       renderKPIs(j);
@@ -502,6 +505,14 @@ const AccionesApp = (function () {
     if ($('file-abrir')) $('file-abrir').addEventListener('change', abrirProyecto);
     $('btn-aplicar-niveles').addEventListener('click', () => aplicarNivelesABarras(false));
     cargarTablas2002();
+    if (window.Memoria) {
+      Memoria.init({
+        acc: () => acc,
+        niveles: nivelesModelador,
+        cfg: cfgNivel,
+        cpCv: cpCvNivel,
+      });
+    }
     /* app única: al volver a esta pestaña, re-lee el proyecto y redibuja */
     window.addEventListener('pestana-activada', (e) => {
       /* Acciones vive dentro de la pestaña «Modelador + Acciones» */

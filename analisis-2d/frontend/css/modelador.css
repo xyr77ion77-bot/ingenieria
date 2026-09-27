@@ -199,3 +199,70 @@
 /* las tablas del dock se desplazan DENTRO de su tarjeta, nunca
    empujan el ancho de la columna */
 .dock-cuerpo .tabla-compacta { overflow-x: auto; }
+
+/* ═══ modo aprendizaje: ¿por qué? + memoria de cálculo ═══ */
+.btn-porque {
+  display: inline-block;
+  margin-left: 5px;
+  min-width: 18px; height: 18px;
+  border-radius: 50%;
+  border: 1.5px solid var(--azul);
+  color: var(--azul);
+  background: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+  cursor: help;
+  padding: 0;
+  vertical-align: middle;
+}
+.btn-porque:hover { background: var(--azul); color: #fff; }
+.popover-porque {
+  position: absolute;
+  z-index: 1000;
+  max-width: 340px;
+  background: #0f172a;
+  color: #e2e8f0;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  box-shadow: 0 8px 24px rgba(2, 6, 23, .35);
+}
+.popover-porque .mem-f { margin-top: 6px; color: #fff; }
+.popover-porque .mem-pq { color: #cbd5e1; }
+#memoria-cuerpo .mem-sec { margin-bottom: 8px; }
+.mem-sec-tit {
+  width: 100%;
+  text-align: left;
+  background: #eff6ff;
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-weight: 700;
+  font-size: 12.5px;
+  cursor: pointer;
+  color: var(--texto);
+}
+.mem-sec-tit:hover { border-color: var(--azul); }
+.mem-sec-cuerpo { padding: 4px 2px 8px 8px; }
+.mem-paso {
+  border-left: 3px solid var(--azul);
+  padding: 6px 10px;
+  margin: 8px 0;
+  background: #f8fafc;
+}
+.mem-f { font-family: ui-monospace, monospace; font-weight: 700; }
+.mem-s { font-family: ui-monospace, monospace; color: #334155; font-size: 12.5px; margin-top: 2px; }
+.mem-r { font-weight: 700; color: #1d4ed8; margin-top: 2px; }
+.mem-fuente {
+  display: inline-block;
+  background: #dbeafe;
+  color: #1e3a8a;
+  font-size: 12px;
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-weight: 600;
+  margin-top: 4px;
+}
+.mem-pq { color: var(--texto2); font-size: 12.5px; margin: 4px 0 0; }

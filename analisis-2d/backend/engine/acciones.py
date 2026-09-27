@@ -129,6 +129,188 @@ def pesos_por_nivel(modelo: Modelo, acc: Acciones):
 
 
 # ------------------------------------------------------------------
+# Memoria de cálculo (modo aprendizaje): cada paso = fórmula +
+# sustitución con los valores reales + fuente + porqué
+# ------------------------------------------------------------------
+def _f(x, dec=2):
+    """1234.5 → '1.234,5' (sin miles para no liar copiado: '1234,5')."""
+    t = "%.*f" % (dec, float(x))
+    if "." in t:
+        t = t.rstrip("0").rstrip(".")
+    return t.replace(".", ",")
+
+
+def construir_memoria(modelo, acc, s, ys, W, gamma, csv_v, combos,
+                      incluir_sismo):
+    M = []
+
+    def sec(nombre):
+        d = {"seccion": nombre, "pasos": []}
+        M.append(d)
+        return d["pasos"]
+
+    def paso(sc, formula, sustitucion="", resultado="", fuente="", porque=""):
+        sc.append({"formula": formula, "sustitucion": sustitucion,
+                   "resultado": str(resultado), "fuente": fuente,
+                   "porque": porque})
+
+    sz = acc.sismo
+
+    # ── 1 · Peso sísmico W por nivel ──
+    s1 = sec("1 · Peso sísmico W por nivel")
+    fcv = sz.get("fraccion_cv", 0.25)
+    paso(s1, "CV_sísmico = frac · CV",
+         "frac = " + _f(fcv) + " (fracción de CV presente durante el sismo)",
+         _f(fcv),
+         "COVENIN 1756:2019 · Tabla 20",
+         "No toda la carga variable está presente cuando ocurre el sismo; "
+         "la norma la fracciona según el uso del edificio (oficinas 0,25).")
+    _ys, _W, nivel_de = pesos_por_nivel(modelo, acc)
+    aporte = {y: 0.0 for y in _ys}
+    nb = {y: 0 for y in _ys}
+    for b in modelo.barras:
+        ni, nj = modelo.nudo(b.ni), modelo.nudo(b.nj)
+        L = math.hypot(nj.x - ni.x, nj.y - ni.y)
+        if L <= 0:
+            continue
+        w = (acc.barra_cp.get(b.id, 0.0)
+             + acc.barra_cv.get(b.id, 0.0) * fcv
+             + (b.A * 1e-4 * _GAMMA_ACERO if b.peso_propio else 0.0))
+        wmed = w * L / 2.0
+        aporte[nivel_de[ni.id]] += wmed
+        aporte[nivel_de[nj.id]] += wmed
+        nb[nivel_de[ni.id]] += 1
+        nb[nivel_de[nj.id]] += 1
+    for y, w in zip(_ys, _W):
+        if w <= 1e-9:
+            continue
+        paso(s1, "W_i = Σ_b (CP + frac·CV + pp) · L / 2",
+             "Nivel y=" + _f(y) + " m: " + str(nb[y]) + " barras aportando → W = "
+             + _f(w) + " kg",
+             _f(w) + " kg",
+             "COVENIN 1756:2019 · §9.4",
+             "El sismo estático equivalente usa el peso de cada nivel: 100% de "
+             "la carga permanente + fracción de la variable. Cada barra reparte "
+             "la mitad de su carga a cada extremo.")
+    paso(s1, "W_total = Σ W_i", "Σ de " + str(len([w for w in W if w > 1e-9]))
+         + " niveles con peso", _f(sum(W)) + " kg",
+         "COVENIN 1756:2019 · §9.4",
+         "El peso total entra en el cortante base de diseño V0 = C·W_total.")
+
+    if incluir_sismo and s:
+        # ── 2 · Parámetros del sismo ──
+        s2 = sec("2 · Parámetros del sismo (COVENIN 1756:2019)")
+        paso(s2, "R, Cd, Ω según sistema estructural",
+             "nd = " + sz.get("nd", "ND3") + " (acero P-RM) → R = "
+             + _f(s.get("R", 0), 0) + " · Cd = " + _f(s.get("Cd", 0))
+             + " · Ω₀ = " + _f(s.get("Omega", 0), 0),
+             "R = " + _f(s.get("R", 0), 0),
+             "COVENIN 1756:2019 · Tablas 14–16",
+             "R reduce el espectro elástico a inelástico: la estructura disipa "
+             "energía mediante ductilidad.")
+        paso(s2, "AA = FA · α · A0",
+             "FA = " + _f(s.get("FA", 1)) + " (sitio " + sz.get("sitio", "CD")
+             + ") · α = " + _f(s.get("alpha", 1)) + " (grupo "
+             + sz.get("grupo", "B2") + ") · A0 = " + _f(sz.get("A0", 0)),
+             "AA = " + _f(s.get("AA", 0), 3),
+             "COVENIN 1756:2019 · §7.2, Tablas 4–11",
+             "La aceleración horizontal de diseño parte del mapa de amenaza "
+             "sísmica (zona) y se corrige por el tipo de suelo y la topografía.")
+        hn = s.get("hn", 0.0)
+        ct = sz.get("ct", 0.08)
+        paso(s2, "Ta = ct · hn^0,75",
+             "ct = " + _f(ct) + " (Tabla 24, acero P-RM) · hn = " + _f(hn)
+             + " m",
+             "Ta = " + _f(s.get("Ta", 0), 3) + " s  (límite σ·Ta = "
+             + _f(s.get("Tmax", 0), 3) + " s)",
+             "COVENIN 1756:2019 · §9.4.3.3 + Tabla 23–24",
+             "Período fundamental estimado de la estructura; con el nivel de "
+             "amenaza se limita (σ) para no sub-diseñar estructuras flexibles.")
+        paso(s2, "C = μ · Ad(T)  ·  Cmín = AA / R",
+             "μ = " + _f(s.get("mu", 0)) + " · Ad(T=" + _f(s.get("T", 0), 3)
+             + " s) = " + _f(s.get("AdT", 0), 4) + " → C = " + _f(s.get("C", 0), 4)
+             + " · Cmín = " + _f(s.get("Cmin", 0), 4)
+             + ("  (escala ×" + _f(s.get("escala", 1), 3) if s.get("escala", 1) != 1.0 else ""),
+             "V0 = C·W = " + _f(s.get("V0", 0)) + " kg → V0d = " + _f(s.get("V0d", 0)) + " kg",
+             "COVENIN 1756:2019 · §9.2–9.4 (fórmulas 9.3–9.4)",
+             "El coeficiente sísmico base C convierte el peso en cortante; si C "
+             "queda por debajo del mínimo AA/R se escala el cortante (V0d).")
+        paso(s2, "Ft = k · V0d,  k = 0,06·T/TC − 0,02 (4% ≤ k ≤ 10%)",
+             "T = " + _f(s.get("T", 0), 3) + " s · TC = " + _f(s.get("TC", 0), 3)
+             + " s → k = " + _f(s.get("coefFt", 0), 3),
+             "Ft = " + _f(s.get("Ft", 0)) + " kg",
+             "COVENIN 1756:2019 · (9.10)",
+             "Fuerza de tope: compensa el efecto de los modos superiores que el "
+             "modelo de un solo grado de libertad por nivel no captura.")
+        wh = [(w, h) for w, h in zip(W, s.get("_niveles_filtrados", [])[:0] or _ys)
+              if w > 1e-9]
+        fis = s.get("Fis", [])
+        ys_f = [y for y, w in zip(_ys, _W) if w > 1e-9]
+        for y, w, fi in zip(ys_f, [w for w in W if w > 1e-9], fis):
+            paso(s2, "F_i = (V0d − Ft) · W_i·h_i / Σ(W_j·h_j)",
+                 "y=" + _f(y) + " m: (" + _f(s.get("V0d", 0)) + " − "
+                 + _f(s.get("Ft", 0)) + ") × " + _f(w) + "×" + _f(y)
+                 + " / Σ(W·h)",
+                 "F" + _f(y, 1) + " = " + _f(fi) + " kg",
+                 "COVENIN 1756:2019 · (9.11)",
+                 "Distribución lineal del cortante: el nivel con más peso y más "
+                 "altura recibe mayor fuerza (aceleración de primer modo).")
+        if csv_v:
+            paso(s2, "CSV = β · AA · γ_máx · E0",
+                 "β = 2,3 · AA = " + _f(s.get("AA", 0), 3) + " · γ_máx = 3,0 · E0 = 1,0",
+                 "CSV = " + _f(csv_v, 3) + "  →  SV = CSV·CP",
+                 "COVENIN 1756:2019 · §8.3.1.4 (8.4–8.5)",
+                 "El sismo vertical agita la masa en la dirección de gravedad; "
+                 "se expresa como fracción del peso permanente (efecto elástico "
+                 "sin ductilidad, por eso β=2,3).")
+
+    # ── 3 · γ y combinaciones ──
+    s3 = sec("3 · γ de la carga variable y combinaciones")
+    if incluir_sismo:
+        cvs = [v for v in acc.barra_cv.values() if v > 0]
+        paso(s3, "γ = 0,5 si CV < 500 kgf/m² · γ = 1 en los demás casos",
+             ("CV máx = " + _f(max(cvs), 2) + " kg/m " if cvs else "")
+             + ("→ γ = " + _f(gamma, 1) if cvs else "sin CV → γ = " + _f(gamma, 1)),
+             "γ = " + _f(gamma, 1),
+             "COVENIN 1756:2019 · §8.3.2.b",
+             "Cuando la carga variable es liviana (< 500 kgf/m², salvo reunión "
+             "pública o estacionamiento), es improbable que esté completa "
+             "justo cuando ocurre el sismo: se reduce al 50%.")
+    porque_combo = {
+        "8.6": "Gravedad mayorada con sismo horizontal y 30% del vertical: "
+               "combinación de resistencia usual.",
+        "8.7": "Con CP al 90% se verifica volteo y tracción en columnas: la "
+               "permanente mínima es la desfavorable para esos efectos.",
+        "8.9": "SH y SV se combinan por raíz de la suma de cuadrados (8.8) "
+               "porque son efectos independientes entre sí.",
+        "8.10": "Igual que 8.7 pero con el sismo combinado por SRSS (8.8).",
+        "1,4": "Solo gravedad mayorada (sismo desactivado): combinación básica "
+               "de resistencia.",
+        "1,2": "Gravedad mayorada con carga variable a tope (γ según §8.3.2.b).",
+    }
+    for c in combos:
+        clave = c["nombre"].split(" ")[0].replace(",", ",")
+        pq = porque_combo.get(clave, "")
+        paso(s3, c["formula"],
+             "factores: CP×" + _f(c["fac"]["CP"], 1) + " · CV×"
+             + _f(c["fac"]["CV"], 1) + " · SH×" + _f(c["fac"]["SH"], 1)
+             + " · SV×" + _f(c["fac"]["SV"], 2),
+             "", "COVENIN 1756:2019 · (" + c["nombre"] + ")", pq)
+
+    # ── 4 · Evaluación ──
+    s4 = sec("4 · Evaluación y envolvente")
+    paso(s4, "U = Σ (factor × caso) por superposición",
+         "los casos CP, CV, SH y SV se resuelven una vez con el solver de "
+         "rigideces 2D y se combinan linealmente",
+         "envolvente por barra/nudo/reacción",
+         "Principio de superposición (comportamiento elástico lineal)",
+         "La envolvente guarda, en cada extremo de barra, el peor efecto (M, "
+         "V, N) y qué combinación lo gobierna: es lo que después dimensiona "
+         "el acero o el concreto.")
+    return M
+
+
+# ------------------------------------------------------------------
 # γ según §8.3.2.b
 # ------------------------------------------------------------------
 def gamma_de(modelo: Modelo, acc: Acciones) -> float:
@@ -423,8 +605,11 @@ def analizar_con_combinaciones(modelo_dict: dict, acciones_dict: dict) -> dict:
     env = envolvente(evals)
 
     fi_map = dict(zip(s.get("_niveles_filtrados", []), s.get("Fis", [])))
+    memoria = construir_memoria(modelo, acc, s, ys, W, gamma, csv_v,
+                                combos, incluir_sismo)
     return {
         "ok": True,
+        "memoria": memoria,
         "gamma": gamma,
         "csv": csv_v,
         "sismo": {k: v for k, v in s.items()
