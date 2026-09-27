@@ -20,7 +20,7 @@
 | 7 | Columnas en corte | **Activables/desactivables** (vano salteado con viga de luz completa) |
 | 8 | Uniones | **Patrón global + excepción por nudo**; bases empotrada/articulada por columna |
 
-**Cargas**: las cargas del Modelador seguirán la norma que el usuario adjuntó (`Norma2002_8_CRITERIOS.pdf`, criterios de cargas COVENIN 2002) — **PDF pendiente de recibir en el workspace** (no persistió el adjunto; el usuario lo subirá a `ACERO/`). Integrar sus criterios (mínimos de carga por uso, CP/CV) al modelo de datos del Modelador antes del paso 4 (generador).
+**Cargas**: las cargas del Modelador siguen la **COVENIN-MINDUR 2002-88** (adjunta por el usuario en `ACERO/Norma2002_8_CRITERIOS.pdf`). Ya moduleada: `backend/engine/cargas2002.py` (Tabla 5.1 completa 8 tipos × 15 ambientes, techos §5.2.4, reducción por pisos §5.2.3, barandas §5.3.4, tabiquería §4.4, materiales Tabla 4.1/4.3) con 35 tests dorados (`tests_cargas2002.py`). Resumen en `docs/NORMA2002-CARGAS.md`. Pendiente: selector de tipo de edificación + ambiente por nivel en la vista Corte (paso 3) y su mapa a cargas del modelo 2D (paso 4).
 
 Reutiliza el patrón de `ACERO/calculadora-sismica/js/canvas_planta.js`:
 `estado → coordenadas → dibujo → hitBoxes → pointer events`, ejes numerados
