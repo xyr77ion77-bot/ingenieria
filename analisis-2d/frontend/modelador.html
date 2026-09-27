@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Cache-Control" content="no-cache">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Modelador · Planta y cortes</title>
+  <link rel="stylesheet" href="css/styles.css?v=20260927i">
+  <link rel="stylesheet" href="css/modelador.css?v=20260927i">
+  <script>
+  /* diagnóstico global: cualquier error JS (incl. SyntaxError de navegadores
+     viejos) muestra un banner rojo — ES5, corre antes que todos los módulos */
+  window.onerror = function (msj, src, linea) {
+    var d = document.getElementById('banner-error');
+    var archivo = (src || '?').split('/').pop();
+    var t = '⚠ Error de la interfaz: ' + msj + '  [' + archivo + ':' + linea + ']';
+    if (window.console && console.error) console.error(t);
+    if (d) { d.textContent = t; d.style.display = 'block'; }
+    return false;
+  };
+  </script>
+</head>
+<body>
+
+<div id="banner-error" style="display:none;position:fixed;left:0;right:0;top:0;z-index:99999;background:#b91c1c;color:#fff;padding:8px 14px;font:13px monospace"></div>
+
+
+<header>
+  <div class="marca">
+    <h1>📐 Modelador</h1>
+    <div class="sub">Geometría del edificio: planta + cortes · unidades: kg · m · kg/cm²</div>
+  </div>
+  <div class="acciones">
+    <input id="inp-titulo" type="text" value="Estructura sin nombre"
+           title="Nombre de la estructura" spellcheck="false">
+    <span class="sep"></span>
+    <button id="btn-guardar" title="Descargar geometría .json">💾 Guardar</button>
+    <button id="btn-abrir" title="Abrir geometría .json">📂 Abrir</button>
+    <input type="file" id="file-abrir" accept=".json,application/json" hidden>
+    <button id="btn-png-planta" title="Exportar planta a PNG (memoria de cálculo)">🖼 PNG planta</button>
+    <button id="btn-limpiar" title="Borrar todo el modelador">🗑</button>
+  </div>
+</header>
+
+<nav class="app-tabs">
+  <a href="/modelador.html" class="activo">📐 Modelador</a>
+  <a href="/acciones.html">⚖️ Acciones y combinaciones</a>
+  <a href="/">🏗️ Análisis 2D</a>
+  <span class="desactivado" title="Fase 3">🗂️ Plantillas</span>
+  <span class="desactivado" title="Fase 4">🧱 Acero 1618</span>
+  <span class="desactivado" title="Fase 5">🩻 Concreto</span>
+</nav>
+
+<div class="modelador-layout">
+
+  <!-- cuadro dividido: PLANTA | CORTE en una sola tarjeta -->
+  <div class="par-lienzos">
+  <!-- ══════════ IZQUIERDA: PLANTA ══════════ -->
+  <section class="panel panel-planta">
+    <div class="panel-cabecera">
+      <b>PLANTA</b>
+      <span id="lbl-planta" class="mini-rotulo">—</span>
+    </div>
+
+    <div class="lienzo-wrap" id="wrap-planta">
+      <canvas id="cv-planta"></canvas>
+    </div>
+
+    <div class="panel-controles">
+      <div class="grupo">
+        <span class="mini-rotulo">Vanos X:</span>
+        <button id="btn-mas-lx" title="Añadir vano en X">＋</button>
+        <button id="btn-menos-lx" title="Eliminar el último vano en X">−</button>
+        <span class="sep"></span>
+        <span class="mini-rotulo">Vanos Y:</span>
+        <button id="btn-mas-ly" title="Añadir vano en Y">＋</button>
+        <button id="btn-menos-ly" title="Eliminar el último vano en Y">−</button>
+      </div>
+      <div class="grupo">
+        <span id="lbl-resistentes" class="conteo-resistentes">Resist. X: 0 · Y: 0</span>
+        <span id="aviso-rho" class="aviso-rho oculto"
+              title="COVENIN 1756-1 §6.3, Tabla 13">⚠ &lt;2 resistentes</span>
+      </div>
+      <div class="grupo ayuda">
+        Clic en un eje: marcar/desmarcar pórtico resistente (X rojo · Y azul) y
+        abrir su corte a la derecha. Clic en un tramo: editar su luz.
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ DERECHA: CORTE ══════════ -->
+  <section class="panel panel-corte">
+    <div class="panel-cabecera">
+      <b>CORTE</b>
+      <span id="lbl-corte" class="mini-rotulo">sin pórtico seleccionado</span>
+    </div>
+    <div class="lienzo-wrap lienzo-corte" id="wrap-corte">
+      <canvas id="cv-corte"></canvas>
+    </div>
+    <div class="panel-controles">
+      <div class="grupo">
+        <span class="mini-rotulo">Pórtico:</span>
+        <select id="sel-corte" title="Eje resistente abierto en el corte"></select>
+      </div>
+      <div class="grupo">
+        <span class="mini-rotulo">Uniones:</span>
+        <select id="sel-patron" title="Patrón de uniones (aplicable a todo el pórtico)">
+          <option value="pr_momento">P-RM todo rígido</option>
+          <option value="vigas_articuladas">Vigas articuladas</option>
+          <option value="todo_articulado">Todo articulado</option>
+        </select>
+      </div>
+      <div class="grupo">
+        <span class="mini-rotulo">Niveles propios:</span>
+        <button id="btn-menos-np" title="Este pórtico baja un nivel">−</button>
+        <b id="lbl-np">–</b>
+        <button id="btn-mas-np" title="Restaurar un nivel propio">＋</button>
+      </div>
+      <div class="grupo">
+        <button id="btn-png-corte" title="Exportar el corte a PNG">🖼 PNG</button>
+        <span class="sep"></span>
+        <button id="btn-generar-2d" class="primario"
+                title="Crea el modelo 2D de este pórtico (nudos, barras, apoyos y liberaciones) y lo abre en Análisis 2D con las cargas aplicadas">⚡ Generar modelo 2D</button>
+      </div>
+      <div class="grupo ayuda" id="ayuda-corte">
+        Clic en una <b>columna</b>: activar/desactivar (vano salteado) ·
+        clic en la <b>base</b>: empotrada/articulada · clic en un
+        <b>nudo</b>: excepción de unión ⚡.
+      </div>
+    </div>
+    <div class="subpanel">
+      <div class="subpanel-titulo">Niveles del edificio (globales)
+        <span class="mini-rotulo">— altura de piso en m · el nivel marcado
+        «techo» toma su CV de §5.2.4 (COVENIN 2002-88)</span></div>
+      <div class="tabla-compacta" id="tabla-niveles-m"></div>
+      <div class="grupo" style="padding: 6px 10px;">
+        <button id="btn-mas-nivel" title="Añadir nivel arriba">＋ nivel</button>
+        <button id="btn-menos-nivel" title="Quitar el nivel más alto">− nivel</button>
+      </div>
+    </div>
+  </section>
+  </div><!-- /.par-lienzos -->
+
+</div>
+
+<script src="js/modelador.js?v=20260927i"></script>
+</body>
+</html>
