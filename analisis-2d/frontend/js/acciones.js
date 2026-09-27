@@ -239,7 +239,7 @@ const AccionesApp = (function () {
       }));
   }
 
-  function aplicarNivelesABarras() {
+  function aplicarNivelesABarras(silencioso) {
     const niveles = nivelesModelador();
     if (!modelo || !modelo.barras.length || !niveles.length) {
       alert('No hay barras en el proyecto (genera el modelo 2D desde el Modelador).');
@@ -268,7 +268,10 @@ const AccionesApp = (function () {
     });
     guardarLocal();
     renderTablaBarras();
-    alert('Barras actualizadas: ' + aplicadas + '\n\n' + detalle.join('\n'));
+    if (silencioso !== true) {
+      alert('Barras actualizadas: ' + aplicadas + '\n\n' + detalle.join('\n'));
+    }
+    return aplicadas;
   }
 
   async function cargarTablas2002() {
@@ -595,5 +598,12 @@ const AccionesApp = (function () {
   }
 
   document.addEventListener('DOMContentLoaded', init);
-  return { calcular };
+  return {
+    calcular,
+    /* hooks para la app única (el generador del Modelador los usa) */
+    cargarModeloProyecto,
+    aplicarNivelesABarras,
+    renderTablaBarras,
+    renderCargasNivel,
+  };
 })();

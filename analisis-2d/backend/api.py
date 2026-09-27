@@ -100,6 +100,23 @@ def api_ejemplo(eid: str):
         raise HTTPException(status_code=404, detail=str(e))
 
 
+@app.post("/api/generar")
+def api_generar(payload: dict):
+    """Modelador → modelo 2D del pórtico (espec §6).
+    body: {modelador: {geometría, cortes…}, corte: "X:1"}"""
+    try:
+        from engine.generador import generar_portico
+        modelo, resumen = generar_portico(payload.get("modelador") or {},
+                                          payload.get("corte") or "")
+        return {"ok": True, "modelo": modelo, "resumen": resumen}
+    except ERROR as e:
+        return JSONResponse(status_code=422, content={"ok": False,
+                                                      "error": str(e)})
+    except Exception as e:  # noqa: BLE001
+        return JSONResponse(status_code=500, content={
+            "ok": False, "error": f"Error generando el modelo: {e}"})
+
+
 @app.get("/api/salud")
 def api_salud():
     return {"ok": True, "motor": "rigideces-2d", "unidades": "kg·m·kg/cm²"}

@@ -217,5 +217,12 @@ Para el pórtico abierto en el corte:
    con símbolo), controles: selector de pórtico, patrón de uniones
    (pr_momento / vigas_articuladas / todo_articulado), niveles propios ±,
    PNG; datos en `cortes["X:1"]` según §5 (clic en planta o selector).
-4. Botón «Generar modelo 2D» + mapping al motor + tests de mapping.
+4. ✅ **Botón «Generar modelo 2D»** — `engine/generador.py` +
+   `POST /api/generar` + botón ⚡ en la barra del corte. Mapping probado
+   con 24 checks dorados (`tests_generador.py`): ejes = vanos+1, nudos
+   «{eje}_N{k}» solo de columnas activas, vano salteado → viga única
+   (L=Σ luces), rótulas del patrón/excepciones → rel_i/rel_j de la VIGA
+   (columnas continuas), bases → apoyos rz, secciones genéricas. El
+   botón guarda el modelo en el Análisis 2D, aplica las cargas
+   (CP+CV)·ancho a las vigas vía Acciones y salta a #analisis.
 5. Pulido: perfil real, área tributaria, exportar PNG, avisos de ρ.

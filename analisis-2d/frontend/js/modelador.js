@@ -67,7 +67,8 @@ const EstadoM = {
      completa si la retícula creció (§5 de la espec) */
   clavesColumnas(dir) {
     const g = this.datos.geometria;
-    const n = dir === 'X' ? g.ly.length : g.lx.length;
+    /* ejes = vanos + 1 (2 vanos en Y → A,B,C) */
+    const n = (dir === 'X' ? g.ly.length : g.lx.length) + 1;
     const out = [];
     for (let i = 0; i < n; i++) out.push(dir === 'X' ? this.letraEje(i) : String(i + 1));
     return out;
@@ -789,6 +790,7 @@ const Corte = (function () {
       $id('lbl-np').textContent = corte.niveles_propios + ' / ' + total;
       guardarYDibujar();
     };
+    $id('btn-generar-2d').onclick = generarModelo2D;
     $id('btn-png-corte').onclick = () => {
       if (!cvC) return;
       const a = document.createElement('a');
@@ -823,6 +825,64 @@ const Corte = (function () {
 
   return { setEje, renderNiveles, vincularNiveles, dibujar,
            vincularCorte, refrescarSelector };
+
+  /* ---------------- ⚡ Generar modelo 2D (paso 4) ---------------- */
+
+async function generarModelo2D() {
+  const sel = EstadoM.seleccion.eje;
+  if (!sel) {
+    alert('Selecciona primero un pórtico resistente (clic en la planta o en el selector del corte).');
+    return;
+  }
+  const previo = localStorage.getItem('analisis2d.autosave');
+  if (previo && !confirm('Ya existe un modelo en Análisis 2D.\n¿Reemplazarlo con el pórtico ' +
+      sel.dir + ':' + sel.id + '?')) {
+    return;
+  }
+  let j;
+  try {
+    const r = await fetch('/api/generar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ modelador: EstadoM.datos,
+                             corte: sel.dir + ':' + sel.id }),
+    });
+    j = await r.json();
+  } catch (e) {
+    alert('No hay conexión con el backend (¿uvicorn está corriendo?).');
+    return;
+  }
+  if (!j.ok) {
+    alert('No se pudo generar el modelo:\n' + (j.error || 'error desconocido'));
+    return;
+  }
+  /* 1) modelo al Análisis 2D */
+  localStorage.setItem('analisis2d.autosave', JSON.stringify(j.modelo));
+  if (window.Estado && Estado.cargarModelo) Estado.cargarModelo(j.modelo);
+  /* 2) cargas de la norma a las vigas (CP·ancho / CV·ancho por nivel) */
+  try {
+    if (window.AccionesApp && AccionesApp.cargarModeloProyecto) {
+      AccionesApp.cargarModeloProyecto();
+      AccionesApp.aplicarNivelesABarras(true);
+    }
+  } catch (e) { /* sin dock de acciones (página suelta) */ }
+  const rs = j.resumen;
+  let msg = 'Modelo «' + j.modelo.titulo + '» generado:\n' +
+    '· ' + rs.n_nudos + ' nudos · ' + rs.n_barras + ' barras' +
+    ' (' + rs.n_columnas + ' columnas + ' + rs.n_vigas + ' vigas)\n' +
+    '· ' + rs.niveles + ' niveles';
+  if (rs.saltados && rs.saltados.length) {
+    msg += '\n· Vanos salteados: ' + rs.saltados.join(' · ');
+  }
+  if (rs.bases_articuladas && rs.bases_articuladas.length) {
+    msg += '\n· Bases articuladas: ' + rs.bases_articuladas.join(', ');
+  }
+  msg += '\n\nSecciones genéricas: asigna los perfiles en Análisis/Acero.';
+  alert(msg);
+  /* 3) abrir la pestaña de Análisis */
+  if (window.Pestanas) Pestanas.activar('analisis');
+  else location.href = '/#analisis';
+}
 })();
 
 /* ---------------- controles y etiquetas del panel izquierdo ---------------- */
