@@ -109,7 +109,7 @@ def api_salud():
 def api_cargas2002():
     """Tablas de cargas mínimas COVENIN-MINDUR 2002-88 para la UI
     (fuente única de verdad: engine/cargas2002.py)."""
-    from .engine import cargas2002 as C
+    from engine import cargas2002 as C
     tipos = {
         clave: {"titulo": titulo,
                 "valores": {amb: v for amb, v in fila.items()
