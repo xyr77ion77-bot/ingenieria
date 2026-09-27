@@ -11,6 +11,13 @@
 | # | Decisión | Elección |
 |---|----------|----------|
 | 1 | Ubicación | **Pestaña nueva «Modelador»** — fuente de geometría del proyecto |
+| 9 | **Unión Modelador ↔ Acciones** | **Proyecto único continuo**: ambas pestañas comparten el mismo proyecto (localStorage `modelador_v1`); no hay modo de Acciones sin geometría. |
+| 10 | **Cargas de la norma** | **En Acciones, por nivel**: tipo de edificación (global) + ambiente de la Tabla 5.1 por nivel → CV; CP = losa (2500) + acabado + tabiquería §4.4; niveles «techo» → CV §5.2.4.2 y CP = pp del techo. |
+| 11 | **Peso sísmico W** | **Manual como hoy** (se asigna por barra/nudo); la norma solo sugiere los valores por nivel. |
+| 12 | **Cargas en vigas del 2D** | Al generar el modelo, las vigas reciben **q_perp = (CP+CV) × ancho tributario** del nivel (visible y editable en Análisis). |
+| 13 | **Techo/azotea** | Un nivel se marca «techo» (solo el último): techo metálico liviano 40 · pp≥50 con p≤15 % 100 · p>15 % 50 · azotea de uso ≥100. |
+| 14 | **Reducción ΣCV §5.2.3** | **Al diseñar** (Acero/Concreto cuentan pisos soportados por columna); Acciones queda sin reducir (envolvente conservadora). |
+
 | 1b | **Orden del flujo** (ampliación aprobada) | **El Modelador es la PRIMERA ventana** del cálculo de Acero/Concreto, junto con Acciones y Combinaciones: Modelador (geometría + cargas) → Acciones (CP/CV, sismo §8) → análisis → Acero 1618 / Concreto. Nav reordenada en las 3 pestañas. |
 | 2 | Pórticos | **Marcar ejes resistentes** X/Y en la planta (clic) |
 | 3 | Corte editable | **Geometría + uniones** (secciones se asignan en Acero/Concreto) |

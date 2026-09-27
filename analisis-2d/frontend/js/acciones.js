@@ -15,6 +15,9 @@ const AccionesApp = (function () {
   const fmt = new Intl.NumberFormat('es-VE', { maximumFractionDigits: 2 });
   const CLAVE_MODELO = 'analisis2d.autosave';
   const CLAVE_ACC = 'analisis2d.acciones';
+  const CLAVE_MODELADOR = 'modelador_v1';      /* proyecto único compartido */
+  const CLAVE_CARGAS_API = '/api/cargas2002';
+  let TAB = null;   /* tablas COVENIN 2002-88 servidas por el motor */
 
   let modelo = null;   // dict del modelo (JSON del motor)
   let acc = null;      // dict de acciones
@@ -24,6 +27,7 @@ const AccionesApp = (function () {
   function accPorDefecto() {
     return {
       barra_cp: {}, barra_cv: {}, nodo_cp: {}, nodo_cv: {},
+      cargas2002: { tipo: '5', por_nivel: {} },
       sismo: {
         A0: 0.21, A1: 0.18, TL: 3.9, grupo: 'B2', nd: 'ND3',
         sitio: 'CD', topo: 'leve', H: 0, rho: 1.0, FI: 1.0,
@@ -107,6 +111,183 @@ const AccionesApp = (function () {
         acc.nodo_cv[inp.dataset.id] = { Fx: 0, Fy: +inp.value || 0, Mz: 0 };
         guardarLocal();
       }));
+  }
+
+  /* ============ cargas por nivel — COVENIN-MINDUR 2002-88 ============ */
+
+  function proyectoModelador() {
+    try {
+      const s = localStorage.getItem(CLAVE_MODELADOR);
+      if (s) return JSON.parse(s);
+    } catch (e) { /* noop */ }
+    return null;
+  }
+
+  function nivelesModelador() {
+    const p = proyectoModelador();
+    if (!p || !p.geometria || !p.geometria.niveles) return [];
+    let y = 0;
+    return p.geometria.niveles.map(n => {
+      y += +n.h_piso || 0;
+      return { nombre: n.nombre, es_techo: !!n.es_techo,
+               pp_techo: +n.pp_techo || 50, pendiente: +n.pendiente || 0,
+               y };
+    });
+  }
+
+  function cfgNivel(nombre) {
+    acc.cargas2002.por_nivel = acc.cargas2002.por_nivel || {};
+    if (!acc.cargas2002.por_nivel[nombre]) {
+      acc.cargas2002.por_nivel[nombre] =
+        { ambiente: 'B', ancho: 3.0, losa_cm: 12, acabado: 80, tabiq: 150,
+          cobertura: 'metalico_liviano' };
+    }
+    return acc.cargas2002.por_nivel[nombre];
+  }
+
+  function cpCvNivel(nivel, cfg) {
+    /* → {cp, cv, fuente_cv} en kg/m² (norma: cap. 4 y 5) */
+    if (nivel.es_techo) {
+      const cvTecho = {
+        metalico_liviano: TAB.techo.metalico_liviano,
+        p_le_15: TAB.techo.p_le_15,
+        p_gt_15: TAB.techo.p_gt_15,
+      };
+      if (cfg.cobertura === 'azotea_uso') {
+        const tipo = TAB.tipos[acc.cargas2002.tipo];
+        const v = tipo && tipo.valores[cfg.ambiente];
+        const cv = Math.max(v != null ? v : 0, TAB.techo.azotea_min_con_uso);
+        return { cp: nivel.pp_techo, cv,
+                 fuente_cv: 'azotea de uso (≥' + TAB.techo.azotea_min_con_uso + ')' };
+      }
+      return { cp: nivel.pp_techo, cv: cvTecho[cfg.cobertura],
+               fuente_cv: '§5.2.4.2' };
+    }
+    const tipo = TAB.tipos[acc.cargas2002.tipo];
+    const cv = tipo && tipo.valores[cfg.ambiente] != null
+      ? tipo.valores[cfg.ambiente] : 0;
+    const cp = cfg.losa_cm / 100 * TAB.pesos.concreto_armado
+             + (+cfg.acabado || 0) + (+cfg.tabiq || 0);
+    return { cp, cv, fuente_cv: 'Tabla 5.1' };
+  }
+
+  function renderCargasNivel() {
+    const div = $('tabla-cargas-nivel');
+    const banner = $('banner-modelador');
+    const niveles = nivelesModelador();
+    if (!TAB) { div.innerHTML = '<div class="mini">…</div>'; return; }
+    if (!niveles.length) {
+      banner.classList.remove('oculto');
+      banner.innerHTML = '⚠ No hay proyecto del <b>Modelador</b>: ábrelo, ' +
+        'define la estructura y vuelve (proyecto único del flujo).';
+      div.innerHTML = '';
+      return;
+    }
+    banner.classList.add('oculto');
+    const tipo = TAB.tipos[acc.cargas2002.tipo] || Object.values(TAB.tipos)[0];
+    let html = '<table><thead><tr><th>Nivel</th><th>amb.</th>' +
+      '<th>CV (kg/m²)</th><th>CP (kg/m²)</th><th>ancho trib. (m)</th>' +
+      '<th>q = (CP+CV)·ancho (kg/m)</th></tr></thead><tbody>';
+    niveles.forEach(n => {
+      const c = cfgNivel(n.nombre);
+      const { cp, cv } = cpCvNivel(n, c);
+      const q = (cp + cv) * (+c.ancho || 0);
+      const ambSel = n.es_techo
+        ? `<select class="in-cob" data-n="${n.nombre}" ${c.cobertura === 'azotea_uso' ? '' : 'title="CV fija por §5.2.4.2"'}>
+             ${[['metalico_liviano', 'techo met. liviano (40)'],
+                ['p_le_15', 'pp≥50 · p≤15% (100)'],
+                ['p_gt_15', 'pp≥50 · p>15% (50)'],
+                ['azotea_uso', 'azotea de uso (≥100)']]
+               .map(([k, t]) => `<option value="${k}" ${c.cobertura === k ? 'selected' : ''}>${t}</option>`).join('')}
+           </select>`
+        : `<select class="in-amb" data-n="${n.nombre}">
+             ${Object.entries(TAB.ambientes)
+               .filter(([k]) => k !== 'O')
+               .map(([k, t]) => `<option value="${k}" ${c.ambiente === k ? 'selected' : ''}
+                   title="${t}">${k}</option>`).join('')}
+           </select>`;
+      html += `<tr>
+        <td>${n.nombre}${n.es_techo ? ' <span class="badge-techo" title="CV por §5.2.4">techo</span>' : ''}</td>
+        <td>${ambSel}</td>
+        <td class="num">${fmt.format(cv)}</td>
+        <td class="num">${fmt.format(cp)}</td>
+        <td><input type="number" step="0.5" min="0" class="in-ancho"
+                   data-n="${n.nombre}" value="${c.ancho}" style="width:64px"></td>
+        <td class="num"><b>${fmt.format(q)}</b></td></tr>`;
+    });
+    div.innerHTML = html + '</tbody></table>';
+
+    div.querySelectorAll('.in-amb').forEach(sel =>
+      sel.addEventListener('change', () => {
+        cfgNivel(sel.dataset.n).ambiente = sel.value;
+        guardarLocal(); renderCargasNivel();
+      }));
+    div.querySelectorAll('.in-cob').forEach(sel =>
+      sel.addEventListener('change', () => {
+        cfgNivel(sel.dataset.n).cobertura = sel.value;
+        guardarLocal(); renderCargasNivel();
+      }));
+    div.querySelectorAll('.in-ancho').forEach(inp =>
+      inp.addEventListener('input', () => {
+        cfgNivel(inp.dataset.n).ancho = +inp.value || 0;
+        guardarLocal();
+        /* refresca solo la columna q sin perder el foco */
+        const tr = inp.closest('tr');
+        const n = niveles.find(x => x.nombre === inp.dataset.n);
+        const { cp, cv } = cpCvNivel(n, cfgNivel(n.nombre));
+        tr.children[5].innerHTML = '<b>' + fmt.format((cp + cv) * (+inp.value || 0)) + '</b>';
+      }));
+  }
+
+  function aplicarNivelesABarras() {
+    const niveles = nivelesModelador();
+    if (!modelo || !modelo.barras.length || !niveles.length) {
+      alert('No hay barras en el proyecto (genera el modelo 2D desde el Modelador).');
+      return;
+    }
+    let aplicadas = 0;
+    const detalle = [];
+    for (const b of modelo.barras) {
+      const ni = modelo.nudos.find(n => n.id === b.ni);
+      const nj = modelo.nudos.find(n => n.id === b.nj);
+      if (!ni || !nj) continue;
+      const yViga = Math.min(ni.y, nj.y) + 1e-9;
+      const nivel = niveles.find(n => Math.abs(n.y - yViga) < 0.05);
+      if (!nivel) continue;
+      const { cp, cv } = cpCvNivel(nivel, cfgNivel(nivel.nombre));
+      const ancho = +cfgNivel(nivel.nombre).ancho || 0;
+      acc.barra_cp[b.id] = Math.round(cp * ancho * 100) / 100;
+      acc.barra_cv[b.id] = Math.round(cv * ancho * 100) / 100;
+      aplicadas++;
+    }
+    niveles.forEach(n => {
+      const { cp, cv } = cpCvNivel(n, cfgNivel(n.nombre));
+      const a = +cfgNivel(n.nombre).ancho || 0;
+      detalle.push(n.nombre + ': CP ' + Math.round(cp * a) +
+                   ' · CV ' + Math.round(cv * a) + ' kg/m');
+    });
+    guardarLocal();
+    renderTablaBarras();
+    alert('Barras actualizadas: ' + aplicadas + '\n\n' + detalle.join('\n'));
+  }
+
+  async function cargarTablas2002() {
+    try {
+      const r = await fetch(CLAVE_CARGAS_API);
+      TAB = await r.json();
+      const sel = $('sel-tipo-2002');
+      sel.innerHTML = TAB.opciones_tipo
+        .map(([k, t]) => `<option value="${k}" ${k === acc.cargas2002.tipo ? 'selected' : ''}>${t}</option>`)
+        .join('');
+      sel.addEventListener('change', () => {
+        acc.cargas2002.tipo = sel.value;
+        guardarLocal(); renderCargasNivel();
+      });
+      renderCargasNivel();
+    } catch (e) {
+      $('tabla-cargas-nivel').innerHTML =
+        '<div class="mini">No se pudieron cargar las tablas 2002-88 (¿backend caído?).</div>';
+    }
   }
 
   /* ================= formulario sismo ================= */
@@ -363,6 +544,8 @@ const AccionesApp = (function () {
     $('btn-guardar').addEventListener('click', guardarProyecto);
     $('btn-abrir').addEventListener('click', () => $('file-abrir').click());
     $('file-abrir').addEventListener('change', abrirProyecto);
+    $('btn-aplicar-niveles').addEventListener('click', aplicarNivelesABarras);
+    cargarTablas2002();
     $('btn-cp-todas').addEventListener('click', () => {
       const v = prompt('CP para todas las barras (kg/m):', '1000');
       if (v === null) return;

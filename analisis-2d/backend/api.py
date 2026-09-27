@@ -105,5 +105,29 @@ def api_salud():
     return {"ok": True, "motor": "rigideces-2d", "unidades": "kg·m·kg/cm²"}
 
 
+@app.get("/api/cargas2002")
+def api_cargas2002():
+    """Tablas de cargas mínimas COVENIN-MINDUR 2002-88 para la UI
+    (fuente única de verdad: engine/cargas2002.py)."""
+    from .engine import cargas2002 as C
+    tipos = {
+        clave: {"titulo": titulo,
+                "valores": {amb: v for amb, v in fila.items()
+                            if isinstance(v, (int, float))}}
+        for clave, (titulo, fila) in C.TIPOS_5_1.items()
+    }
+    return {
+        "ambientes": C.AMBIENTES_5_1,
+        "tipos": tipos,
+        "opciones_tipo": C.opciones_tipo(),
+        "techo": {"metalico_liviano": 40, "p_le_15": 100, "p_gt_15": 50,
+                  "azotea_min_con_uso": C.AZOTEA_MIN_CON_USO},
+        "pesos": {"concreto_armado": C.PESOS_MATERIALES[
+                      "concreto_armado_ordinario"],
+                  "acabados": C.PESOS_ELEMENTOS,
+                  "tabiquería_defecto": C.PESO_TABIQUERIA_EQUIVALENTE},
+    }
+
+
 # ---------- frontend estático (al final para no tapar /api) ----------
 app.mount("/", StaticFiles(directory=FRONT, html=True), name="frontend")

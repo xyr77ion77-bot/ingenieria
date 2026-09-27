@@ -30,7 +30,8 @@ const EstadoM = {
       niveles: [
         { nombre: 'N1', h_piso: 4.0 },
         { nombre: 'N2', h_piso: 3.2 },
-        { nombre: 'N3', h_piso: 3.2 },
+        { nombre: 'N3', h_piso: 3.2, es_techo: true,
+          pp_techo: 50, pendiente: 0 },
       ],
     },
     ejes_resistentes: { X: [1, 3], Y: ['A', 'C'] },
@@ -88,6 +89,11 @@ function ModeladorMigrar(d) {
         ? g.niveles
         : [{ nombre: 'N1', h_piso: 4 }]).map(n => ({
             nombre: String(n.nombre), h_piso: Number(n.h_piso) || 3.0,
+            es_techo: !!n.es_techo,
+            pp_techo: (n.pp_techo != null && n.pp_techo !== '')
+              ? Number(n.pp_techo) : 50,
+            pendiente: (n.pendiente != null && n.pendiente !== '')
+              ? Number(n.pendiente) : 0,
           })),
     },
     ejes_resistentes: {
@@ -360,6 +366,66 @@ const Planta = (function () {
 const Corte = (function () {
   const $id = (id) => document.getElementById(id);
 
+  /* -------- editor de niveles globales (nombre · h · techo) -------- */
+  function renderNiveles() {
+    const div = $id('tabla-niveles-m');
+    if (!div) return;
+    const ns = EstadoM.datos.geometria.niveles;
+    let html = '<table><thead><tr><th>Nivel</th><th>h piso (m)</th>' +
+      '<th title="CV por §5.2.4 en lugar de la Tabla 5.1">techo</th>' +
+      '<th>pp techo (kg/m²)</th><th>pendiente (%)</th></tr></thead><tbody>';
+    ns.forEach((n, i) => {
+      html += `<tr>
+        <td><input class="in-nom" data-i="${i}" value="${n.nombre}" size="6"></td>
+        <td><input type="number" step="0.1" min="1" class="in-h" data-i="${i}"
+                   value="${n.h_piso}" style="width:70px"></td>
+        <td style="text-align:center"><input type="checkbox" class="in-techo"
+                   data-i="${i}" ${n.es_techo ? 'checked' : ''}></td>
+        <td><input type="number" step="5" min="0" class="in-pp" data-i="${i}"
+                   value="${n.pp_techo ?? 50}" style="width:70px"
+                   ${n.es_techo ? '' : 'disabled'}></td>
+        <td><input type="number" step="1" min="0" class="in-pend" data-i="${i}"
+                   value="${n.pendiente ?? 0}" style="width:70px"
+                   ${n.es_techo ? '' : 'disabled'}></td></tr>`;
+    });
+    div.innerHTML = html + '</tbody></table>';
+
+    const alCambiar = () => {
+      renderNiveles();
+      Planta.render();
+      Panel.actualizar();
+      EstadoM.guardarLocal();
+    };
+    div.querySelectorAll('.in-nom').forEach(inp =>
+      inp.addEventListener('change', () => {
+        ns[+inp.dataset.i].nombre = inp.value.trim() || ('N' + (+inp.dataset.i + 1));
+        alCambiar();
+      }));
+    div.querySelectorAll('.in-h').forEach(inp =>
+      inp.addEventListener('input', () => {
+        const v = parseFloat(inp.value);
+        if (v > 0 && v <= 30) { ns[+inp.dataset.i].h_piso = v; EstadoM.guardarLocal(); }
+      }));
+    div.querySelectorAll('.in-techo').forEach(inp =>
+      inp.addEventListener('change', () => {
+        const n = ns[+inp.dataset.i];
+        n.es_techo = inp.checked;
+        /* solo el último nivel puede ser techo: si marco uno, desmarco otros */
+        if (n.es_techo) ns.forEach((o, k) => { if (k !== +inp.dataset.i) o.es_techo = false; });
+        alCambiar();
+      }));
+    div.querySelectorAll('.in-pp').forEach(inp =>
+      inp.addEventListener('input', () => {
+        const v = parseFloat(inp.value);
+        if (v >= 0) { ns[+inp.dataset.i].pp_techo = v; EstadoM.guardarLocal(); }
+      }));
+    div.querySelectorAll('.in-pend').forEach(inp =>
+      inp.addEventListener('input', () => {
+        const v = parseFloat(inp.value);
+        if (v >= 0) { ns[+inp.dataset.i].pendiente = v; EstadoM.guardarLocal(); }
+      }));
+  }
+
   function setEje(dir, id) {
     const lbl = $id('lbl-corte');
     if (dir == null) {
@@ -376,7 +442,28 @@ const Corte = (function () {
       '<b>paso 3</b> del plan (MODELADOR-ESPEC §8).';
   }
 
-  return { setEje };
+  function vincularNiveles() {
+    $id('btn-mas-nivel').onclick = () => {
+      const ns = EstadoM.datos.geometria.niveles;
+      ns.forEach(n => { n.es_techo = false; });
+      const k = ns.length + 1;
+      ns.push({ nombre: 'N' + k, h_piso: 3.0, es_techo: true,
+                pp_techo: 50, pendiente: 0 });
+      renderNiveles();
+      EstadoM.guardarLocal();
+    };
+    $id('btn-menos-nivel').onclick = () => {
+      const ns = EstadoM.datos.geometria.niveles;
+      if (ns.length <= 1) return;
+      if (!confirm('¿Eliminar el nivel ' + ns[ns.length - 1].nombre + '?')) return;
+      ns.pop();
+      if (ns.length && !ns.some(n => n.es_techo)) ns[ns.length - 1].es_techo = true;
+      renderNiveles();
+      EstadoM.guardarLocal();
+    };
+  }
+
+  return { setEje, renderNiveles, vincularNiveles };
 })();
 
 /* ---------------- controles y etiquetas del panel izquierdo ---------------- */
@@ -508,5 +595,7 @@ document.addEventListener('DOMContentLoaded', () => {
   EstadoM.cargarLocal();
   Panel.vincular();
   Planta.init();
+  Corte.vincularNiveles();
+  Corte.renderNiveles();
   Panel.actualizar();
 });

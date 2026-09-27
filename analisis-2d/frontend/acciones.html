@@ -47,13 +47,31 @@
     </div>
 
     <div class="card">
-      <h2><span class="num">2</span> Cargas nodales (kg, ↓ negativo)</h2>
+      <h2><span class="num">2</span> Cargas por nivel — COVENIN 2002-88</h2>
+      <div id="banner-modelador" class="aviso-modelador oculto"></div>
+      <div class="fila-2" style="margin-bottom:6px">
+        <label class="mini">Tipo de edificación (Tabla 5.1):</label>
+        <select id="sel-tipo-2002" style="width:100%"></select>
+      </div>
+      <div class="tabla-compacta" id="tabla-cargas-nivel"></div>
+      <p class="mini" id="ayuda-2002" style="margin-top:6px">
+        CV de la Tabla 5.1 según el ambiente · CP = losa (2500 kg/m³) +
+        acabado + tabiquería §4.4 · en niveles «techo», CV = §5.2.4.2 y
+        CP = pp del techo. El ancho tributario convierte kg/m² → kg/m.</p>
+      <div class="fila-2">
+        <button class="suave" id="btn-aplicar-niveles"
+                title="Fija CP y CV (kg/m) en las barras de cada nivel">⚡ Aplicar CP·CV a las barras por nivel</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><span class="num">3</span> Cargas nodales (kg, ↓ negativo)</h2>
       <div class="tabla-compacta" id="tabla-nudos-cargas"></div>
       <div class="mini">Solo carga vertical por tipo. Para Fx/Mz puntuales usa la pestaña Análisis 2D (entran como CP).</div>
     </div>
 
     <div class="card">
-      <h2><span class="num">3</span> Sismo — COVENIN 1756-1:2019</h2>
+      <h2><span class="num">4</span> Sismo — COVENIN 1756-1:2019</h2>
       <div class="fila-3">
         <label class="campo">A₀<input type="number" id="s-A0" step="0.01" min="0" value="0.21"></label>
         <label class="campo">A₁<input type="number" id="s-A1" step="0.01" min="0" value="0.18"></label>
@@ -110,7 +128,7 @@
     </div>
 
     <div class="card">
-      <h2><span class="num">4</span> Opciones de combinación (§8.3.2)</h2>
+      <h2><span class="num">5</span> Opciones de combinación (§8.3.2)</h2>
       <label class="check"><input type="checkbox" id="o-sismo" checked> Incluir acción sísmica (SH)</label>
       <label class="check"><input type="checkbox" id="o-sv" checked> Incluir componente vertical SV = CSV·CP (§8.3.1.4)</label>
       <label class="check"><input type="checkbox" id="o-omega"> Con sobrerresistencia Ω₀·ρ — fórmulas 8.11–8.15</label>

@@ -86,6 +86,10 @@ descargado (avisos).
 
 **Pestaña «⚖️ Acciones y Combinaciones»** (`/acciones.html`, Fase 2):
 
+- **Cargas por nivel — COVENIN-MINDUR 2002-88**: tipo de edificación +
+  ambiente de la Tabla 5.1 por nivel (leído del proyecto del Modelador),
+  CP construida con losa/acabados/tabiquería (cap. 4), techo §5.2.4.2 y
+  aplicación de (CP+CV)·ancho tributario a las barras de cada nivel
 - CP/CV por barra y por nudo (kg/m, kg) con aplicación rápida a todas
 - Parámetros del sismo: A₀, A₁, T'L, grupo α, ND (R/Cd/Ω₀), sitio, topografía,
   H basamento, ρ, FI, Ct, fracción de CV (Tabla 20) y % de V₀ que toma el pórtico
