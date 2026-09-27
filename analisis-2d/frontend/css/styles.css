@@ -27,7 +27,8 @@ body {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;   /* si el contenido crece, la página baja */
   font-size: 14px;
 }
 
@@ -408,7 +409,7 @@ tr:hover td { background: #f8fafc; }
   min-height: 0;
   flex-direction: column;
 }
-.vista.activa { display: flex; }
+.vista.activa { display: flex; overflow-y: auto; }
 .vista main { flex: 1; min-height: 0; }
 
 .barra-seccion {

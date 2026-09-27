@@ -4,6 +4,14 @@
    acento azul #2563eb · pórticos X rojo · pórticos Y azul.
    ================================================================ */
 
+/* la barra de herramientas queda fija mientras la vista baja a Acciones */
+#vista-modelador .barra-seccion {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--bg);
+}
+
 .modelador-layout {
   display: grid;
   grid-template-columns: 1fr;   /* apilado: PLANTA → CORTE → ACCIONES */
