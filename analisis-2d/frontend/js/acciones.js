@@ -284,7 +284,7 @@ const AccionesApp = (function () {
     $('o-sismo').checked = !!s.incluir_sismo;
     $('o-sv').checked = !!s.incluir_sv;
     $('o-omega').checked = !!s.sobrerresistencia;
-    $('o-rhoR').value = s.rho_redundancia ?? 1;
+    $('o-rhoR').value = (s.rho_redundancia == null ? 1 : s.rho_redundancia);
     $('o-gamma').value = s.gamma_manual == null ? 'auto' : String(s.gamma_manual);
   }
 

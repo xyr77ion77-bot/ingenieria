@@ -152,19 +152,64 @@ const Planta = (function () {
   const MARGEN = 58;
   let cv = null, ctx = null, wrap = null;
   let hitBoxes = [];
+  let hoverHB = null;          /* hitbox bajo el cursor (resaltado) */
+  let toastTimer = null;
+  function toastPlanta(msg) {
+    if (!wrap) return;
+    let t = document.getElementById('toast-planta');
+    if (!t) {
+      t = document.createElement('div');
+      t.id = 'toast-planta';
+      t.style.cssText = 'position:absolute;left:50%;bottom:10px;transform:translateX(-50%);' +
+        'background:#0f172a;color:#fff;padding:6px 12px;border-radius:8px;' +
+        'font:12.5px system-ui,sans-serif;pointer-events:none;z-index:5;transition:opacity .3s';
+      wrap.appendChild(t);
+    }
+    t.textContent = msg; t.style.opacity = '1';
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { t.style.opacity = '0'; }, 1800);
+  }
   let geom = null;                    /* {arX, arY, lx, ly, scale} */
 
   const $id = (id) => document.getElementById(id);
   const sum = (a) => a.reduce((x, y) => x + y, 0);
+
+  /* compat de eventos: navegadores sin Pointer Events usan
+     mousedown/touchstart; «gestoUnico» evita el doble disparo cuando el
+     navegador manda varios eventos por el mismo gesto */
+  const ultimoGesto = {};
+  function gestoUnico(clave, tipo) {
+    const t = Date.now();
+    const a = ultimoGesto[clave];
+    if (a && a.tipo !== tipo && t - a.t < 250) return false;
+    ultimoGesto[clave] = { tipo, t };
+    return true;
+  }
 
   function init() {
     cv = $id('cv-planta');
     if (!cv) return;
     ctx = cv.getContext('2d');
     wrap = cv.parentElement;
-    cv.addEventListener('pointerdown', onTap);
-    cv.addEventListener('pointermove', onHover);
+    const down = (e) => {
+      if (e.type === 'touchstart' && e.cancelable) e.preventDefault();
+      if (gestoUnico('P', e.type)) onTap(e);
+    };
+    wrap.addEventListener('mousedown', down);
+    wrap.addEventListener('touchstart', down, { passive: false });
+    if (window.PointerEvent) wrap.addEventListener('pointerdown', down);
+    wrap.addEventListener('mousemove', onHover);
+    if (window.PointerEvent) wrap.addEventListener('pointermove', onHover);
+    wrap.addEventListener('mouseleave', () => {
+      hoverHB = null; wrap.style.cursor = 'default'; render();
+    });
+    if (window.ResizeObserver) {
+      try { new ResizeObserver(render).observe(wrap); } catch (e) { /* opcional */ }
+    }
     window.addEventListener('resize', render);
+    window.addEventListener('pestana-activada', (e) => {
+      if (e.detail === 'modelador') render();
+    });
     render();
   }
 
@@ -194,6 +239,9 @@ const Planta = (function () {
     ctx.clearRect(0, 0, w, h);
     ctx.fillStyle = '#fbfcfd';
     ctx.fillRect(0, 0, w, h);
+    /* sello de versión: permite confirmar de un vistazo qué JS corre */
+    ctx.fillStyle = '#94a3b8'; ctx.font = '10px monospace'; ctx.textAlign = 'right';
+    ctx.fillText('v20260927b', w - 6, h - 6); ctx.textAlign = 'left';
     hitBoxes = [];
 
     const sel = EstadoM.seleccion.eje;
@@ -273,6 +321,13 @@ const Planta = (function () {
                       x1: xc - 9, y1: arY[i] + 14, x2: xc + 9, y2: arY[i + 1] - 14 });
     }
 
+    /* --- resaltado del hitbox bajo el cursor --- */
+    if (hoverHB) {
+      ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 2;
+      ctx.strokeRect(hoverHB.x1 - 3, hoverHB.y1 - 3,
+                     (hoverHB.x2 - hoverHB.x1) + 6, (hoverHB.y2 - hoverHB.y1) + 6);
+    }
+
     /* --- etiquetas de ejes --- */
     ctx.save();
     ctx.font = 'bold 13px system-ui, sans-serif';
@@ -324,6 +379,7 @@ const Planta = (function () {
   /* ---------------- interacción ---------------- */
 
   function localXY(e) {
+    if (e.touches && e.touches[0]) e = e.touches[0];
     const r = cv.getBoundingClientRect();
     return { x: e.clientX - r.left, y: e.clientY - r.top };
   }
@@ -370,6 +426,10 @@ const Planta = (function () {
       render();
       Panel.actualizar();
       EstadoM.guardarLocal();
+      toastPlanta('EJE ' + hb.dir + ':' + hb.id +
+                  (EstadoM.ejeResistente(hb.dir, hb.id)
+                    ? ' → resistente ✓'
+                    : ' → quitado de resistentes'));
 
     } else if (hb.t === 'TRAMO') {
       const arr = hb.dir === 'X'
@@ -387,17 +447,20 @@ const Planta = (function () {
       render();
       Panel.actualizar();
       EstadoM.guardarLocal();
+      toastPlanta('Luz vano ' + hb.dir + ' #' + (hb.idx + 1) + ' = ' + nv + ' m');
     }
   }
 
   function onHover(e) {
-    if (!geom) return;
+    if (!geom || !wrap) return;
     const { x, y } = localXY(e);
     const hb = buscarHit(x, y);
-    cv.style.cursor = hb ? 'pointer' : 'default';
+    hoverHB = hb;
+    wrap.style.cursor = hb ? 'pointer' : 'default';
     if (hb) cv.title = hb.t === 'EJE'
       ? 'Eje ' + hb.dir + ':' + hb.id
       : 'Vano ' + hb.dir + ' #' + (hb.idx + 1);
+    render();
   }
 
   function exportarPNG(nombre) {
@@ -432,10 +495,10 @@ const Corte = (function () {
         <td style="text-align:center"><input type="checkbox" class="in-techo"
                    data-i="${i}" ${n.es_techo ? 'checked' : ''}></td>
         <td><input type="number" step="5" min="0" class="in-pp" data-i="${i}"
-                   value="${n.pp_techo ?? 50}" style="width:70px"
+                   value="${n.pp_techo == null ? 50 : n.pp_techo}" style="width:70px"
                    ${n.es_techo ? '' : 'disabled'}></td>
         <td><input type="number" step="1" min="0" class="in-pend" data-i="${i}"
-                   value="${n.pendiente ?? 0}" style="width:70px"
+                   value="${n.pendiente == null ? 0 : n.pendiente}" style="width:70px"
                    ${n.es_techo ? '' : 'disabled'}></td></tr>`;
     });
     div.innerHTML = html + '</tbody></table>';
@@ -508,7 +571,13 @@ const Corte = (function () {
     if (!cvC) return false;
     ctxC = cvC.getContext('2d');
     wrapC = cvC.parentElement;
-    cvC.addEventListener('pointerdown', onTapC);
+    const downC = (e) => {
+      if (e.type === 'touchstart' && e.cancelable) e.preventDefault();
+      if (gestoUnico('C', e.type)) onTapC(e);
+    };
+    wrapC.addEventListener('mousedown', downC);
+    wrapC.addEventListener('touchstart', downC, { passive: false });
+    if (window.PointerEvent) wrapC.addEventListener('pointerdown', downC);
     cvC.addEventListener('pointermove', onHoverC);
     window.addEventListener('resize', dibujar);
     return true;
@@ -682,6 +751,7 @@ const Corte = (function () {
   /* ---------------- interacción del corte ---------------- */
 
   function localXYC(e) {
+    if (e.touches && e.touches[0]) e = e.touches[0];
     const r = cvC.getBoundingClientRect();
     return { x: e.clientX - r.left, y: e.clientY - r.top };
   }
@@ -1052,3 +1122,4 @@ document.addEventListener('DOMContentLoaded', () => {
     document.body.appendChild(d);
   }
 });
+console.log('[UI] modelador v20260927b listo');

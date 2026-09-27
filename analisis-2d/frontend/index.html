@@ -5,10 +5,25 @@
   <meta http-equiv="Cache-Control" content="no-cache">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Software Estructural · Modelador · Acciones · Análisis 2D</title>
-  <link rel="stylesheet" href="css/styles.css?v=20260927a">
-  <link rel="stylesheet" href="css/modelador.css?v=20260927a">
+  <link rel="stylesheet" href="css/styles.css?v=20260927b">
+  <link rel="stylesheet" href="css/modelador.css?v=20260927b">
+  <script>
+  /* diagnóstico global: cualquier error JS (incl. SyntaxError de navegadores
+     viejos) muestra un banner rojo — ES5, corre antes que todos los módulos */
+  window.onerror = function (msj, src, linea) {
+    var d = document.getElementById('banner-error');
+    var archivo = (src || '?').split('/').pop();
+    var t = '⚠ Error de la interfaz: ' + msj + '  [' + archivo + ':' + linea + ']';
+    if (window.console && console.error) console.error(t);
+    if (d) { d.textContent = t; d.style.display = 'block'; }
+    return false;
+  };
+  </script>
 </head>
 <body>
+
+<div id="banner-error" style="display:none;position:fixed;left:0;right:0;top:0;z-index:99999;background:#b91c1c;color:#fff;padding:8px 14px;font:13px monospace"></div>
+
 
 <header>
   <div class="marca">
@@ -487,14 +502,14 @@
 </main>
 </section>
 
-<script src="js/proyecto.js?v=20260927a"></script>
-<script src="js/pestanas.js?v=20260927a"></script>
-<script src="js/perfiles.js?v=20260927a"></script>
-<script src="js/estado.js?v=20260927a"></script>
-<script src="js/api.js?v=20260927a"></script>
-<script src="js/canvas.js?v=20260927a"></script>
-<script src="js/app.js?v=20260927a"></script>
-<script src="js/acciones.js?v=20260927a"></script>
-<script src="js/modelador.js?v=20260927a"></script>
+<script src="js/proyecto.js?v=20260927b"></script>
+<script src="js/pestanas.js?v=20260927b"></script>
+<script src="js/perfiles.js?v=20260927b"></script>
+<script src="js/estado.js?v=20260927b"></script>
+<script src="js/api.js?v=20260927b"></script>
+<script src="js/canvas.js?v=20260927b"></script>
+<script src="js/app.js?v=20260927b"></script>
+<script src="js/acciones.js?v=20260927b"></script>
+<script src="js/modelador.js?v=20260927b"></script>
 </body>
 </html>
