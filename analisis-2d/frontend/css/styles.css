@@ -335,7 +335,7 @@ tr:hover td { background: #f8fafc; }
 
 .tabla-compacta table { width: 100%; border-collapse: collapse; font-size: .78rem; }
 .tabla-compacta th {
-  text-align: left; font-size: .66rem; text-transform: uppercase;
+  text-align: left; font-size: .72rem; text-transform: uppercase;
   color: var(--texto2); padding: 4px 6px; border-bottom: 1px solid var(--borde);
 }
 .tabla-compacta td { padding: 2px 6px; border-bottom: 1px solid #f1f5f9; }

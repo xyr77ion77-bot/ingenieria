@@ -259,7 +259,7 @@ const Planta = (function () {
     ctx.fillRect(0, 0, w, h);
     /* sello de versión: permite confirmar de un vistazo qué JS corre */
     ctx.fillStyle = '#94a3b8'; ctx.font = '10px monospace'; ctx.textAlign = 'right';
-    ctx.fillText('v20260927d', w - 6, h - 6); ctx.textAlign = 'left';
+    ctx.fillText('v20260927e', w - 6, h - 6); ctx.textAlign = 'left';
     hitBoxes = [];
 
     const sel = EstadoM.seleccion.eje;
@@ -425,6 +425,20 @@ const Planta = (function () {
     return otro;
   }
 
+  /* en pantallas angostas el corte queda debajo de la planta:
+     al elegir un pórtico, llévalo a la vista (si está fuera de pantalla) */
+  function llevarCorteAVista() {
+    const wc = $id('wrap-corte');
+    if (!wc || !wc.getBoundingClientRect) return;
+    let top = 0;
+    try { top = wc.getBoundingClientRect().top; } catch (e) { return; }
+    const vh = window.innerHeight || 0;
+    if (top > vh) {
+      try { wc.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+      catch (e) { try { wc.scrollIntoView(true); } catch (e2) { /* opcional */ } }
+    }
+  }
+
   function onTap(e) {
     e.preventDefault();
     if (!geom) return;
@@ -458,6 +472,7 @@ const Planta = (function () {
                   (EstadoM.ejeResistente(hb.dir, hb.id)
                     ? ' → resistente ✓'
                     : ' → quitado de resistentes'));
+      if (EstadoM.ejeResistente(hb.dir, hb.id)) llevarCorteAVista();
 
     } else if (hb.t === 'TRAMO') {
       const arr = hb.dir === 'X'
@@ -1151,4 +1166,4 @@ document.addEventListener('DOMContentLoaded', () => {
     document.body.appendChild(d);
   }
 });
-console.log('[UI] modelador v20260927d listo');
+console.log('[UI] modelador v20260927e listo');
